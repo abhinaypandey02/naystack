@@ -1,0 +1,29 @@
+import { NextRequest } from "next/server";
+
+import { handleError } from "../../utils/errors";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  getTokenizedResponse,
+  verifyUser,
+} from "../token";
+import { InitRoutesOptions } from "../types";
+import { massageRequest } from "../utils";
+
+export const getPutRoute =
+  (options: InitRoutesOptions) => async (req: NextRequest) => {
+    const { data, error } = await massageRequest(req, options);
+    if (error || !data) return error;
+
+    const user = await options.getUser(data.email);
+    if (!user)
+      return handleError(400, "A user does not exist", options.onError);
+
+    if (await verifyUser(user, data.password)) {
+      return getTokenizedResponse(
+        generateAccessToken(user.id, options.signingKey),
+        generateRefreshToken(user.id, options.refreshKey),
+      );
+    }
+    return handleError(403, "Invalid password", options.onError);
+  };
