@@ -1,10 +1,9 @@
 import { useCallback, useContext } from "react";
 
-import { TokenContext } from "@/src/graphql/client";
+import { TokenContext, useSetToken } from "@/src/graphql/client";
 
 export function useSignUpWithEmail(endpoint: string) {
-  const { setToken, token } = useContext(TokenContext);
-  console.warn(token, setToken, "1");
+  const setToken = useSetToken();
   return useCallback(
     async (data: object) => {
       const res = await fetch(endpoint, {
@@ -24,7 +23,8 @@ export function useSignUpWithEmail(endpoint: string) {
 }
 
 export function useLoginWithEmail(endpoint: string) {
-  const { setToken } = useContext(TokenContext);
+  const setToken = useSetToken();
+  console.warn(setToken, "2");
   return useCallback(
     async (data: object) => {
       const res = await fetch(endpoint, {
