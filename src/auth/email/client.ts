@@ -1,6 +1,6 @@
+// Import from package export to ensure same TokenContext instance at runtime
+import { TokenContext, useSetToken } from "naystack/graphql/client";
 import { useCallback, useContext } from "react";
-
-import { TokenContext, useSetToken } from "@/src/graphql/client";
 
 export function useSignUpWithEmail(endpoint: string) {
   const setToken = useSetToken();
