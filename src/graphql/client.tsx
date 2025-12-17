@@ -74,6 +74,11 @@ export function useToken() {
   return token;
 }
 
+export function useSetToken() {
+  const { setToken } = useContext(TokenContext);
+  return setToken;
+}
+
 export const tokenContext = (token?: string | null) => {
   if (!token) return undefined;
   return {
