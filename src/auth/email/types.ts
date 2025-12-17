@@ -7,6 +7,6 @@ export type InitRoutesOptions = {
   signingKey: string;
   refreshKey: string;
   turnstileKey?: string;
-  onSignUp: (user: UserOutput) => void;
+  onSignUp?: (user: UserOutput) => void;
   onLogout?: (body: string) => Promise<void>;
 };
