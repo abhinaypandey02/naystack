@@ -6,6 +6,6 @@ import { getTokenizedResponse } from "../token";
 
 export const getDeleteRoute =
   (options: InitRoutesOptions) => async (req: NextRequest) => {
-    if (options.onLogout) await options.onLogout?.(await req.text());
+    if (options.onLogout) await options.onLogout?.(await req.json());
     return getTokenizedResponse(undefined, "");
   };
