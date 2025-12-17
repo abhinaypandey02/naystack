@@ -4,7 +4,6 @@ import {
   InMemoryCache,
   type OperationVariables,
 } from "@apollo/client";
-import { registerApolloClient } from "@apollo/client-integration-nextjs";
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 import { cookies } from "next/headers";
 import type { FC } from "react";
@@ -45,15 +44,12 @@ async function InjectorSuspensed<T, Y>({
 }
 
 export const getGraphQLQuery = ({ uri }: { uri: string }) => {
-  const getClient = () => {
-    return new ApolloClient({
-      cache: new InMemoryCache(),
-      link: new HttpLink({
-        uri,
-      }),
-    });
-  };
-  const { query: queryApollo } = registerApolloClient(getClient);
+  const client = new ApolloClient({
+    cache: new InMemoryCache(),
+    link: new HttpLink({
+      uri,
+    }),
+  });
 
   return async <T, V extends OperationVariables>(
     _query: TypedDocumentNode<T, V>,
@@ -64,7 +60,7 @@ export const getGraphQLQuery = ({ uri }: { uri: string }) => {
       noCookie?: boolean;
     },
   ): Promise<T> => {
-    const res = await queryApollo({
+    const res = await client.query({
       query: _query,
       variables: options?.variables,
       context: {
