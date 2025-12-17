@@ -61,7 +61,9 @@ export const getApolloWrapper = ({
     }, []);
     return (
       <ApolloNextAppProvider makeClient={makeClient}>
-        <TokenContext value={{ token, setToken }}>{children}</TokenContext>
+        <TokenContext.Provider value={{ token, setToken }}>
+          {children}
+        </TokenContext.Provider>
       </ApolloNextAppProvider>
     );
   };

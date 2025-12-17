@@ -2,7 +2,7 @@ import { useCallback, useContext } from "react";
 
 import { TokenContext } from "@/src/graphql/client";
 
-export function useSignUpWithEmail(endpoint: string) {
+function useSignUpWithEmail(endpoint: string) {
   const { setToken } = useContext(TokenContext);
   return useCallback(
     async (data: object) => {
@@ -22,7 +22,7 @@ export function useSignUpWithEmail(endpoint: string) {
   );
 }
 
-export function useLoginWithEmail(endpoint: string) {
+function useLoginWithEmail(endpoint: string) {
   const { setToken } = useContext(TokenContext);
   return useCallback(
     async (data: object) => {
@@ -42,7 +42,7 @@ export function useLoginWithEmail(endpoint: string) {
   );
 }
 
-export function useLogout(endpoint: string) {
+function useLogout(endpoint: string) {
   const { setToken } = useContext(TokenContext);
   return useCallback(
     async (data?: object) => {
@@ -55,4 +55,12 @@ export function useLogout(endpoint: string) {
     },
     [setToken],
   );
+}
+
+export function getEmailAuthUtils(endpoint: string) {
+  return {
+    useSignUp: () => useSignUpWithEmail(endpoint),
+    useLogin: () => useLoginWithEmail(endpoint),
+    useLogout: () => useLogout(endpoint),
+  };
 }
