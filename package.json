@@ -9,7 +9,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup"
+    "build": "NODE_OPTIONS='--max-old-space-size=16384' tsup"
   },
   "exports": {
     "./auth": {
