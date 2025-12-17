@@ -79,11 +79,11 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
+    "@graphql-typed-document-node/core": "^3.2.0",
     "@types/cloudflare-turnstile": "^0.2.2",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^24.5.2",
     "@types/react": "^19.2",
-    "@graphql-typed-document-node/core": "^3.2.0",
     "@types/react-dom": "^19.2",
     "dotenv": "^17.2.2",
     "eslint": "^9.26.0",
