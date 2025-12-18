@@ -39,6 +39,9 @@
       ],
       "@graphql/*": [
         "./app/api/(graphql)/*"
+      ],
+      "naystack/graphql/client": [
+        "./src/graphql/client.tsx"
       ]
     },
     "plugins": [
