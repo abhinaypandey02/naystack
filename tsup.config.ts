@@ -6,22 +6,8 @@ export default defineConfig({
   dts: true,
   clean: true,
   outDir: "dist",
-  splitting: false, // needed for multi-entry
-  // Make naystack imports external so they resolve at runtime
-  // This ensures TokenContext is shared across modules
+  splitting: false,
   external: ["naystack/graphql/client"],
-  esbuildPlugins: [
-    {
-      name: "externalize-graphql-client",
-      setup(build) {
-        // Mark naystack/graphql/client as external
-        build.onResolve({ filter: /^naystack\/graphql\/client$/ }, () => ({
-          path: "naystack/graphql/client",
-          external: true,
-        }));
-      },
-    },
-  ],
   outExtension({ format }) {
     return {
       js: `.${format}.js`,

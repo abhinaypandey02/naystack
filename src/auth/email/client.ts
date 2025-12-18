@@ -1,8 +1,8 @@
 // Import from package export to ensure same TokenContext instance at runtime
-import { TokenContext, useSetToken } from "naystack/graphql/client";
-import { useCallback, useContext } from "react";
+import { useSetToken } from "naystack/graphql/client";
+import { useCallback } from "react";
 
-export function useSignUpWithEmail(endpoint: string) {
+function useSignUpWithEmail(endpoint: string) {
   const setToken = useSetToken();
   return useCallback(
     async (data: object) => {
@@ -22,9 +22,8 @@ export function useSignUpWithEmail(endpoint: string) {
   );
 }
 
-export function useLoginWithEmail(endpoint: string) {
+function useLoginWithEmail(endpoint: string) {
   const setToken = useSetToken();
-  console.warn(setToken, "2");
   return useCallback(
     async (data: object) => {
       const res = await fetch(endpoint, {
@@ -43,9 +42,8 @@ export function useLoginWithEmail(endpoint: string) {
   );
 }
 
-export function useLogout(endpoint: string) {
-  const { setToken, token } = useContext(TokenContext);
-  console.warn(token, setToken, "1");
+function useLogout(endpoint: string) {
+  const setToken = useSetToken();
   return useCallback(
     async (data?: object) => {
       setToken(null);
