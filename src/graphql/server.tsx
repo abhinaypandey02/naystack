@@ -4,6 +4,7 @@ import {
   InMemoryCache,
   type OperationVariables,
 } from "@apollo/client";
+import { registerApolloClient } from "@apollo/client-integration-nextjs";
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 import { cookies } from "next/headers";
 import type { FC } from "react";
@@ -43,12 +44,29 @@ async function InjectorSuspensed<T, Y>({
   return <Component loading={false} {...((props || {}) as Y)} data={data} />;
 }
 
-export const getGraphQLQuery = ({ uri }: { uri: string }) => {
-  const client = new ApolloClient({
+export const { getClient, query, PreloadQuery } = registerApolloClient(() => {
+  return new ApolloClient({
     cache: new InMemoryCache(),
     link: new HttpLink({
-      uri,
+      // this needs to be an absolute url, as relative urls cannot be used in SSR
+      uri: "http://example.com/api/graphql",
+      fetchOptions: {
+        // you can pass additional options that should be passed to `fetch` here,
+        // e.g. Next.js-related `fetch` options regarding caching and revalidation
+        // see https://nextjs.org/docs/app/api-reference/functions/fetch#fetchurl-options
+      },
     }),
+  });
+});
+
+export const getGraphQLQuery = ({ uri }: { uri: string }) => {
+  const { query } = registerApolloClient(() => {
+    return new ApolloClient({
+      cache: new InMemoryCache(),
+      link: new HttpLink({
+        uri,
+      }),
+    });
   });
 
   return async <T, V extends OperationVariables>(
@@ -60,7 +78,7 @@ export const getGraphQLQuery = ({ uri }: { uri: string }) => {
       noCookie?: boolean;
     },
   ): Promise<T> => {
-    const res = await client.query({
+    const res = await query({
       query: _query,
       variables: options?.variables,
       context: {
