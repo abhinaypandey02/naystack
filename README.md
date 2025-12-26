@@ -19,13 +19,15 @@ yarn add naystack
 
 Naystack provides the following modules, each accessible via its own import path:
 
-| Module      | Import Path        | Description                                     |
-| ----------- | ------------------ | ----------------------------------------------- |
-| **Auth**    | `naystack/auth`    | Email, Google, and Instagram authentication     |
-| **GraphQL** | `naystack/graphql` | GraphQL server initialization with type-graphql |
-| **Client**  | `naystack/client`  | Client-side hooks and utilities                 |
-| **File**    | `naystack/file`    | File upload to AWS S3                           |
-| **Socials** | `naystack/socials` | Instagram and Threads API integration           |
+| Module      | Import Path                | Description                                                        |
+| ----------- | -------------------------- | ------------------------------------------------------------------ |
+| **Auth**    | `naystack/auth`           | Email, Google, and Instagram authentication (server-side routes)  |
+| **Auth UI** | `naystack/auth/email/client` | Client-side React hooks for login / signup / logout flows     |
+| **GraphQL** | `naystack/graphql`        | GraphQL server initialization with type-graphql                   |
+| **GQL App** | `naystack/graphql/client` / `naystack/graphql/server` | Apollo Client helpers for Next.js App Router (client + server) |
+| **Client**  | `naystack/client`         | Generic client-side hooks and utilities                            |
+| **File**    | `naystack/file`           | File upload to AWS S3                                              |
+| **Socials** | `naystack/socials`        | Instagram and Threads API integration                              |
 
 ---
 
@@ -39,11 +41,21 @@ import {
 } from "naystack/auth";
 ```
 
+### High-level Auth Flow in a Next.js App Router project
+
+From a real-world setup (like `veas-web`), the pieces look like this:
+
+- **Server-side auth routes** – created with `getEmailAuthRoutes` (and optionally Google / Instagram)
+- **Server-side GraphQL context** – uses `getUserIdFromRequest` from the email auth routes
+- **Client-side auth hooks** – created with `getEmailAuthUtils` and used in login/signup/logout forms
+
+The sections below show each part in more detail.
+
 ### Email Authentication
 
 Setup email-based authentication with JWT tokens and optional Turnstile captcha verification.
 
-**Basic Example:**
+**Next.js App Router Example (server routes):**
 
 ```typescript
 const emailAuth = getEmailAuthRoutes({
@@ -59,6 +71,101 @@ const emailAuth = getEmailAuthRoutes({
 
 // Export in Next.js route handler
 export const { GET, POST, PUT, DELETE, getUserIdFromRequest } = emailAuth;
+```
+
+**Client-side hooks (login, signup, logout) – as used in `veas-web`:**
+
+```typescript
+// app/(auth)/utils.ts
+import { getEmailAuthUtils } from "naystack/auth/email/client";
+
+// The argument is the URL where your email auth API lives
+export const { useLogin, useLogout, useSignUp } =
+  getEmailAuthUtils("/api/email");
+```
+
+```typescript
+// app/(auth)/login/components/form.tsx
+"use client";
+import React, { useState } from "react";
+import { useLogin } from "@/app/(auth)/utils";
+import { useRouter } from "next/navigation";
+
+export default function LoginForm() {
+  const login = useLogin();
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  return (
+    <form
+      onSubmit={async (e) => {
+        e.preventDefault();
+        const ok = await login({ email, password });
+        if (ok) router.push("/dashboard");
+      }}
+    >
+      {/* inputs + submit */}
+    </form>
+  );
+}
+```
+
+```typescript
+// app/(auth)/signup/components/form.tsx
+"use client";
+import React, { useState } from "react";
+import { useSignUp } from "@/app/(auth)/utils";
+import { useRouter } from "next/navigation";
+
+export default function SignupForm() {
+  const signUp = useSignUp();
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  return (
+    <form
+      onSubmit={async (e) => {
+        e.preventDefault();
+        const ok = await signUp({ email, password });
+        if (ok) router.push("/onboard");
+      }}
+    >
+      {/* inputs + submit */}
+    </form>
+  );
+}
+```
+
+```typescript
+// app/dashboard/components/logout-button.tsx
+"use client";
+import React, { useState } from "react";
+import { useLogout } from "@/app/(auth)/utils";
+import { useRouter } from "next/navigation";
+
+export default function LogoutButton() {
+  const logout = useLogout();
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    setLoading(true);
+    try {
+      await logout();
+      router.push("/login");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <button onClick={handleLogout} disabled={loading}>
+      {loading ? "Logging out..." : "Logout"}
+    </button>
+  );
+}
 ```
 
 **Real-World Example with Drizzle ORM:**
@@ -302,7 +409,7 @@ import {
 import type { Context, AuthorizedContext } from "naystack/graphql";
 ```
 
-### Initialize GraphQL Server
+### Initialize GraphQL Server (Next.js App Router)
 
 **Basic Example:**
 
@@ -356,6 +463,17 @@ export const { GET, POST } = await initGraphQLServer({
   },
 });
 ```
+
+### Real-world pattern from a full Next.js app (like `veas-web`)
+
+In a typical app you will:
+
+- Define **GraphQL resolvers** using `QueryLibrary` / `FieldLibrary`
+- Initialize the GraphQL **API route** with `initGraphQLServer`
+- Use **server-side helper** `getGraphQLQuery` to call GraphQL from RSC / server actions
+- Use **client-side helper** `getApolloWrapper` and `useAuthMutation` for client components
+
+The next sections show how these pieces fit together.
 
 #### Options
 
@@ -482,6 +600,139 @@ const fields = {
 
 const UserFieldResolver = FieldLibrary(User, fields);
 ```
+
+**How this looks in a real app (`veas-web`-style):**
+
+```typescript
+// app/api/(graphql)/User/db.ts
+import { pgTable, serial, text, timestamp, real } from "drizzle-orm/pg-core";
+
+export const UserTable = pgTable("users", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull(),
+  password: text("password").notNull(),
+  name: text("name"),
+  dateOfBirth: timestamp("date_of_birth"),
+  placeOfBirthLat: real("place_of_birth_lat"),
+  placeOfBirthLong: real("place_of_birth_long"),
+  timezone: real("timezone"),
+});
+
+export type UserDB = typeof UserTable.$inferSelect;
+```
+
+```typescript
+// app/api/(graphql)/User/types.ts
+import { Field, ObjectType } from "type-graphql";
+
+@ObjectType("User")
+export class User {
+  @Field()
+  id: number;
+
+  @Field()
+  email: string;
+
+  @Field(() => String, { nullable: true })
+  name: string | null;
+
+  @Field(() => Date, { nullable: true })
+  dateOfBirth: Date | null;
+
+  @Field(() => Number, { nullable: true })
+  placeOfBirthLat: number | null;
+
+  @Field(() => Number, { nullable: true })
+  placeOfBirthLong: number | null;
+
+  @Field(() => Number, { nullable: true })
+  timezone: number | null;
+
+  @Field()
+  isOnboarded: boolean;
+}
+```
+
+```typescript
+// app/api/(graphql)/User/resolvers/is-onboarded.ts
+import { field } from "naystack/graphql";
+import type { UserDB } from "../db";
+
+export default field(
+  async (user: UserDB) => {
+    return (
+      !!user.name &&
+      !!user.dateOfBirth &&
+      user.placeOfBirthLat !== null &&
+      user.placeOfBirthLong !== null &&
+      user.timezone !== null
+    );
+  },
+  { output: Boolean },
+);
+```
+
+```typescript
+// app/api/(graphql)/User/resolvers/get-current-user.ts
+import { query } from "naystack/graphql";
+import { db } from "@/app/api/lib/db";
+import { UserTable } from "../db";
+import { eq } from "drizzle-orm";
+import { User } from "../types";
+
+export default query(
+  async (ctx: { userId: number | null }) => {
+    if (!ctx.userId) return null;
+    const [user] = await db
+      .select()
+      .from(UserTable)
+      .where(eq(UserTable.id, ctx.userId));
+    return user || null;
+  },
+  {
+    output: User,
+  },
+);
+```
+
+```typescript
+// app/api/(graphql)/User/graphql.ts
+import { QueryLibrary, FieldLibrary } from "naystack/graphql";
+import getCurrentUser from "./resolvers/get-current-user";
+import onboardUser from "./resolvers/onboard-user";
+import isOnboarded from "./resolvers/is-onboarded";
+import type { UserDB } from "./db";
+import { User } from "./types";
+
+export const UserResolvers = QueryLibrary({
+  getCurrentUser,
+  onboardUser,
+});
+
+export const UserFieldResolvers = FieldLibrary<UserDB>(User, {
+  isOnboarded,
+});
+```
+
+```typescript
+// app/api/(graphql)/route.ts
+import { initGraphQLServer } from "naystack/graphql";
+import { UserResolvers, UserFieldResolvers } from "./User/graphql";
+import { getUserIdFromRequest } from "@/app/api/(auth)/email";
+
+export const { GET, POST } = await initGraphQLServer({
+  resolvers: [UserResolvers, UserFieldResolvers],
+  context: async (req) => {
+    const res = getUserIdFromRequest(req);
+    if (!res) return { userId: null };
+    return {
+      userId: res.accessUserId ?? res.refreshUserID ?? null,
+    };
+  },
+});
+```
+
+This gives you a full GraphQL API route that uses Naystack’s auth, Drizzle models, and functional resolvers.
 
 **Real-World Example:**
 
