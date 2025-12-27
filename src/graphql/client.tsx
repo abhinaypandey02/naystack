@@ -23,15 +23,13 @@ import React, {
 
 export const getApolloWrapper = (
   endpoint: string,
-  {
-    cacheConfig,
-  }: {
+  options?: {
     cacheConfig?: InMemoryCacheConfig;
   },
 ) => {
   function makeClient() {
     return new ApolloClient({
-      cache: new InMemoryCache(cacheConfig),
+      cache: new InMemoryCache(options?.cacheConfig),
       link: new HttpLink({
         uri: endpoint,
       }),
