@@ -1,6 +1,6 @@
 {
   "name": "naystack",
-  "version": "1.4.4",
+  "version": "1.4.5",
   "description": "A stack built with Next + GraphQL + S3 + Auth",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
