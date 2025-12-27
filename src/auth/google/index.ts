@@ -1,16 +1,18 @@
 import type { oauth2_v2 } from "googleapis";
 
 import { getGoogleGetRoute } from "@/src/auth/google/get";
+
+import { AuthKeys } from "../email/types";
 type Schema$Userinfo = oauth2_v2.Schema$Userinfo;
 
 export interface InitGoogleAuthOptions {
   getUserIdFromEmail: (email: Schema$Userinfo) => Promise<number | null>;
-  successRedirectURL: string;
-  errorRedirectURL: string;
-  authRoute: string;
+  redirectURL: string;
+  errorRedirectURL?: string;
+  url: string;
   clientId: string;
   clientSecret: string;
-  refreshKey: string;
+  keys: AuthKeys;
 }
 
 export function initGoogleAuth(props: InitGoogleAuthOptions) {

@@ -8,18 +8,14 @@ import { InitGoogleAuthOptions } from "@/src/auth/google/index";
 
 export const getGoogleGetRoute = ({
   getUserIdFromEmail,
-  successRedirectURL,
+  redirectURL,
   errorRedirectURL,
-  authRoute,
+  url,
   clientId,
   clientSecret,
-  refreshKey,
+  keys,
 }: InitGoogleAuthOptions) => {
-  const oauth2Client = new google.auth.OAuth2(
-    clientId,
-    clientSecret,
-    authRoute,
-  );
+  const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, url);
   return async (req: NextRequest) => {
     const code = req.nextUrl.searchParams.get("code");
     const error = req.nextUrl.searchParams.get("error");
@@ -34,7 +30,7 @@ export const getGoogleGetRoute = ({
         state,
         include_granted_scopes: true,
         prompt: "consent",
-        redirect_uri: authRoute,
+        redirect_uri: url,
       });
       const res = NextResponse.redirect(authorizationUrl);
       res.cookies.set("state", state, {
@@ -43,13 +39,14 @@ export const getGoogleGetRoute = ({
       });
       return res;
     }
+    const errorURL = errorRedirectURL || redirectURL;
     if (error) {
-      return NextResponse.redirect(errorRedirectURL);
+      return NextResponse.redirect(errorURL);
     }
     const state = req.nextUrl.searchParams.get("state") || undefined;
     if (code && state) {
       const localState = req.cookies.get("state")?.value;
-      if (localState !== state) return NextResponse.redirect(errorRedirectURL);
+      if (localState !== state) return NextResponse.redirect(errorURL);
       const { tokens } = await oauth2Client.getToken(code);
       oauth2Client.setCredentials(tokens);
 
@@ -63,9 +60,9 @@ export const getGoogleGetRoute = ({
       const user = userInfoRequest.data;
       if (user.email) {
         const id = await getUserIdFromEmail(user);
-        const res = NextResponse.redirect(successRedirectURL);
+        const res = NextResponse.redirect(redirectURL);
         if (id) {
-          res.cookies.set("refresh", generateRefreshToken(id, refreshKey), {
+          res.cookies.set("refresh", generateRefreshToken(id, keys.refresh), {
             httpOnly: true,
             secure: true,
           });
@@ -78,6 +75,6 @@ export const getGoogleGetRoute = ({
         return res;
       }
     }
-    return NextResponse.redirect(errorRedirectURL);
+    return NextResponse.redirect(errorURL);
   };
 };
