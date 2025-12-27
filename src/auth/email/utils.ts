@@ -2,6 +2,7 @@ import { verify } from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getUserIdFromRefreshToken } from "@/src/auth/email/token";
+import { Context } from "@/src/graphql";
 
 import { handleError } from "../utils/errors";
 import { InitRoutesOptions } from "./types";
@@ -65,27 +66,27 @@ export async function verifyCaptcha(token: string, secret?: string) {
   return false;
 }
 
-export const getUserContext = (
+export const getContext = (
   refreshKey: string,
   signingKey: string,
   req: NextRequest,
-): { refreshUserID?: number; accessUserId?: number } | null => {
+): Context => {
   const bearer = req.headers.get("authorization");
   if (!bearer) {
     const refresh = req.cookies.get("refresh")?.value;
     const userId = getUserIdFromRefreshToken(refreshKey, refresh);
-    if (userId) return { refreshUserID: userId };
-    return null;
+    if (userId) return { userId: userId, isRefreshID: true };
+    return { userId: null };
   }
   const token = bearer.slice(7);
   try {
     const res = verify(token, signingKey);
     if (typeof res === "string") {
-      return null;
+      return { userId: null };
     }
     return {
-      accessUserId: res.id as number,
+      userId: res.id as number,
     };
   } catch {}
-  return null;
+  return { userId: null };
 };

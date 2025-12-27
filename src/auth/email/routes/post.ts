@@ -32,10 +32,10 @@ export const getPostRoute =
       ...data,
       password: encryptedPassword,
     });
-
     if (newUser) {
-      options.onSignUp?.(newUser);
-
+      if (options.onSignUp) {
+        await options.onSignUp?.(newUser.id, req);
+      }
       return getTokenizedResponse(
         generateAccessToken(newUser.id, options.signingKey),
         generateRefreshToken(newUser.id, options.refreshKey),

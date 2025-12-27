@@ -20,6 +20,9 @@ export const getPutRoute =
       return handleError(400, "A user does not exist", options.onError);
 
     if (await verifyUser(user, data.password)) {
+      if (options.onLogin) {
+        await options.onLogin?.(user.id, req);
+      }
       return getTokenizedResponse(
         generateAccessToken(user.id, options.signingKey),
         generateRefreshToken(user.id, options.refreshKey),
