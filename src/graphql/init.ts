@@ -25,7 +25,7 @@ export async function initGraphQLServer({
   // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   resolvers: NonEmptyArray<Function>;
   plugins?: ApolloServerPlugin[];
-  getContext?: (req: NextRequest) => Promise<any>;
+  getContext?: (req: NextRequest) => Promise<any> | any;
 }) {
   const { typeDefs, resolvers: builtResolvers } =
     await buildTypeDefsAndResolvers({

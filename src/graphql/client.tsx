@@ -1,12 +1,12 @@
 "use client";
 import {
   HttpLink,
+  type InMemoryCacheConfig,
   MutationHookOptions,
   type OperationVariables,
   useLazyQuery,
   useMutation,
 } from "@apollo/client";
-import { InMemoryCacheConfig } from "@apollo/client/cache";
 import {
   ApolloClient,
   ApolloNextAppProvider,
@@ -21,20 +21,19 @@ import React, {
   useState,
 } from "react";
 
-export const getApolloWrapper = ({
-  graphqlUri,
-  cacheConfig,
-  authEndpoint,
-}: {
-  graphqlUri: string;
-  authEndpoint: string;
-  cacheConfig?: InMemoryCacheConfig;
-}) => {
+export const getApolloWrapper = (
+  endpoint: string,
+  {
+    cacheConfig,
+  }: {
+    cacheConfig?: InMemoryCacheConfig;
+  },
+) => {
   function makeClient() {
     return new ApolloClient({
       cache: new InMemoryCache(cacheConfig),
       link: new HttpLink({
-        uri: graphqlUri,
+        uri: endpoint,
       }),
     });
   }
