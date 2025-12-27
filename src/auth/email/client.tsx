@@ -15,7 +15,7 @@ export const TokenContext = createContext<{
   token: null,
   setToken: () => null,
 });
-export const getApolloWrapper =
+export const getAuthWrapper =
   (endpoint: string) =>
   ({ children }: { children: React.ReactNode }) => {
     const [token, setToken] = useState<string | null>(null);
