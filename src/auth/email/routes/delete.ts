@@ -8,7 +8,7 @@ import { getContext } from "../utils";
 export const getDeleteRoute =
   (options: InitRoutesOptions) => async (req: NextRequest) => {
     if (options.onLogout) {
-      const ctx = await getContext(options.refreshKey, options.signingKey, req);
+      const ctx = await getContext(options.keys, req);
       await options.onLogout?.(ctx.userId, req);
     }
     return getTokenizedResponse(undefined, "");

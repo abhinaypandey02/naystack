@@ -9,7 +9,7 @@ import { getDownloadURL, uploadBlob } from "@/src/file/utils";
 export const getFileUploadPutRoute =
   (options: SetupFileUploadOptions, client: S3Client) =>
   async (req: NextRequest) => {
-    const ctx = getContext(options.refreshKey, options.signingKey, req);
+    const ctx = getContext(options.keys, req);
     if (!ctx?.userId || ctx.isRefreshID)
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     const formData = await req.formData();

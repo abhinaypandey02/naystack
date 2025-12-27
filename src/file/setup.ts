@@ -7,9 +7,10 @@ import {
   uploadFile,
 } from "@/src/file/utils";
 
+import { AuthKeys } from "../auth/email/types";
+
 export interface SetupFileUploadOptions {
-  refreshKey: string;
-  signingKey: string;
+  keys: AuthKeys;
   region: string;
   bucket: string;
   awsSecret: string;

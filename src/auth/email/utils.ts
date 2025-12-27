@@ -5,7 +5,7 @@ import { getUserIdFromRefreshToken } from "@/src/auth/email/token";
 import { Context } from "@/src/graphql";
 
 import { handleError } from "../utils/errors";
-import { InitRoutesOptions } from "./types";
+import { AuthKeys, InitRoutesOptions } from "./types";
 
 export async function massageRequest(
   req: NextRequest,
@@ -66,21 +66,17 @@ export async function verifyCaptcha(token: string, secret?: string) {
   return false;
 }
 
-export const getContext = (
-  refreshKey: string,
-  signingKey: string,
-  req: NextRequest,
-): Context => {
+export const getContext = (keys: AuthKeys, req: NextRequest): Context => {
   const bearer = req.headers.get("authorization");
   if (!bearer) {
     const refresh = req.cookies.get("refresh")?.value;
-    const userId = getUserIdFromRefreshToken(refreshKey, refresh);
+    const userId = getUserIdFromRefreshToken(keys.refresh, refresh);
     if (userId) return { userId: userId, isRefreshID: true };
     return { userId: null };
   }
   const token = bearer.slice(7);
   try {
-    const res = verify(token, signingKey);
+    const res = verify(token, keys.signing);
     if (typeof res === "string") {
       return { userId: null };
     }

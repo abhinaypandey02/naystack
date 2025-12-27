@@ -20,8 +20,8 @@ export const getPostRoute =
     if (existingUser) {
       if (await verifyUser(existingUser, data.password)) {
         return getTokenizedResponse(
-          generateAccessToken(existingUser.id, options.signingKey),
-          generateRefreshToken(existingUser.id, options.refreshKey),
+          generateAccessToken(existingUser.id, options.keys.signing),
+          generateRefreshToken(existingUser.id, options.keys.refresh),
         );
       }
       return handleError(400, "A user already exists", options.onError);
@@ -37,8 +37,8 @@ export const getPostRoute =
         await options.onSignUp?.(newUser.id, req);
       }
       return getTokenizedResponse(
-        generateAccessToken(newUser.id, options.signingKey),
-        generateRefreshToken(newUser.id, options.refreshKey),
+        generateAccessToken(newUser.id, options.keys.signing),
+        generateRefreshToken(newUser.id, options.keys.refresh),
       );
     }
     return getTokenizedResponse();
