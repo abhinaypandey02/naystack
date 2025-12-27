@@ -1,10 +1,10 @@
 import { NextRequest } from "next/server";
 
-import { ErrorHandler, UserInput, UserOutput } from "@/src/auth/types";
+import { ErrorHandler, UserOutput } from "@/src/auth/types";
 
 export type InitRoutesOptions = {
-  getUser: (data: UserInput) => Promise<UserOutput | undefined>;
-  createUser: (user: UserInput) => Promise<UserOutput | undefined>;
+  getUser: (data: object) => Promise<UserOutput | undefined>;
+  createUser: (user: object) => Promise<UserOutput | undefined>;
   onError?: ErrorHandler;
   keys: AuthKeys;
   turnstileKey?: string;

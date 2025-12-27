@@ -5,11 +5,6 @@ export type ErrorHandler = (error: {
   message: string;
 }) => NextResponse;
 
-export type UserInput = {
-  password: string;
-} & {
-  [key: string]: unknown;
-};
 export type UserOutput = {
   id: number;
   password: string | null;
