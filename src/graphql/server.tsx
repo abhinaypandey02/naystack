@@ -71,9 +71,9 @@ export const getGraphQLQuery = ({ uri }: { uri: string }) => {
           Cookie: options?.noCookie ? undefined : await cookies(),
         },
         fetchOptions: {
-          cache: options?.revalidate === undefined ? "force-cache" : undefined,
+          cache: options?.revalidate ? "force-cache" : undefined,
           next: {
-            revalidate: options?.revalidate,
+            revalidate: options?.revalidate || 0,
             tags: options?.tags,
           },
         },
