@@ -14,12 +14,7 @@ import {
 } from "@apollo/client-integration-nextjs";
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 import { useToken } from "naystack/auth/email/client";
-import React, {
-  PropsWithChildren,
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import { PropsWithChildren, useCallback, useEffect, useState } from "react";
 
 export const getApolloWrapper = (
   endpoint: string,
