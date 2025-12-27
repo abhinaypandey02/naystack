@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 import { ErrorHandler, UserInput, UserOutput } from "@/src/auth/types";
 
 export type InitRoutesOptions = {
-  getUser: (email: string) => Promise<UserOutput | undefined>;
+  getUser: (data: UserInput) => Promise<UserOutput | undefined>;
   createUser: (user: UserInput) => Promise<UserOutput | undefined>;
   onError?: ErrorHandler;
   keys: AuthKeys;

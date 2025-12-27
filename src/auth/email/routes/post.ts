@@ -16,7 +16,7 @@ export const getPostRoute =
     const { data, error } = await massageRequest(req, options);
     if (error || !data) return error;
 
-    const existingUser = await options.getUser(data.email);
+    const existingUser = await options.getUser(data);
     if (existingUser) {
       if (await verifyUser(existingUser, data.password)) {
         return getTokenizedResponse(

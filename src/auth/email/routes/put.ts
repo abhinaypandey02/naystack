@@ -15,7 +15,7 @@ export const getPutRoute =
     const { data, error } = await massageRequest(req, options);
     if (error || !data) return error;
 
-    const user = await options.getUser(data.email);
+    const user = await options.getUser(data);
     if (!user)
       return handleError(400, "A user does not exist", options.onError);
 

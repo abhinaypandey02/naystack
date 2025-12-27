@@ -10,6 +10,8 @@ import React, {
   useState,
 } from "react";
 
+import { UserInput } from "../types";
+
 export const TokenContext = createContext<{
   token: string | null;
   setToken: Dispatch<SetStateAction<string | null>>;
@@ -48,7 +50,7 @@ export function useSetToken() {
 function useSignUpWithEmail(endpoint: string) {
   const setToken = useSetToken();
   return useCallback(
-    async (data: object) => {
+    async (data: UserInput) => {
       const res = await fetch(endpoint, {
         method: "POST",
         body: JSON.stringify(data),
@@ -68,7 +70,7 @@ function useSignUpWithEmail(endpoint: string) {
 function useLoginWithEmail(endpoint: string) {
   const setToken = useSetToken();
   return useCallback(
-    async (data: object) => {
+    async (data: UserInput) => {
       const res = await fetch(endpoint, {
         method: "PUT",
         body: JSON.stringify(data),
