@@ -7,7 +7,7 @@ export default defineConfig({
   clean: true,
   outDir: "dist",
   splitting: false,
-  external: ["naystack/graphql/client"],
+  external: ["naystack/auth/email/client"],
   outExtension({ format }) {
     return {
       js: `.${format}.js`,
