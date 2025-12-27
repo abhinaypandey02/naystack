@@ -19,18 +19,18 @@ export async function initGraphQLServer({
   authChecker,
   resolvers,
   plugins,
-  context,
+  getContext,
 }: {
   authChecker?: AuthChecker<any>;
   // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   resolvers: NonEmptyArray<Function>;
   plugins?: ApolloServerPlugin[];
-  context?: (req: NextRequest) => Promise<any>;
+  getContext?: (req: NextRequest) => Promise<any>;
 }) {
   const { typeDefs, resolvers: builtResolvers } =
     await buildTypeDefsAndResolvers({
       validate: true,
-      authChecker,
+      authChecker: authChecker || (({ context }) => !!context.userId),
       resolvers,
     });
   const server = new ApolloServer({
@@ -43,8 +43,7 @@ export async function initGraphQLServer({
       {
         async requestDidStart({ request, contextValue }) {
           if (
-            // eslint-disable-next-line
-            (contextValue as any).onlyQuery &&
+            (contextValue as any).isRefreshID &&
             !request.query?.startsWith("query")
           )
             (contextValue as Context).userId = null;
@@ -56,12 +55,11 @@ export async function initGraphQLServer({
     status400ForVariableCoercionErrors: true,
   });
   const handler = startServerAndCreateNextHandler(server, {
-    context,
+    context: getContext,
   });
 
   return {
     GET: (request: NextRequest) => handler(request),
     POST: (request: NextRequest) => handler(request),
-    context,
   };
 }

@@ -14,7 +14,13 @@ export function getEmailAuthRoutes(options: InitRoutesOptions) {
     POST: getPostRoute(options),
     PUT: getPutRoute(options),
     DELETE: getDeleteRoute(options),
-    getUserIdFromRequest: (req: NextRequest) =>
-      getUserContext(options.refreshKey, options.signingKey, req),
+    getContext: (req: NextRequest) => {
+      const ids = getUserContext(options.refreshKey, options.signingKey, req);
+      if (!ids) return { userId: null };
+      if (ids.refreshUserID) {
+        return { userId: ids.refreshUserID, isRefreshID: true };
+      }
+      return { userId: ids.accessUserId };
+    },
   };
 }
