@@ -9,7 +9,8 @@ export const getDeleteRoute =
   (options: InitRoutesOptions) => async (req: NextRequest) => {
     if (options.onLogout) {
       const ctx = await getContext(options.keys, req);
-      await options.onLogout?.(ctx.userId, req);
+      const body = await req.json();
+      await options.onLogout?.(ctx.userId, body);
     }
     return getTokenizedResponse(undefined, "");
   };

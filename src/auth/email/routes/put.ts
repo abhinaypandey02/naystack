@@ -21,7 +21,7 @@ export const getPutRoute =
 
     if (await verifyUser(user, data.password)) {
       if (options.onLogin) {
-        await options.onLogin?.(user.id, req);
+        await options.onLogin?.(user.id, data);
       }
       return getTokenizedResponse(
         generateAccessToken(user.id, options.keys.signing),

@@ -1,5 +1,3 @@
-import { NextRequest } from "next/server";
-
 import { ErrorHandler, UserOutput } from "@/src/auth/types";
 
 export type InitRoutesOptions = {
@@ -8,10 +6,10 @@ export type InitRoutesOptions = {
   onError?: ErrorHandler;
   keys: AuthKeys;
   turnstileKey?: string;
-  onSignUp?: (userId: number | null, req: NextRequest) => Promise<void>;
-  onLogin?: (userId: number | null, req: NextRequest) => Promise<void>;
-  onRefresh?: (userId: number | null, req: NextRequest) => Promise<void>;
-  onLogout?: (userId: number | null, req: NextRequest) => Promise<void>;
+  onSignUp?: (userId: number | null, body: any) => Promise<void>;
+  onLogin?: (userId: number | null, body: any) => Promise<void>;
+  onRefresh?: (userId: number | null, body: any) => Promise<void>;
+  onLogout?: (userId: number | null, body: any) => Promise<void>;
 };
 
 export interface AuthKeys {

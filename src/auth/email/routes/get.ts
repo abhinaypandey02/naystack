@@ -17,7 +17,8 @@ export const getGetRoute =
 
     if (userID) {
       if (options.onRefresh) {
-        await options.onRefresh?.(userID, req);
+        const body = await req.json();
+        await options.onRefresh?.(userID, body);
       }
       return getTokenizedResponse(
         generateAccessToken(userID, options.keys.signing),

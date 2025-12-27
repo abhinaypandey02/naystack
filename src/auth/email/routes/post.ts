@@ -34,7 +34,7 @@ export const getPostRoute =
     });
     if (newUser) {
       if (options.onSignUp) {
-        await options.onSignUp?.(newUser.id, req);
+        await options.onSignUp?.(newUser.id, data);
       }
       return getTokenizedResponse(
         generateAccessToken(newUser.id, options.keys.signing),
