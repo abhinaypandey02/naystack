@@ -12,25 +12,26 @@ export async function massageRequest(
   options: InitRoutesOptions,
 ): Promise<{
   error?: NextResponse;
-  data?: { email: string; password: string } & {
+  data?: { password: string } & {
     [key: string]: unknown; // extra fields must be type-checked
   };
 }> {
   const data = (await req.json()) as {
-    email?: string;
     password?: string;
     captchaToken?: string;
   } & {
     [key: string]: unknown; // extra fields must be type-checked
   };
 
-  if (!data.email || !data.password)
+  if (!data.password)
     return {
-      error: handleError(400, "Missing email or password", options.onError),
+      error: handleError(400, "Missing password", options.onError),
     };
   if (options.turnstileKey) {
     if (!data.captchaToken)
-      return { error: handleError(400, "Missing captcha", options.onError) };
+      return {
+        error: handleError(400, "Missing captchaToken", options.onError),
+      };
     if (!(await verifyCaptcha(data.captchaToken, options.turnstileKey)))
       return {
         error: handleError(400, "Invalid captcha", options.onError),
