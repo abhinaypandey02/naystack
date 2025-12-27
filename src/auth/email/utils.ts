@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserIdFromRefreshToken } from "@/src/auth/email/token";
 import { Context } from "@/src/graphql";
 
+import { REFRESH_COOKIE_NAME } from "../constants";
 import { handleError } from "../utils/errors";
 import { AuthKeys, InitRoutesOptions } from "./types";
 
@@ -70,7 +71,7 @@ export async function verifyCaptcha(token: string, secret?: string) {
 export const getContext = (keys: AuthKeys, req: NextRequest): Context => {
   const bearer = req.headers.get("authorization");
   if (!bearer) {
-    const refresh = req.cookies.get("refresh")?.value;
+    const refresh = req.cookies.get(REFRESH_COOKIE_NAME)?.value;
     const userId = getUserIdFromRefreshToken(keys.refresh, refresh);
     if (userId) return { userId: userId, isRefreshID: true };
     return { userId: null };

@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 
 import { InitRoutesOptions } from "@/src/auth/email/types";
 
+import { REFRESH_COOKIE_NAME } from "../../constants";
 import {
   generateAccessToken,
   getTokenizedResponse,
@@ -10,7 +11,7 @@ import {
 
 export const getGetRoute =
   (options: InitRoutesOptions) => async (req: NextRequest) => {
-    const refresh = req.cookies.get("refresh")?.value;
+    const refresh = req.cookies.get(REFRESH_COOKIE_NAME)?.value;
 
     const userID = getUserIdFromRefreshToken(options.keys.refresh, refresh);
 

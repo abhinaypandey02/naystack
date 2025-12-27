@@ -6,6 +6,8 @@ import { v4 } from "uuid";
 import { generateRefreshToken } from "@/src/auth/email/token";
 import { InitGoogleAuthOptions } from "@/src/auth/google/index";
 
+import { REFRESH_COOKIE_NAME } from "../constants";
+
 export const getGoogleGetRoute = ({
   getUserIdFromEmail,
   redirectURL,
@@ -62,10 +64,14 @@ export const getGoogleGetRoute = ({
         const id = await getUserIdFromEmail(user);
         const res = NextResponse.redirect(redirectURL);
         if (id) {
-          res.cookies.set("refresh", generateRefreshToken(id, keys.refresh), {
-            httpOnly: true,
-            secure: true,
-          });
+          res.cookies.set(
+            REFRESH_COOKIE_NAME,
+            generateRefreshToken(id, keys.refresh),
+            {
+              httpOnly: true,
+              secure: true,
+            },
+          );
         }
         res.cookies.set("state", "", {
           httpOnly: true,

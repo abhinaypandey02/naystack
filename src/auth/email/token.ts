@@ -1,8 +1,11 @@
 import { compare } from "bcryptjs";
 import { JsonWebTokenError, sign, verify } from "jsonwebtoken";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
 
 import { UserOutput } from "@/src/auth/types";
+import { REFRESH_COOKIE_NAME } from "../constants";
 
 export function generateAccessToken(id: number, signingKey: string) {
   return sign({ id }, signingKey, {
@@ -23,14 +26,14 @@ export function getTokenizedResponse(
     status: 200,
   });
   if (!accessToken) {
-    response.cookies.set("refresh", "", {
+    response.cookies.set(REFRESH_COOKIE_NAME, "", {
       secure: false,
       httpOnly: true,
       expires: 0,
     });
   }
   if (refreshToken !== undefined) {
-    response.cookies.set("refresh", refreshToken, {
+    response.cookies.set(REFRESH_COOKIE_NAME, refreshToken, {
       secure: false,
       httpOnly: true,
       expires:
@@ -74,4 +77,12 @@ export function getUserIdFromAccessToken(refreshToken?: string): number | null {
 export function verifyUser(user: UserOutput, password: string) {
   if (!user.password) return false;
   return compare(password, user.password);
+}
+
+export async function checkAuthStatus(redirectUnauthorizedURL?: string) {
+  const Cookie = await cookies();
+  const isAuthorized = !!Cookie.get(REFRESH_COOKIE_NAME)?.value;
+  if (!isAuthorized && redirectUnauthorizedURL)
+    return redirect(redirectUnauthorizedURL);
+  return isAuthorized;
 }
