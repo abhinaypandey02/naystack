@@ -1,11 +1,10 @@
 import { S3Client } from "@aws-sdk/client-s3";
-import { waitUntil } from "@vercel/functions";
 import { NextRequest, NextResponse } from "next/server";
 import { v4 } from "uuid";
 
 import { getContext } from "@/src/auth/email/utils";
 import { SetupFileUploadOptions } from "@/src/file/setup";
-import { deleteImage, getFileURL, uploadFile } from "@/src/file/utils";
+import { getDownloadURL, uploadBlob } from "@/src/file/utils";
 
 export const getFileUploadPutRoute =
   (options: SetupFileUploadOptions, client: S3Client) =>
@@ -15,33 +14,26 @@ export const getFileUploadPutRoute =
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     const formData = await req.formData();
 
-    const type = formData.get("type");
-    const sync = Boolean(formData.get("sync"));
     const file = formData.get("file") as File | undefined;
+    if (!file) return NextResponse.json({ error: "no file" }, { status: 400 });
+
     const data = formData.get("data");
 
-    const imageKey = v4();
-    const url = file ? getFileURL(options)(imageKey) : null;
-    const handleKeyProcessing = async () => {
-      if (file) await uploadFile(client, options.bucket)(file, imageKey);
-      if (!type || !ctx.userId || ctx.isRefreshID) return;
-      const { deleteURL, response } = await options.processFile({
-        url,
-        type: type as string,
-        userId: ctx.userId,
-        data: typeof data === "string" ? JSON.parse(data) : undefined,
-      });
-      if (deleteURL) await deleteImage(client, options)(deleteURL);
-      return response;
+    const inputData = {
+      type: formData.get("type") + "",
+      userId: ctx.userId,
+      data: typeof data === "string" ? JSON.parse(data) : undefined,
     };
 
-    if (!sync) {
-      waitUntil(handleKeyProcessing());
-      return NextResponse.json({ url });
-    } else {
-      return NextResponse.json({
-        url,
-        response: await handleKeyProcessing(),
-      });
-    }
+    const fileKey = options.getKey ? await options.getKey(inputData) : v4();
+    const url = getDownloadURL(options)(fileKey);
+    await uploadBlob(client, options.bucket)(file, fileKey);
+    const onUploadResponse = await options.onUpload({
+      ...inputData,
+      url,
+    });
+    return NextResponse.json({
+      url,
+      onUploadResponse,
+    });
   };

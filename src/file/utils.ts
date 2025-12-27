@@ -1,12 +1,9 @@
-import { createHash } from "node:crypto";
-
 import {
   DeleteObjectCommand,
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { waitUntil } from "@vercel/functions";
 
 import { SetupFileUploadOptions } from "@/src/file/setup";
 
@@ -22,38 +19,47 @@ export const getS3Client = (options: SetupFileUploadOptions) =>
 const getURLPrefix = (options: SetupFileUploadOptions) =>
   `https://${options.bucket}.s3.${options.region}.amazonaws.com/`;
 
-function getHash(keys: string[]) {
-  return createHash("sha256").update(keys.join("/")).digest("hex");
+function getKey(keys: string | string[]) {
+  return typeof keys === "string" ? keys : keys.join("/");
 }
 
-export const getUploadFileURL =
-  (client: S3Client, Bucket: string) =>
-  (keys: string[], isPublic?: boolean) => {
+export const getUploadURL =
+  (client: S3Client, Bucket: string) => (keys: string | string[]) => {
     const command = new PutObjectCommand({
       Bucket,
-      Key: getHash(keys),
-      ACL: isPublic ? "public-read" : undefined,
+      Key: getKey(keys),
+      ACL: "public-read",
     });
     return getSignedUrl(client, command, { expiresIn: 300 });
   };
-export const getFileURL =
+export const getDownloadURL =
   (options: SetupFileUploadOptions) => (keys: string | string[]) => {
-    if (typeof keys === "string") return `${getURLPrefix(options)}${keys}`;
-    return `${getURLPrefix(options)}${getHash(keys)}`;
+    return `${getURLPrefix(options)}${getKey(keys)}`;
   };
 
-export const uploadImage =
+export const uploadFile =
   (client: S3Client, options: SetupFileUploadOptions) =>
-  async (url: string, key: string[], blob?: Blob) => {
-    const photoBlob = blob || (await fetch(url).then((file) => file.blob()));
-    if (photoBlob) {
-      waitUntil(uploadFile(client, options.bucket)(photoBlob, getHash(key)));
-      return getFileURL(options)(key);
+  async (
+    keys: string | string[],
+    {
+      url,
+      blob,
+    }: {
+      blob?: Blob;
+      url?: string;
+    },
+  ) => {
+    if (!blob && !url) return null;
+    const fileBlob = blob || (await fetch(url!).then((file) => file.blob()));
+    if (fileBlob) {
+      const key = getKey(keys);
+      await uploadBlob(client, options.bucket)(fileBlob, key);
+      return getDownloadURL(options)(key);
     }
     return null;
   };
 
-export const deleteImage =
+export const deleteFile =
   (client: S3Client, options: SetupFileUploadOptions) =>
   async (url: string) => {
     const key = url.split(getURLPrefix(options))[1];
@@ -73,7 +79,7 @@ export const deleteImage =
     return false;
   };
 
-export const uploadFile =
+export const uploadBlob =
   (client: S3Client, Bucket: string) =>
   async (file: File | Blob, key: string) => {
     const fileBuffer = await file.arrayBuffer();

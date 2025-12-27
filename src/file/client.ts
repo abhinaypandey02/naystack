@@ -1,22 +1,11 @@
-export const getHandleImageUpload =
-  (route: string) =>
-  ({
-    file,
-    type,
-    token,
-    data,
-    sync,
-  }: {
-    file?: File | Blob;
-    token: string;
-    type: string;
-    sync?: boolean;
-    data?: object;
-  }) => {
+import { useToken } from "naystack/auth/email/client";
+
+export const getUseFileUpload = (route: string) => () => {
+  const token = useToken();
+  return (file: File | Blob, type: string, data?: object) => {
     const formData = new FormData();
     formData.append("type", type);
-    if (file) formData.append("file", file);
-    if (sync) formData.append("sync", sync.toString());
+    formData.append("file", file);
     if (data) formData.append("data", JSON.stringify(data));
     return fetch(route, {
       method: "PUT",
@@ -25,11 +14,12 @@ export const getHandleImageUpload =
         Authorization: `Bearer ${token}`,
       },
     }).then(
-      async (res) => ((await res.json()) as ImageUploadResponseType) || null,
+      async (res) => ((await res.json()) as FileUploadResponseType) || null,
     );
   };
+};
 
-export interface ImageUploadResponseType {
+interface FileUploadResponseType {
   url?: string;
-  response?: object;
+  onUploadResponse?: object;
 }

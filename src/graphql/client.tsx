@@ -1,5 +1,4 @@
 "use client";
-
 import {
   HttpLink,
   MutationHookOptions,
@@ -14,24 +13,13 @@ import {
   InMemoryCache,
 } from "@apollo/client-integration-nextjs";
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+import { useToken } from "naystack/auth/email/client";
 import React, {
-  createContext,
-  Dispatch,
   PropsWithChildren,
-  SetStateAction,
   useCallback,
-  useContext,
   useEffect,
   useState,
 } from "react";
-
-export const TokenContext = createContext<{
-  token: string | null;
-  setToken: Dispatch<SetStateAction<string | null>>;
-}>({
-  token: null,
-  setToken: () => null,
-});
 
 export const getApolloWrapper = ({
   graphqlUri,
@@ -51,33 +39,13 @@ export const getApolloWrapper = ({
     });
   }
   return ({ children }: PropsWithChildren) => {
-    const [token, setToken] = useState<string | null>(null);
-    useEffect(() => {
-      fetch(authEndpoint, {
-        credentials: "include",
-      })
-        .then((res) => res.json())
-        .then((data) => setToken(data.accessToken));
-    }, []);
     return (
       <ApolloNextAppProvider makeClient={makeClient}>
-        <TokenContext.Provider value={{ token, setToken }}>
-          {children}
-        </TokenContext.Provider>
+        {children}
       </ApolloNextAppProvider>
     );
   };
 };
-
-export function useToken() {
-  const { token } = useContext(TokenContext);
-  return token;
-}
-
-export function useSetToken() {
-  const { setToken } = useContext(TokenContext);
-  return setToken;
-}
 
 export const tokenContext = (token?: string | null) => {
   if (!token) return undefined;

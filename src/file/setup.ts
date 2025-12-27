@@ -1,11 +1,10 @@
 import { getFileUploadPutRoute } from "@/src/file/put";
 import {
-  deleteImage,
-  getFileURL,
+  deleteFile,
+  getDownloadURL,
   getS3Client,
-  getUploadFileURL,
+  getUploadURL,
   uploadFile,
-  uploadImage,
 } from "@/src/file/utils";
 
 export interface SetupFileUploadOptions {
@@ -15,21 +14,25 @@ export interface SetupFileUploadOptions {
   bucket: string;
   awsSecret: string;
   awsKey: string;
-  processFile: (data: {
+  getKey?: (data: {
+    type: string;
+    userId: number;
+    data: object;
+  }) => Promise<string>;
+  onUpload: (data: {
     url: string | null;
     type: string;
     userId: number;
     data: object;
-  }) => Promise<{ deleteURL?: string; response?: object }>;
+  }) => Promise<object>;
 }
 export function setupFileUpload(options: SetupFileUploadOptions) {
   const client = getS3Client(options);
   return {
     PUT: getFileUploadPutRoute(options, client),
-    getUploadFileURL: getUploadFileURL(client, options.bucket),
-    uploadImage: uploadImage(client, options),
-    deleteImage: deleteImage(client, options),
-    getFileURL: getFileURL(options),
-    uploadFile: uploadFile(client, options.bucket),
+    uploadFile: uploadFile(client, options),
+    deleteFile: deleteFile(client, options),
+    getUploadURL: getUploadURL(client, options.bucket),
+    getDownloadURL: getDownloadURL(options),
   };
 }
