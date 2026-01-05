@@ -44,7 +44,7 @@ export function useSetToken() {
   return setToken;
 }
 
-export function useSignUpWithEmail(endpoint: string) {
+export function useSignUp() {
   const setToken = useSetToken();
   return useCallback(
     async (data: object) => {
@@ -64,7 +64,7 @@ export function useSignUpWithEmail(endpoint: string) {
   );
 }
 
-export function useLoginWithEmail() {
+export function useLogin() {
   const setToken = useSetToken();
   return useCallback(
     async (data: object) => {
