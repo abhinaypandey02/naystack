@@ -12,11 +12,11 @@ export const getGoogleGetRoute = ({
   getUserIdFromEmail,
   redirectURL,
   errorRedirectURL,
-  url,
   clientId,
   clientSecret,
   keys,
 }: InitGoogleAuthOptions) => {
+  const url = process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENDPOINT!;
   const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, url);
   return async (req: NextRequest) => {
     const code = req.nextUrl.searchParams.get("code");

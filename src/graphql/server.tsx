@@ -14,8 +14,8 @@ type OmittedProps<Y> = Omit<Omit<Y, "loading">, "data">;
 
 type ComponentProps<Y> =
   OmittedProps<Y> extends Record<string, never>
-    ? { props?: object }
-    : { props: OmittedProps<Y> };
+  ? { props?: object }
+  : { props: OmittedProps<Y> };
 
 export function Injector<T, Y>({
   fetch,
@@ -44,41 +44,40 @@ async function InjectorSuspensed<T, Y>({
   return <Component loading={false} {...((props || {}) as Y)} data={data} />;
 }
 
-export const getGraphQLQuery = ({ uri }: { uri: string }) => {
-  const { query } = registerApolloClient(() => {
-    return new ApolloClient({
-      cache: new InMemoryCache(),
-      link: new HttpLink({
-        uri,
-      }),
-    });
+const { query: gqlQuery } = registerApolloClient(() => {
+  return new ApolloClient({
+    cache: new InMemoryCache(),
+    link: new HttpLink({
+      uri: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT,
+    }),
   });
+});
 
-  return async <T, V extends OperationVariables>(
-    _query: TypedDocumentNode<T, V>,
-    options?: {
-      variables?: V;
-      revalidate?: number;
-      tags?: string[];
-      noCookie?: boolean;
-    },
-  ): Promise<T> => {
-    const res = await query({
-      query: _query,
-      variables: options?.variables,
-      context: {
-        headers: {
-          Cookie: options?.noCookie ? undefined : await cookies(),
-        },
-        fetchOptions: {
-          cache: options?.revalidate ? "force-cache" : undefined,
-          next: {
-            revalidate: options?.revalidate || 0,
-            tags: options?.tags,
-          },
+
+export const query = async <T, V extends OperationVariables>(
+  _query: TypedDocumentNode<T, V>,
+  options?: {
+    variables?: V;
+    revalidate?: number;
+    tags?: string[];
+    noCookie?: boolean;
+  },
+): Promise<T> => {
+  const res = await gqlQuery({
+    query: _query,
+    variables: options?.variables,
+    context: {
+      headers: {
+        Cookie: options?.noCookie ? undefined : await cookies(),
+      },
+      fetchOptions: {
+        cache: options?.revalidate ? "force-cache" : undefined,
+        next: {
+          revalidate: options?.revalidate || 0,
+          tags: options?.tags,
         },
       },
-    });
-    return res.data;
-  };
-};
+    },
+  });
+  return res.data;
+}

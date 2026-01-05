@@ -21,27 +21,23 @@ import React, {
   useState,
 } from "react";
 
-export const getApolloWrapper = (
-  endpoint: string,
-  options?: {
-    cacheConfig?: InMemoryCacheConfig;
-  },
-) => {
+
+
+
+export const ApolloWrapper = ({ children, cacheConfig }: PropsWithChildren<{ cacheConfig?: InMemoryCacheConfig; }>) => {
   function makeClient() {
     return new ApolloClient({
-      cache: new InMemoryCache(options?.cacheConfig),
+      cache: new InMemoryCache(cacheConfig),
       link: new HttpLink({
-        uri: endpoint,
+        uri: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT!,
       }),
     });
   }
-  return ({ children }: PropsWithChildren) => {
-    return (
-      <ApolloNextAppProvider makeClient={makeClient}>
-        {children}
-      </ApolloNextAppProvider>
-    );
-  };
+  return (
+    <ApolloNextAppProvider makeClient={makeClient}>
+      {children}
+    </ApolloNextAppProvider>
+  );
 };
 
 export const tokenContext = (token?: string | null) => {

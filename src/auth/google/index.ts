@@ -9,7 +9,6 @@ export interface InitGoogleAuthOptions {
   getUserIdFromEmail: (email: Schema$Userinfo) => Promise<number | null>;
   redirectURL: string;
   errorRedirectURL?: string;
-  url: string;
   clientId: string;
   clientSecret: string;
   keys: AuthKeys;

@@ -10,7 +10,6 @@ export interface InitInstagramAuthOptions {
   ) => Promise<string | void>;
   successRedirectURL: string;
   errorRedirectURL: string;
-  authRoute: string;
   clientId: string;
   clientSecret: string;
   refreshKey: string;

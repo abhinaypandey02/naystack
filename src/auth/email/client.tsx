@@ -17,12 +17,11 @@ export const TokenContext = createContext<{
   token: null,
   setToken: () => null,
 });
-export const getAuthWrapper =
-  (endpoint: string) =>
+export const AuthWrapper =
   ({ children }: { children: React.ReactNode }) => {
     const [token, setToken] = useState<string | null>(null);
     useEffect(() => {
-      fetch(endpoint, {
+      fetch(process.env.NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT!, {
         credentials: "include",
       })
         .then((res) => res.json())
@@ -45,11 +44,11 @@ export function useSetToken() {
   return setToken;
 }
 
-function useSignUpWithEmail(endpoint: string) {
+export function useSignUpWithEmail(endpoint: string) {
   const setToken = useSetToken();
   return useCallback(
     async (data: object) => {
-      const res = await fetch(endpoint, {
+      const res = await fetch(process.env.NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT!, {
         method: "POST",
         body: JSON.stringify(data),
         credentials: "include",
@@ -65,11 +64,11 @@ function useSignUpWithEmail(endpoint: string) {
   );
 }
 
-function useLoginWithEmail(endpoint: string) {
+export function useLoginWithEmail() {
   const setToken = useSetToken();
   return useCallback(
     async (data: object) => {
-      const res = await fetch(endpoint, {
+      const res = await fetch(process.env.NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT!, {
         method: "PUT",
         body: JSON.stringify(data),
         credentials: "include",
@@ -85,12 +84,12 @@ function useLoginWithEmail(endpoint: string) {
   );
 }
 
-function useLogout(endpoint: string) {
+export function useLogout() {
   const setToken = useSetToken();
   return useCallback(
     async (data?: object) => {
       setToken(null);
-      await fetch(endpoint, {
+      await fetch(process.env.NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT!, {
         method: "DELETE",
         credentials: "include",
         body: JSON.stringify(data),
@@ -98,12 +97,4 @@ function useLogout(endpoint: string) {
     },
     [setToken],
   );
-}
-
-export function getEmailAuthUtils(endpoint: string) {
-  return {
-    useSignUp: () => useSignUpWithEmail(endpoint),
-    useLogin: () => useLoginWithEmail(endpoint),
-    useLogout: () => useLogout(endpoint),
-  };
 }

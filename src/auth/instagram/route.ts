@@ -9,7 +9,6 @@ export const getInstagramRoute = ({
   successRedirectURL,
   errorRedirectURL,
   onUser,
-  authRoute,
   clientSecret,
   clientId,
 }: InitInstagramAuthOptions) => {
@@ -23,7 +22,7 @@ export const getInstagramRoute = ({
     if (!stateToken || !accessCode) return handleError("Invalid request");
     const instagramData = await getLongLivedToken(
       accessCode,
-      authRoute,
+      process.env.NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT!,
       clientId,
       clientSecret,
     );

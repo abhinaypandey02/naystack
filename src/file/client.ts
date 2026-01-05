@@ -1,13 +1,13 @@
 import { useToken } from "naystack/auth/email/client";
 
-export const getUseFileUpload = (route: string) => () => {
+export const useFileUpload = () => {
   const token = useToken();
   return (file: File | Blob, type: string, data?: object) => {
     const formData = new FormData();
     formData.append("type", type);
     formData.append("file", file);
     if (data) formData.append("data", JSON.stringify(data));
-    return fetch(route, {
+    return fetch(process.env.NEXT_PUBLIC_FILE_ENDPOINT!, {
       method: "PUT",
       body: formData,
       headers: {
