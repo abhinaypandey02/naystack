@@ -59,17 +59,15 @@ Wrap your application with `AuthWrapper` in your root layout or a client compone
 ```typescript
 // gql/client.ts
 "use client";
-import { getAuthWrapper } from "naystack/auth/email/client";
+import { AuthWrapper } from "naystack/auth/email/client";
 
-export const AuthWrapper = getAuthWrapper("/api/email");
 ```
 
 ### Frontend Usage
 
 ```typescript
-import { getEmailAuthUtils, useToken } from "naystack/auth/email/client";
+import { useLogin, useSignUp, useLogout, useToken } from "naystack/auth/email/client";
 
-const { useLogin, useSignUp, useLogout } = getEmailAuthUtils("/api/email");
 
 function AuthComponent() {
   const login = useLogin();
@@ -108,11 +106,7 @@ Call your GraphQL API from server components or actions:
 
 ```typescript
 // gql/server.ts
-import { getGraphQLQuery } from "naystack/graphql/server";
-
-export const query = getGraphQLQuery({
-  uri: process.env.NEXT_PUBLIC_BACKEND_BASE_URL!,
-});
+import { query } from "naystack/graphql/server";
 
 // Usage in Page
 const data = await query(MyQueryDocument, { variables });
@@ -124,18 +118,17 @@ For client-side GraphQL with Apollo:
 
 ```typescript
 // gql/client.ts
-import { getApolloWrapper } from "naystack/graphql/client";
+import { ApolloWrapper } from "naystack/graphql/client";
 
-export const ApolloWrapper = getApolloWrapper("/api");
 ```
 
 ### Frontend Usage
 
 ```typescript
-import { useQuery, useMutation } from "@apollo/client";
+import { useAuthQuery, useAuthMutation } from "naystack/graphql/client";
 
 function Profile() {
-  const { data } = useQuery(GetCurrentUserDocument);
+  const [getCurrentUser, { loading }] = useAuthMutation(GetCurrentUserDocument);
   // ...
 }
 ```
@@ -170,9 +163,7 @@ export const { PUT, uploadFile, getDownloadURL } = setupFileUpload({
 ### Client Setup & Usage
 
 ```typescript
-import { getUseFileUpload } from "naystack/file/client";
-
-const useFileUpload = getUseFileUpload("/api/upload");
+import { useFileUpload } from "naystack/file/client";
 
 function UploadButton() {
   const upload = useFileUpload();
