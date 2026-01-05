@@ -90,8 +90,9 @@ export function useAuthMutation<T, V extends OperationVariables>(
   const token = useToken();
   const [mutate, result] = useMutation(mutation, options);
   const method = useCallback(
-    (input?: V) =>
+    (input: V['input']) =>
       mutate({
+        // @ts-ignore
         variables: { input },
         context: tokenContext(token),
       }),
