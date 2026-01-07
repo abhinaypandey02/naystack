@@ -16,14 +16,19 @@ import { AuthorizedContext, Context } from "./types";
 type ReturnOptions = Parameters<typeof Query>[1];
 type ArgsOptions = Parameters<typeof Arg>[2];
 
-type ParsedGQLType<T> =
-  T extends ClassType<infer U>
-    ? U
-    : T extends GraphQLScalarType<infer U>
-      ? U
-      : T extends Record<infer K, string | number>
-        ? T[K]
-        : T;
+type ParsedGQLType<T> = T extends StringConstructor
+  ? string
+  : T extends NumberConstructor
+    ? number
+    : T extends BooleanConstructor
+      ? boolean
+      : T extends ClassType<infer U>
+        ? U
+        : T extends GraphQLScalarType<infer U>
+          ? U
+          : T extends Record<infer K, string | number>
+            ? T[K]
+            : void;
 
 type ParsedGQLTypeWithArray<T> =
   T extends Array<infer U> ? ParsedGQLType<U>[] : ParsedGQLType<T>;
