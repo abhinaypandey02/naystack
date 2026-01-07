@@ -21,24 +21,28 @@ type DeepPartial<T> = {
   [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
 };
 
-type OtherTypes<T> =
-  | GraphQLScalarType<T, T>
-  | [GraphQLScalarType<T, T>]
-  | NumberConstructor
-  | [NumberConstructor]
-  | StringConstructor
-  | [StringConstructor]
-  | BooleanConstructor
-  | [BooleanConstructor];
+export type RecursiveArray<TValue> = Array<RecursiveArray<TValue> | TValue>;
+type RecursiveAndSingle<T> = RecursiveArray<T> | T;
+type EnumLike = Record<string, string | number>;
+
+type OtherTypes<T> = T extends number
+  ? NumberConstructor | EnumLike
+  : T extends string
+    ? StringConstructor | EnumLike
+    : T extends boolean
+      ? BooleanConstructor
+      : GraphQLScalarType<T, T>;
+
+type OutputType<T> = RecursiveAndSingle<
+  T extends object ? ClassType<DeepPartial<T>> : OtherTypes<T>
+>;
 
 interface BaseDefinition<
   T extends Values,
   U extends Values,
   IsAuth extends boolean,
 > {
-  output: T extends object
-    ? ClassType<DeepPartial<T>> | [ClassType<DeepPartial<T>>]
-    : OtherTypes<T>;
+  output: OutputType<T>;
   outputOptions?: ReturnOptions;
   input?: U extends object ? ClassType<U> | [ClassType<U>] : OtherTypes<U>;
   inputOptions?: ArgsOptions;

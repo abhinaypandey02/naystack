@@ -24,6 +24,7 @@ const config = [
       "simple-import-sort/imports": "warn",
       "@typescript-eslint/no-unused-vars": "off",
       "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unsafe-function-type": "off",
       "simple-import-sort/exports": "warn",
       "unused-imports/no-unused-imports": "warn",
     },
