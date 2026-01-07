@@ -16,7 +16,7 @@ import { AuthorizedContext, Context } from "./types";
 type ReturnOptions = Parameters<typeof Query>[1];
 type ArgsOptions = Parameters<typeof Arg>[2];
 
-type OutputType<T> =
+type ParsedGQLType<T> =
   T extends ClassType<infer U>
     ? U
     : T extends GraphQLScalarType<infer U>
@@ -25,8 +25,8 @@ type OutputType<T> =
         ? T[K]
         : T;
 
-type OutputTypeWithArray<T> =
-  T extends Array<infer U> ? OutputType<U>[] : OutputType<T>;
+type ParsedGQLTypeWithArray<T> =
+  T extends Array<infer U> ? ParsedGQLType<U>[] : ParsedGQLType<T>;
 
 interface BaseDefinition<T, U, IsAuth extends boolean = false> {
   output: T;
@@ -39,8 +39,8 @@ interface QueryDefinition<T, U, IsAuth extends boolean = false>
   extends BaseDefinition<T, U, IsAuth> {
   fn: (
     ctx: IsAuth extends true ? AuthorizedContext : Context,
-    data: U,
-  ) => Promise<OutputTypeWithArray<T>> | OutputTypeWithArray<T>;
+    data: ParsedGQLTypeWithArray<U>,
+  ) => Promise<ParsedGQLTypeWithArray<T>> | ParsedGQLTypeWithArray<T>;
   mutation?: boolean;
 }
 
@@ -49,8 +49,8 @@ interface FieldResolverDefinition<T, U, Root, IsAuth extends boolean = false>
   fn: (
     root: Root,
     ctx: IsAuth extends true ? AuthorizedContext : Context,
-    data: U,
-  ) => Promise<T | T[]> | T | T[];
+    data: ParsedGQLTypeWithArray<U>,
+  ) => Promise<ParsedGQLTypeWithArray<T>> | ParsedGQLTypeWithArray<T>;
 }
 
 export function query<T, U, IsAuth extends boolean = false>(
