@@ -16,15 +16,17 @@ import { AuthorizedContext, Context } from "./types";
 type ReturnOptions = Parameters<typeof Query>[1];
 type ArgsOptions = Parameters<typeof Arg>[2];
 
+type NullableOptions<T, X extends boolean> = T & { nullable: X };
+
 type ParsedGQLType<T> = T extends StringConstructor
   ? string
   : T extends NumberConstructor
     ? number
     : T extends BooleanConstructor
       ? boolean
-      : T extends ClassType<infer U>
+      : T extends GraphQLScalarType<infer U>
         ? U
-        : T extends GraphQLScalarType<infer U>
+        : T extends ClassType<infer U>
           ? U
           : T extends Record<infer K, string | number>
             ? T[K]
@@ -33,42 +35,96 @@ type ParsedGQLType<T> = T extends StringConstructor
 type ParsedGQLTypeWithArray<T> =
   T extends Array<infer U> ? ParsedGQLType<U>[] : ParsedGQLType<T>;
 
-interface BaseDefinition<T, U, IsAuth extends boolean = false> {
+type ParsedGQLTypeWithNullability<
+  T,
+  IsNullable extends boolean,
+> = IsNullable extends true
+  ? ParsedGQLTypeWithArray<T> | null | undefined
+  : ParsedGQLTypeWithArray<T>;
+
+interface BaseDefinition<
+  T,
+  U,
+  IsAuth extends boolean = false,
+  OutputNullable extends boolean = false,
+  InputNullable extends boolean = false,
+> {
   output: T;
-  outputOptions?: ReturnOptions;
+  outputOptions?: NullableOptions<ReturnOptions, OutputNullable>;
   input?: U;
-  inputOptions?: ArgsOptions;
+  inputOptions?: NullableOptions<ArgsOptions, InputNullable>;
   authorized?: IsAuth;
 }
-interface QueryDefinition<T, U, IsAuth extends boolean = false>
-  extends BaseDefinition<T, U, IsAuth> {
+interface QueryDefinition<
+  T,
+  U,
+  IsAuth extends boolean = false,
+  OutputNullable extends boolean = false,
+  InputNullable extends boolean = false,
+> extends BaseDefinition<T, U, IsAuth, OutputNullable, InputNullable> {
   fn: (
     ctx: IsAuth extends true ? AuthorizedContext : Context,
-    data: ParsedGQLTypeWithArray<U>,
-  ) => Promise<ParsedGQLTypeWithArray<T>> | ParsedGQLTypeWithArray<T>;
+    data: ParsedGQLTypeWithNullability<U, InputNullable>,
+  ) =>
+    | Promise<ParsedGQLTypeWithNullability<T, OutputNullable>>
+    | ParsedGQLTypeWithNullability<T, OutputNullable>;
   mutation?: boolean;
 }
 
-interface FieldResolverDefinition<T, U, Root, IsAuth extends boolean = false>
-  extends BaseDefinition<T, U, IsAuth> {
-  fn: (
-    root: Root,
-    ctx: IsAuth extends true ? AuthorizedContext : Context,
-    data: ParsedGQLTypeWithArray<U>,
-  ) => Promise<ParsedGQLTypeWithArray<T>> | ParsedGQLTypeWithArray<T>;
-}
-
-export function query<T, U, IsAuth extends boolean = false>(
-  fn: QueryDefinition<T, U, IsAuth>["fn"],
-  options: Omit<QueryDefinition<T, U, IsAuth>, "fn">,
-): QueryDefinition<T, U, IsAuth> {
+export function query<
+  T,
+  U,
+  IsAuth extends boolean = false,
+  OutputNullable extends boolean = false,
+  InputNullable extends boolean = false,
+>(
+  fn: QueryDefinition<T, U, IsAuth, OutputNullable, InputNullable>["fn"],
+  options: Omit<
+    QueryDefinition<T, U, IsAuth, OutputNullable, InputNullable>,
+    "fn"
+  >,
+): QueryDefinition<T, U, IsAuth, OutputNullable, InputNullable> {
   return { ...options, fn };
 }
 
-export function field<T, U, IsAuth extends boolean, Root>(
-  fn: FieldResolverDefinition<T, U, Root, IsAuth>["fn"],
-  options: Omit<FieldResolverDefinition<T, U, Root, IsAuth>, "fn">,
-): FieldResolverDefinition<T, U, Root, IsAuth> {
+interface FieldResolverDefinition<
+  T,
+  U,
+  Root,
+  IsAuth extends boolean = false,
+  OutputNullable extends boolean = false,
+  InputNullable extends boolean = false,
+> extends BaseDefinition<T, U, IsAuth, OutputNullable, InputNullable> {
+  fn: (
+    root: Root,
+    ctx: IsAuth extends true ? AuthorizedContext : Context,
+    data: ParsedGQLTypeWithNullability<U, InputNullable>,
+  ) =>
+    | Promise<ParsedGQLTypeWithNullability<T, OutputNullable>>
+    | ParsedGQLTypeWithNullability<T, OutputNullable>;
+}
+
+export function field<
+  T,
+  U,
+  IsAuth extends boolean,
+  Root,
+  OutputNullable extends boolean = false,
+  InputNullable extends boolean = false,
+>(
+  fn: FieldResolverDefinition<
+    T,
+    U,
+    Root,
+    IsAuth,
+    OutputNullable,
+    InputNullable
+  >["fn"],
+  options: Omit<
+    FieldResolverDefinition<T, U, Root, IsAuth, OutputNullable, InputNullable>,
+    "fn"
+  >,
+): FieldResolverDefinition<T, U, Root, IsAuth, OutputNullable, InputNullable> {
   return { ...options, fn };
 }
 
