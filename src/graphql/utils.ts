@@ -129,7 +129,7 @@ export function field<
 }
 
 export function QueryLibrary<
-  T extends Record<string, QueryDefinition<any, any, any>>,
+  T extends Record<string, QueryDefinition<any, any, any, any, any>>,
 >(queries: T) {
   @Resolver()
   class GeneratedResolver {}
@@ -182,10 +182,10 @@ export function QueryLibrary<
 
 export function FieldLibrary<
   X extends object,
-  T extends Record<string, FieldResolverDefinition<any, any, X, any>> = Record<
+  T extends Record<
     string,
-    FieldResolverDefinition<any, any, X, any>
-  >,
+    FieldResolverDefinition<any, any, X, any, any, any>
+  > = Record<string, FieldResolverDefinition<any, any, X, any>>,
 >(type: ClassType, queries: T) {
   @Resolver(() => type)
   class GeneratedResolver {}
