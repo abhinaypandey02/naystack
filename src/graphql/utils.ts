@@ -16,6 +16,16 @@ import { AuthorizedContext, Context } from "./types";
 type ReturnOptions = Parameters<typeof Query>[1];
 type ArgsOptions = Parameters<typeof Arg>[2];
 
+type NormalizeNullUndefined<T> = {
+  // Keys that include null → make optional
+  [K in keyof T as null extends T[K] ? K : never]?: Exclude<T[K], undefined>;
+} & {
+  // Keys that do not include null → keep as is, but add null if optional
+  [K in keyof T as null extends T[K] ? never : K]: undefined extends T[K]
+    ? Exclude<T[K], undefined> | null // optional → add null
+    : T[K];
+};
+
 type NullableOptions<T, X extends boolean> = T & { nullable: X };
 
 type ParsedGQLType<T> = T extends StringConstructor
@@ -27,7 +37,7 @@ type ParsedGQLType<T> = T extends StringConstructor
       : T extends GraphQLScalarType<infer U>
         ? U
         : T extends ClassType<infer U>
-          ? U
+          ? NormalizeNullUndefined<U>
           : T extends Record<infer K, string | number>
             ? T[K]
             : void;
@@ -185,7 +195,7 @@ export function FieldLibrary<
   T extends Record<
     string,
     FieldResolverDefinition<any, any, X, any, any, any>
-  > = Record<string, FieldResolverDefinition<any, any, X, any>>,
+  > = Record<string, FieldResolverDefinition<any, any, X, any, any>>,
 >(type: ClassType, queries: T) {
   @Resolver(() => type)
   class GeneratedResolver {}
