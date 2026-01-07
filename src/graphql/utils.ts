@@ -16,56 +16,36 @@ import { AuthorizedContext, Context } from "./types";
 type ReturnOptions = Parameters<typeof Query>[1];
 type ArgsOptions = Parameters<typeof Arg>[2];
 
-type Values = object | string | number | boolean;
-type DeepPartial<T> = {
-  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
-};
+type OutputType<T> =
+  T extends ClassType<infer U>
+    ? U
+    : T extends GraphQLScalarType<infer U>
+      ? U
+      : T extends Record<infer K, string | number>
+        ? T[K]
+        : T;
 
-export type RecursiveArray<TValue> = Array<RecursiveArray<TValue> | TValue>;
-type RecursiveAndSingle<T> = RecursiveArray<T> | T;
-type EnumLike = Record<string, string | number>;
+type OutputTypeWithArray<T> =
+  T extends Array<infer U> ? OutputType<U>[] : OutputType<T>;
 
-type OtherTypes<T> = T extends number
-  ? NumberConstructor | EnumLike
-  : T extends string
-    ? StringConstructor | EnumLike
-    : T extends boolean
-      ? BooleanConstructor
-      : GraphQLScalarType<T, T>;
-
-type OutputType<T> = RecursiveAndSingle<
-  T extends object ? ClassType<DeepPartial<T>> : OtherTypes<T>
->;
-
-interface BaseDefinition<
-  T extends Values,
-  U extends Values,
-  IsAuth extends boolean,
-> {
-  output: OutputType<T>;
+interface BaseDefinition<T, U, IsAuth extends boolean = false> {
+  output: T;
   outputOptions?: ReturnOptions;
-  input?: U extends object ? ClassType<U> | [ClassType<U>] : OtherTypes<U>;
+  input?: U;
   inputOptions?: ArgsOptions;
   authorized?: IsAuth;
 }
-interface QueryDefinition<
-  T extends Values,
-  U extends Values,
-  IsAuth extends boolean,
-> extends BaseDefinition<T, U, IsAuth> {
+interface QueryDefinition<T, U, IsAuth extends boolean = false>
+  extends BaseDefinition<T, U, IsAuth> {
   fn: (
     ctx: IsAuth extends true ? AuthorizedContext : Context,
     data: U,
-  ) => Promise<T | T[]> | T | T[];
+  ) => Promise<OutputTypeWithArray<T>> | OutputTypeWithArray<T>;
   mutation?: boolean;
 }
 
-interface FieldResolverDefinition<
-  T extends Values,
-  U extends Values,
-  IsAuth extends boolean,
-  Root,
-> extends BaseDefinition<T, U, IsAuth> {
+interface FieldResolverDefinition<T, U, Root, IsAuth extends boolean = false>
+  extends BaseDefinition<T, U, IsAuth> {
   fn: (
     root: Root,
     ctx: IsAuth extends true ? AuthorizedContext : Context,
@@ -73,26 +53,17 @@ interface FieldResolverDefinition<
   ) => Promise<T | T[]> | T | T[];
 }
 
-export function query<
-  T extends Values,
-  U extends Values,
-  IsAuth extends boolean,
->(
+export function query<T, U, IsAuth extends boolean = false>(
   fn: QueryDefinition<T, U, IsAuth>["fn"],
   options: Omit<QueryDefinition<T, U, IsAuth>, "fn">,
 ): QueryDefinition<T, U, IsAuth> {
   return { ...options, fn };
 }
 
-export function field<
-  T extends Values,
-  U extends Values,
-  IsAuth extends boolean,
-  Root,
->(
-  fn: FieldResolverDefinition<T, U, IsAuth, Root>["fn"],
-  options: Omit<FieldResolverDefinition<T, U, IsAuth, Root>, "fn">,
-): FieldResolverDefinition<T, U, IsAuth, Root> {
+export function field<T, U, IsAuth extends boolean, Root>(
+  fn: FieldResolverDefinition<T, U, Root, IsAuth>["fn"],
+  options: Omit<FieldResolverDefinition<T, U, Root, IsAuth>, "fn">,
+): FieldResolverDefinition<T, U, Root, IsAuth> {
   return { ...options, fn };
 }
 
@@ -150,9 +121,9 @@ export function QueryLibrary<
 
 export function FieldLibrary<
   X extends object,
-  T extends Record<string, FieldResolverDefinition<any, any, any, X>> = Record<
+  T extends Record<string, FieldResolverDefinition<any, any, X, any>> = Record<
     string,
-    FieldResolverDefinition<any, any, any, X>
+    FieldResolverDefinition<any, any, X, any>
   >,
 >(type: ClassType, queries: T) {
   @Resolver(() => type)
