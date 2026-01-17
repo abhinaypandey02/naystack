@@ -89,10 +89,12 @@ interface QueryDefinition<
     ctx: IsAuth extends true ? AuthorizedContext : Context,
     data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
   ) => Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>;
-  call: (
-    data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
-  ) => Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>;
-  cachedCall: (
+  call: IsAuth extends true
+    ? never
+    : (
+        data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
+      ) => Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>;
+  authCall: (
     data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
   ) => Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>;
   mutation?: boolean;
@@ -107,10 +109,19 @@ export function query<
   fn: QueryDefinition<T, U, IsAuth, OutputNullable, InputNullable>["fn"],
   options: Omit<
     QueryDefinition<T, U, IsAuth, OutputNullable, InputNullable>,
-    "fn" | "call"
+    "fn" | "authCall" | "call"
   >,
 ): QueryDefinition<T, U, IsAuth, OutputNullable, InputNullable> {
-  return { ...options, fn, call: getCaller(fn, options), cachedCall };
+  return {
+    ...options,
+    fn,
+    authCall: getAuthCaller(fn),
+    call: getCaller(fn) as IsAuth extends true
+      ? never
+      : (
+          data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
+        ) => Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>,
+  };
 }
 
 const getUserId = async () => {
@@ -119,24 +130,36 @@ const getUserId = async () => {
   return refresh ? getUserIdFromRefreshToken(refresh) : null;
 };
 
+function getAuthCaller<
+  T,
+  U,
+  IsAuth extends boolean = false,
+  OutputNullable extends boolean = false,
+  InputNullable extends boolean = false,
+>(fn: QueryDefinition<T, U, IsAuth, OutputNullable, InputNullable>["fn"]) {
+  return async (
+    data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
+  ) => {
+    const ctx = {
+      userId: await getUserId(),
+      isRefreshID: true,
+    } as IsAuth extends true ? AuthorizedContext : Context;
+    return fn(ctx, data);
+  };
+}
+
 function getCaller<
   T,
   U,
   IsAuth extends boolean = false,
   OutputNullable extends boolean = false,
   InputNullable extends boolean = false,
->(
-  fn: QueryDefinition<T, U, IsAuth, OutputNullable, InputNullable>["fn"],
-  options: Omit<
-    QueryDefinition<T, U, IsAuth, OutputNullable, InputNullable>,
-    "fn" | "call"
-  >,
-) {
+>(fn: QueryDefinition<T, U, IsAuth, OutputNullable, InputNullable>["fn"]) {
   return async (
     data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
   ) => {
     const ctx = {
-      userId: await getUserId(),
+      userId: null,
       isRefreshID: true,
     } as IsAuth extends true ? AuthorizedContext : Context;
     return fn(ctx, data);
