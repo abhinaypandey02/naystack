@@ -19,11 +19,55 @@ export enum EnvVariable {
   NODE_ENV = "NODE_ENV",
 }
 
+export const getEnvValue = (key: EnvVariable): string | undefined => {
+  switch (key) {
+    case EnvVariable.NEXT_PUBLIC_GRAPHQL_ENDPOINT:
+      return process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT;
+    case EnvVariable.NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT:
+      return process.env.NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT;
+    case EnvVariable.NEXT_PUBLIC_GOOGLE_AUTH_ENDPOINT:
+      return process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENDPOINT;
+    case EnvVariable.NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT:
+      return process.env.NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT;
+    case EnvVariable.NEXT_PUBLIC_FILE_ENDPOINT:
+      return process.env.NEXT_PUBLIC_FILE_ENDPOINT;
+    case EnvVariable.NEXT_PUBLIC_BASE_URL:
+      return process.env.NEXT_PUBLIC_BASE_URL;
+    case EnvVariable.REFRESH_KEY:
+      return process.env.REFRESH_KEY;
+    case EnvVariable.SIGNING_KEY:
+      return process.env.SIGNING_KEY;
+    case EnvVariable.INSTAGRAM_CLIENT_SECRET:
+      return process.env.INSTAGRAM_CLIENT_SECRET;
+    case EnvVariable.INSTAGRAM_CLIENT_ID:
+      return process.env.INSTAGRAM_CLIENT_ID;
+    case EnvVariable.GOOGLE_CLIENT_SECRET:
+      return process.env.GOOGLE_CLIENT_SECRET;
+    case EnvVariable.GOOGLE_CLIENT_ID:
+      return process.env.GOOGLE_CLIENT_ID;
+    case EnvVariable.TURNSTILE_KEY:
+      return process.env.TURNSTILE_KEY;
+    case EnvVariable.AWS_ACCESS_KEY_ID:
+      return process.env.AWS_ACCESS_KEY_ID;
+    case EnvVariable.AWS_ACCESS_KEY_SECRET:
+      return process.env.AWS_ACCESS_KEY_SECRET;
+    case EnvVariable.AWS_REGION:
+      return process.env.AWS_REGION;
+    case EnvVariable.AWS_BUCKET:
+      return process.env.AWS_BUCKET;
+    case EnvVariable.NODE_ENV:
+      return process.env.NODE_ENV;
+    default:
+      return process.env[key];
+  }
+};
+
 export function getEnv<T extends boolean = false>(
   key: EnvVariable,
   skipCheck?: T,
 ): T extends true ? string | undefined : string {
-  const value = process.env[key];
+  const value = getEnvValue(key);
+
   if (!skipCheck && !value) throw new Error(`${key} is not defined`);
   return value as T extends true ? string | undefined : string;
 }
