@@ -8,6 +8,7 @@ import { registerApolloClient } from "@apollo/client-integration-nextjs";
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 import { cookies } from "next/headers";
 import type { FC } from "react";
+import React from "react";
 import { Suspense } from "react";
 
 import { EnvVariable, getEnv } from "@/src/env";
