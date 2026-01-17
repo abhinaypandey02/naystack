@@ -43,7 +43,11 @@ async function InjectorSuspensed<T, Y>({
   Component: FC<{ data?: T; loading: boolean } & Y>;
 } & ComponentProps<Y>) {
   const data = await fetch();
-  return <Component loading={false} {...((props || {}) as Y)} data={data} />;
+  return (
+    <Suspense fallback={<Component {...((props || {}) as Y)} loading />}>
+      <Component loading={false} {...((props || {}) as Y)} data={data} />
+    </Suspense>
+  );
 }
 
 const { query: gqlQuery } = registerApolloClient(() => {
