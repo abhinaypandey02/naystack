@@ -130,12 +130,14 @@ function getCaller<
     "fn" | "call"
   >,
 ) {
-  const ctx = {
-    userId: options.authorized ? getUserId() : null,
-    isRefreshID: true,
-  } as IsAuth extends true ? AuthorizedContext : Context;
   return (data: ParsedGQLTypeWithNullability<U, InputNullable, false>) =>
-    fn(ctx, data);
+    fn(
+      {
+        userId: options.authorized ? getUserId() : null,
+        isRefreshID: true,
+      } as IsAuth extends true ? AuthorizedContext : Context,
+      data,
+    );
 }
 
 interface FieldResolverDefinition<
