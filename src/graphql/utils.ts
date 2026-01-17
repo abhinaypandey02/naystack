@@ -84,17 +84,20 @@ interface QueryDefinition<
   IsAuth extends boolean = false,
   OutputNullable extends boolean = false,
   InputNullable extends boolean = false,
+  R extends Promisify<
+    ParsedGQLTypeWithNullability<T, OutputNullable, true>
+  > = Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>,
 > extends BaseDefinition<T, U, IsAuth, OutputNullable, InputNullable> {
   fn: (
     ctx: IsAuth extends true ? AuthorizedContext : Context,
     data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
-  ) => Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>;
+  ) => R;
   call: (
     data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
-  ) => Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>;
+  ) => Promise<Awaited<R>>;
   authCall: (
     data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
-  ) => Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>;
+  ) => Promise<Awaited<R>>;
   mutation?: boolean;
 }
 export function query<
@@ -103,18 +106,26 @@ export function query<
   IsAuth extends boolean = false,
   OutputNullable extends boolean = false,
   InputNullable extends boolean = false,
+  R extends Promisify<
+    ParsedGQLTypeWithNullability<T, OutputNullable, true>
+  > = Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>,
 >(
-  fn: QueryDefinition<T, U, IsAuth, OutputNullable, InputNullable>["fn"],
+  fn: (
+    ctx: IsAuth extends true ? AuthorizedContext : Context,
+    data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
+  ) => R,
   options: Omit<
-    QueryDefinition<T, U, IsAuth, OutputNullable, InputNullable>,
+    QueryDefinition<T, U, IsAuth, OutputNullable, InputNullable, R>,
     "fn" | "authCall" | "call"
   >,
-): QueryDefinition<T, U, IsAuth, OutputNullable, InputNullable> {
+): QueryDefinition<T, U, IsAuth, OutputNullable, InputNullable, R> {
   return {
     ...options,
     fn,
-    authCall: getAuthCaller(fn),
-    call: options.authorized ? getAuthCaller(fn) : getCaller(fn),
+    authCall: getAuthCaller<T, U, IsAuth, OutputNullable, InputNullable, R>(fn),
+    call: options.authorized
+      ? getAuthCaller<T, U, IsAuth, OutputNullable, InputNullable, R>(fn)
+      : getCaller<T, U, IsAuth, OutputNullable, InputNullable, R>(fn),
   };
 }
 
@@ -130,15 +141,23 @@ function getAuthCaller<
   IsAuth extends boolean = false,
   OutputNullable extends boolean = false,
   InputNullable extends boolean = false,
->(fn: QueryDefinition<T, U, IsAuth, OutputNullable, InputNullable>["fn"]) {
+  R extends Promisify<
+    ParsedGQLTypeWithNullability<T, OutputNullable, true>
+  > = Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>,
+>(
+  fn: (
+    ctx: IsAuth extends true ? AuthorizedContext : Context,
+    data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
+  ) => R,
+) {
   return async (
     data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
-  ) => {
+  ): Promise<Awaited<R>> => {
     const ctx = {
       userId: await getUserId(),
       isRefreshID: true,
     } as IsAuth extends true ? AuthorizedContext : Context;
-    return fn(ctx, data);
+    return await fn(ctx, data);
   };
 }
 
@@ -148,15 +167,23 @@ function getCaller<
   IsAuth extends boolean = false,
   OutputNullable extends boolean = false,
   InputNullable extends boolean = false,
->(fn: QueryDefinition<T, U, IsAuth, OutputNullable, InputNullable>["fn"]) {
+  R extends Promisify<
+    ParsedGQLTypeWithNullability<T, OutputNullable, true>
+  > = Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>,
+>(
+  fn: (
+    ctx: IsAuth extends true ? AuthorizedContext : Context,
+    data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
+  ) => R,
+) {
   return async (
     data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
-  ) => {
+  ): Promise<Awaited<R>> => {
     const ctx = {
       userId: null,
       isRefreshID: true,
     } as IsAuth extends true ? AuthorizedContext : Context;
-    return fn(ctx, data);
+    return await fn(ctx, data);
   };
 }
 
@@ -167,12 +194,81 @@ interface FieldResolverDefinition<
   IsAuth extends boolean = false,
   OutputNullable extends boolean = false,
   InputNullable extends boolean = false,
+  R extends Promisify<
+    ParsedGQLTypeWithNullability<T, OutputNullable, true>
+  > = Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>,
 > extends BaseDefinition<T, U, IsAuth, OutputNullable, InputNullable> {
   fn: (
     root: Root,
     ctx: IsAuth extends true ? AuthorizedContext : Context,
     data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
-  ) => Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>;
+  ) => R;
+  call: (
+    root: Root,
+    data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
+  ) => Promise<Awaited<R>>;
+  authCall: (
+    root: Root,
+    data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
+  ) => Promise<Awaited<R>>;
+}
+
+function getFieldAuthCaller<
+  T,
+  U,
+  Root,
+  IsAuth extends boolean = false,
+  OutputNullable extends boolean = false,
+  InputNullable extends boolean = false,
+  R extends Promisify<
+    ParsedGQLTypeWithNullability<T, OutputNullable, true>
+  > = Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>,
+>(
+  fn: (
+    root: Root,
+    ctx: IsAuth extends true ? AuthorizedContext : Context,
+    data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
+  ) => R,
+) {
+  return async (
+    root: Root,
+    data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
+  ): Promise<Awaited<R>> => {
+    const ctx = {
+      userId: await getUserId(),
+      isRefreshID: true,
+    } as IsAuth extends true ? AuthorizedContext : Context;
+    return await fn(root, ctx, data);
+  };
+}
+
+function getFieldCaller<
+  T,
+  U,
+  Root,
+  IsAuth extends boolean = false,
+  OutputNullable extends boolean = false,
+  InputNullable extends boolean = false,
+  R extends Promisify<
+    ParsedGQLTypeWithNullability<T, OutputNullable, true>
+  > = Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>,
+>(
+  fn: (
+    root: Root,
+    ctx: IsAuth extends true ? AuthorizedContext : Context,
+    data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
+  ) => R,
+) {
+  return async (
+    root: Root,
+    data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
+  ): Promise<Awaited<R>> => {
+    const ctx = {
+      userId: null,
+      isRefreshID: true,
+    } as IsAuth extends true ? AuthorizedContext : Context;
+    return await fn(root, ctx, data);
+  };
 }
 
 export function field<
@@ -182,25 +278,66 @@ export function field<
   Root,
   OutputNullable extends boolean = false,
   InputNullable extends boolean = false,
+  R extends Promisify<
+    ParsedGQLTypeWithNullability<T, OutputNullable, true>
+  > = Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>,
 >(
-  fn: FieldResolverDefinition<
-    T,
-    U,
-    Root,
-    IsAuth,
-    OutputNullable,
-    InputNullable
-  >["fn"],
+  fn: (
+    root: Root,
+    ctx: IsAuth extends true ? AuthorizedContext : Context,
+    data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
+  ) => R,
   options: Omit<
-    FieldResolverDefinition<T, U, Root, IsAuth, OutputNullable, InputNullable>,
-    "fn"
+    FieldResolverDefinition<
+      T,
+      U,
+      Root,
+      IsAuth,
+      OutputNullable,
+      InputNullable,
+      R
+    >,
+    "fn" | "authCall" | "call"
   >,
-): FieldResolverDefinition<T, U, Root, IsAuth, OutputNullable, InputNullable> {
-  return { ...options, fn };
+): FieldResolverDefinition<
+  T,
+  U,
+  Root,
+  IsAuth,
+  OutputNullable,
+  InputNullable,
+  R
+> {
+  return {
+    ...options,
+    fn,
+    authCall: getFieldAuthCaller<
+      T,
+      U,
+      Root,
+      IsAuth,
+      OutputNullable,
+      InputNullable,
+      R
+    >(fn),
+    call: (options.authorized
+      ? getFieldAuthCaller<
+          T,
+          U,
+          Root,
+          IsAuth,
+          OutputNullable,
+          InputNullable,
+          R
+        >(fn)
+      : getFieldCaller<T, U, Root, IsAuth, OutputNullable, InputNullable, R>(
+          fn,
+        )) as any,
+  };
 }
 
 export function QueryLibrary<
-  T extends Record<string, QueryDefinition<any, any, any, any, any>>,
+  T extends Record<string, QueryDefinition<any, any, any, any, any, any>>,
 >(queries: T) {
   @Resolver()
   class GeneratedResolver {}
@@ -255,8 +392,8 @@ export function FieldLibrary<
   X extends object,
   T extends Record<
     string,
-    FieldResolverDefinition<any, any, X, any, any, any>
-  > = Record<string, FieldResolverDefinition<any, any, X, any, any>>,
+    FieldResolverDefinition<any, any, X, any, any, any, any>
+  > = Record<string, FieldResolverDefinition<any, any, X, any, any, any, any>>,
 >(type: ClassType, queries: T) {
   @Resolver(() => type)
   class GeneratedResolver {}
