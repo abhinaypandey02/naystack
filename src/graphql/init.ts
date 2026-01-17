@@ -13,6 +13,8 @@ import {
   NonEmptyArray,
 } from "type-graphql";
 
+import { EnvVariable, getEnv } from "@/src";
+
 import { Context } from "./types";
 
 export async function initGraphQLServer({
@@ -22,7 +24,6 @@ export async function initGraphQLServer({
   getContext,
 }: {
   authChecker?: AuthChecker<any>;
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   resolvers: NonEmptyArray<Function>;
   plugins?: ApolloServerPlugin[];
   getContext?: (req: NextRequest) => Promise<any> | any;
@@ -37,7 +38,7 @@ export async function initGraphQLServer({
     typeDefs,
     resolvers: builtResolvers,
     plugins: [
-      process.env.NODE_ENV === "production"
+      getEnv(EnvVariable.NODE_ENV, true) === "production"
         ? ApolloServerPluginLandingPageProductionDefault()
         : ApolloServerPluginLandingPageLocalDefault(),
       {
@@ -51,7 +52,7 @@ export async function initGraphQLServer({
       },
       ...(plugins || []),
     ],
-    introspection: process.env.NODE_ENV !== "production",
+    introspection: getEnv(EnvVariable.NODE_ENV, true) !== "production",
     status400ForVariableCoercionErrors: true,
   });
   const handler = startServerAndCreateNextHandler(server, {

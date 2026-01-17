@@ -4,7 +4,9 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
 
+import { EnvVariable, getEnv } from "@/src";
 import { UserOutput } from "@/src/auth/types";
+
 import { REFRESH_COOKIE_NAME } from "../constants";
 
 export function generateAccessToken(id: number, signingKey: string) {
@@ -62,9 +64,9 @@ export function getUserIdFromRefreshToken(
 }
 
 export function getUserIdFromAccessToken(refreshToken?: string): number | null {
-  if (refreshToken && process.env.SIGNING_KEY)
+  if (refreshToken)
     try {
-      const decoded = verify(refreshToken, process.env.SIGNING_KEY);
+      const decoded = verify(refreshToken, getEnv(EnvVariable.SIGNING_KEY));
       if (typeof decoded !== "string" && typeof decoded.id === "number")
         return decoded.id;
     } catch (e) {

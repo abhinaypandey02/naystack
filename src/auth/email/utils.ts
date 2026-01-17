@@ -1,12 +1,13 @@
 import { verify } from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
 
+import { EnvVariable, getEnv } from "@/src";
 import { getUserIdFromRefreshToken } from "@/src/auth/email/token";
 import { Context } from "@/src/graphql";
 
 import { REFRESH_COOKIE_NAME } from "../constants";
 import { handleError } from "../utils/errors";
-import { AuthKeys, InitRoutesOptions } from "./types";
+import { InitRoutesOptions } from "./types";
 
 export async function massageRequest(
   req: NextRequest,
@@ -28,12 +29,13 @@ export async function massageRequest(
     return {
       error: handleError(400, "Missing password", options.onError),
     };
-  if (options.turnstileKey) {
+  const turnstileKey = getEnv(EnvVariable.TURNSTILE_KEY, true);
+  if (turnstileKey) {
     if (!data.captchaToken)
       return {
         error: handleError(400, "Missing captchaToken", options.onError),
       };
-    if (!(await verifyCaptcha(data.captchaToken, options.turnstileKey)))
+    if (!(await verifyCaptcha(data.captchaToken, turnstileKey)))
       return {
         error: handleError(400, "Invalid captcha", options.onError),
       };
@@ -68,17 +70,20 @@ export async function verifyCaptcha(token: string, secret?: string) {
   return false;
 }
 
-export const getContext = (keys: AuthKeys, req: NextRequest): Context => {
+export const getContext = (req: NextRequest): Context => {
   const bearer = req.headers.get("authorization");
   if (!bearer) {
     const refresh = req.cookies.get(REFRESH_COOKIE_NAME)?.value;
-    const userId = getUserIdFromRefreshToken(keys.refresh, refresh);
+    const userId = getUserIdFromRefreshToken(
+      getEnv(EnvVariable.REFRESH_KEY),
+      refresh,
+    );
     if (userId) return { userId: userId, isRefreshID: true };
     return { userId: null };
   }
   const token = bearer.slice(7);
   try {
-    const res = verify(token, keys.signing);
+    const res = verify(token, getEnv(EnvVariable.SIGNING_KEY));
     if (typeof res === "string") {
       return { userId: null };
     }

@@ -5,40 +5,39 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-import { SetupFileUploadOptions } from "@/src/file/setup";
+import { EnvVariable, getEnv } from "@/src";
 
-export const getS3Client = (options: SetupFileUploadOptions) =>
+export const getS3Client = () =>
   new S3Client({
-    region: options.region,
+    region: getEnv(EnvVariable.AWS_REGION),
     credentials: {
-      accessKeyId: options.awsKey,
-      secretAccessKey: options.awsSecret,
+      accessKeyId: getEnv(EnvVariable.AWS_ACCESS_KEY_ID),
+      secretAccessKey: getEnv(EnvVariable.AWS_ACCESS_KEY_SECRET),
     },
   });
 
-const getURLPrefix = (options: SetupFileUploadOptions) =>
-  `https://${options.bucket}.s3.${options.region}.amazonaws.com/`;
+const URL_PREFIX = `https://${getEnv(EnvVariable.AWS_BUCKET)}.s3.${getEnv(
+  EnvVariable.AWS_REGION,
+)}.amazonaws.com/`;
 
 function getKey(keys: string | string[]) {
   return typeof keys === "string" ? keys : keys.join("/");
 }
 
-export const getUploadURL =
-  (client: S3Client, Bucket: string) => (keys: string | string[]) => {
-    const command = new PutObjectCommand({
-      Bucket,
-      Key: getKey(keys),
-      ACL: "public-read",
-    });
-    return getSignedUrl(client, command, { expiresIn: 300 });
-  };
-export const getDownloadURL =
-  (options: SetupFileUploadOptions) => (keys: string | string[]) => {
-    return `${getURLPrefix(options)}${getKey(keys)}`;
-  };
+export const getUploadURL = (client: S3Client) => (keys: string | string[]) => {
+  const command = new PutObjectCommand({
+    Bucket: getEnv(EnvVariable.AWS_BUCKET),
+    Key: getKey(keys),
+    ACL: "public-read",
+  });
+  return getSignedUrl(client, command, { expiresIn: 300 });
+};
+export const getDownloadURL = (keys: string | string[]) => {
+  return `${URL_PREFIX}${getKey(keys)}`;
+};
 
 export const uploadFile =
-  (client: S3Client, options: SetupFileUploadOptions) =>
+  (client: S3Client) =>
   async (
     keys: string | string[],
     {
@@ -53,39 +52,36 @@ export const uploadFile =
     const fileBlob = blob || (await fetch(url!).then((file) => file.blob()));
     if (fileBlob) {
       const key = getKey(keys);
-      await uploadBlob(client, options.bucket)(fileBlob, key);
-      return getDownloadURL(options)(key);
+      await uploadBlob(client)(fileBlob, key);
+      return getDownloadURL(key);
     }
     return null;
   };
 
-export const deleteFile =
-  (client: S3Client, options: SetupFileUploadOptions) =>
-  async (url: string) => {
-    const key = url.split(getURLPrefix(options))[1];
-    if (key) {
-      try {
-        await client.send(
-          new DeleteObjectCommand({
-            Bucket: options.bucket,
-            Key: key,
-          }),
-        );
-        return true;
-      } catch (e) {
-        console.error("ERROR", url, e);
-      }
+export const deleteFile = (client: S3Client) => async (url: string) => {
+  const key = url.split(URL_PREFIX)[1];
+  if (key) {
+    try {
+      await client.send(
+        new DeleteObjectCommand({
+          Bucket: getEnv(EnvVariable.AWS_BUCKET),
+          Key: key,
+        }),
+      );
+      return true;
+    } catch (e) {
+      console.error("ERROR", url, e);
     }
-    return false;
-  };
+  }
+  return false;
+};
 
 export const uploadBlob =
-  (client: S3Client, Bucket: string) =>
-  async (file: File | Blob, key: string) => {
+  (client: S3Client) => async (file: File | Blob, key: string) => {
     const fileBuffer = await file.arrayBuffer();
     return client.send(
       new PutObjectCommand({
-        Bucket,
+        Bucket: getEnv(EnvVariable.AWS_BUCKET),
         Key: key,
         ACL: "public-read",
         Body: Buffer.from(fileBuffer),

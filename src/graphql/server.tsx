@@ -10,12 +10,14 @@ import { cookies } from "next/headers";
 import type { FC } from "react";
 import { Suspense } from "react";
 
+import { EnvVariable, getEnv } from "@/src";
+
 type OmittedProps<Y> = Omit<Omit<Y, "loading">, "data">;
 
 type ComponentProps<Y> =
   OmittedProps<Y> extends Record<string, never>
-  ? { props?: object }
-  : { props: OmittedProps<Y> };
+    ? { props?: object }
+    : { props: OmittedProps<Y> };
 
 export function Injector<T, Y>({
   fetch,
@@ -48,11 +50,10 @@ const { query: gqlQuery } = registerApolloClient(() => {
   return new ApolloClient({
     cache: new InMemoryCache(),
     link: new HttpLink({
-      uri: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT,
+      uri: getEnv(EnvVariable.NEXT_PUBLIC_GRAPHQL_ENDPOINT),
     }),
   });
 });
-
 
 export const query = async <T, V extends OperationVariables>(
   _query: TypedDocumentNode<T, V>,
@@ -80,4 +81,4 @@ export const query = async <T, V extends OperationVariables>(
     },
   });
   return res.data;
-}
+};

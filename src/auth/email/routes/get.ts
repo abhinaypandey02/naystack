@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 
+import { EnvVariable, getEnv } from "@/src";
 import { InitRoutesOptions } from "@/src/auth/email/types";
 
 import { REFRESH_COOKIE_NAME } from "../../constants";
@@ -13,7 +14,10 @@ export const getGetRoute =
   (options: InitRoutesOptions) => async (req: NextRequest) => {
     const refresh = req.cookies.get(REFRESH_COOKIE_NAME)?.value;
 
-    const userID = getUserIdFromRefreshToken(options.keys.refresh, refresh);
+    const userID = getUserIdFromRefreshToken(
+      getEnv(EnvVariable.REFRESH_KEY),
+      refresh,
+    );
 
     if (userID) {
       if (options.onRefresh) {
@@ -21,7 +25,7 @@ export const getGetRoute =
         await options.onRefresh?.(userID, body);
       }
       return getTokenizedResponse(
-        generateAccessToken(userID, options.keys.signing),
+        generateAccessToken(userID, getEnv(EnvVariable.SIGNING_KEY)),
       );
     }
 

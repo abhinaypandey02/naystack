@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { v4 } from "uuid";
 
+import { EnvVariable, getEnv } from "@/src";
 import { generateRefreshToken } from "@/src/auth/email/token";
 import { InitGoogleAuthOptions } from "@/src/auth/google/index";
 
@@ -12,12 +13,13 @@ export const getGoogleGetRoute = ({
   getUserIdFromEmail,
   redirectURL,
   errorRedirectURL,
-  clientId,
-  clientSecret,
-  keys,
 }: InitGoogleAuthOptions) => {
-  const url = process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENDPOINT!;
-  const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, url);
+  const url = getEnv(EnvVariable.NEXT_PUBLIC_GOOGLE_AUTH_ENDPOINT);
+  const oauth2Client = new google.auth.OAuth2(
+    getEnv(EnvVariable.GOOGLE_CLIENT_ID),
+    getEnv(EnvVariable.GOOGLE_CLIENT_SECRET),
+    url,
+  );
   return async (req: NextRequest) => {
     const code = req.nextUrl.searchParams.get("code");
     const error = req.nextUrl.searchParams.get("error");
@@ -66,7 +68,7 @@ export const getGoogleGetRoute = ({
         if (id) {
           res.cookies.set(
             REFRESH_COOKIE_NAME,
-            generateRefreshToken(id, keys.refresh),
+            generateRefreshToken(id, getEnv(EnvVariable.REFRESH_KEY)),
             {
               httpOnly: true,
               secure: true,

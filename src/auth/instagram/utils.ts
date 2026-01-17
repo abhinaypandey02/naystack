@@ -1,3 +1,5 @@
+import { EnvVariable, getEnv } from "@/src";
+
 export async function getRefreshedAccessToken(token: string) {
   const request = await fetch(
     `https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${token}`,
@@ -31,7 +33,7 @@ export async function getLongLivedToken(
     if (shortResData.access_token) {
       const shortLivedToken = shortResData.access_token;
       const longRes = await fetch(
-        `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&access_token=${shortLivedToken}&client_secret=${process.env.INSTAGRAM_CLIENT_SECRET}`,
+        `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&access_token=${shortLivedToken}&client_secret=${getEnv(EnvVariable.INSTAGRAM_CLIENT_SECRET)}`,
       );
       if (longRes.ok) {
         const longResData = (await longRes.json()) as {

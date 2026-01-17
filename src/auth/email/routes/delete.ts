@@ -8,7 +8,7 @@ import { getContext } from "../utils";
 export const getDeleteRoute =
   (options: InitRoutesOptions) => async (req: NextRequest) => {
     if (options.onLogout) {
-      const ctx = await getContext(options.keys, req);
+      const ctx = await getContext(req);
       const body = await req.json();
       await options.onLogout?.(ctx.userId, body);
     }

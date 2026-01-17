@@ -1,5 +1,7 @@
 import { Metadata } from "next";
 
+import { EnvVariable, getEnv } from "@/src";
+
 export const setupSEO =
   (SEO: {
     title: string;
@@ -23,7 +25,7 @@ export const setupSEO =
     appleWebApp: {
       title: title ? title : SEO.title,
       capable: true,
-      startupImage: `${process.env.NEXT_PUBLIC_BASE_URL}/apple-icon.png`,
+      startupImage: `${getEnv(EnvVariable.NEXT_PUBLIC_BASE_URL)}/apple-icon.png`,
     },
     applicationName: SEO.siteName,
     creator: SEO.siteName,

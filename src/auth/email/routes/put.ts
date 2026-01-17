@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
 
+import { EnvVariable, getEnv } from "@/src";
+
 import { handleError } from "../../utils/errors";
 import {
   generateAccessToken,
@@ -24,8 +26,8 @@ export const getPutRoute =
         await options.onLogin?.(user.id, data);
       }
       return getTokenizedResponse(
-        generateAccessToken(user.id, options.keys.signing),
-        generateRefreshToken(user.id, options.keys.refresh),
+        generateAccessToken(user.id, getEnv(EnvVariable.SIGNING_KEY)),
+        generateRefreshToken(user.id, getEnv(EnvVariable.REFRESH_KEY)),
       );
     }
     return handleError(403, "Invalid password", options.onError);

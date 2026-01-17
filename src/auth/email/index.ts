@@ -15,6 +15,6 @@ export function getEmailAuthRoutes(options: InitRoutesOptions) {
     POST: getPostRoute(options),
     PUT: getPutRoute(options),
     DELETE: getDeleteRoute(options),
-    getContext: (req: NextRequest) => getContext(options.keys, req),
+    getContext,
   };
 }

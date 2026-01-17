@@ -1,6 +1,8 @@
 import { hash } from "bcryptjs";
 import { NextRequest } from "next/server";
 
+import { EnvVariable, getEnv } from "@/src";
+
 import { handleError } from "../../utils/errors";
 import {
   generateAccessToken,
@@ -20,8 +22,11 @@ export const getPostRoute =
     if (existingUser) {
       if (await verifyUser(existingUser, data.password)) {
         return getTokenizedResponse(
-          generateAccessToken(existingUser.id, options.keys.signing),
-          generateRefreshToken(existingUser.id, options.keys.refresh),
+          generateAccessToken(existingUser.id, getEnv(EnvVariable.SIGNING_KEY)),
+          generateRefreshToken(
+            existingUser.id,
+            getEnv(EnvVariable.REFRESH_KEY),
+          ),
         );
       }
       return handleError(400, "A user already exists", options.onError);
@@ -37,8 +42,8 @@ export const getPostRoute =
         await options.onSignUp?.(newUser.id, data);
       }
       return getTokenizedResponse(
-        generateAccessToken(newUser.id, options.keys.signing),
-        generateRefreshToken(newUser.id, options.keys.refresh),
+        generateAccessToken(newUser.id, getEnv(EnvVariable.SIGNING_KEY)),
+        generateRefreshToken(newUser.id, getEnv(EnvVariable.REFRESH_KEY)),
       );
     }
     return getTokenizedResponse();

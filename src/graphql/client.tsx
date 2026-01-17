@@ -1,4 +1,5 @@
 "use client";
+
 import {
   HttpLink,
   type InMemoryCacheConfig,
@@ -21,15 +22,17 @@ import React, {
   useState,
 } from "react";
 
+import { EnvVariable, getEnv } from "@/src";
 
-
-
-export const ApolloWrapper = ({ children, cacheConfig }: PropsWithChildren<{ cacheConfig?: InMemoryCacheConfig; }>) => {
+export const ApolloWrapper = ({
+  children,
+  cacheConfig,
+}: PropsWithChildren<{ cacheConfig?: InMemoryCacheConfig }>) => {
   function makeClient() {
     return new ApolloClient({
       cache: new InMemoryCache(cacheConfig),
       link: new HttpLink({
-        uri: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT!,
+        uri: getEnv(EnvVariable.NEXT_PUBLIC_GRAPHQL_ENDPOINT),
       }),
     });
   }
@@ -86,9 +89,9 @@ export function useAuthMutation<T, V extends OperationVariables>(
   const token = useToken();
   const [mutate, result] = useMutation(mutation, options);
   const method = useCallback(
-    (input: V['input']) =>
+    (input: V["input"]) =>
       mutate({
-        // @ts-ignore
+        // @ts-expect-error -- to allow dynamic props
         variables: { input },
         context: tokenContext(token),
       }),

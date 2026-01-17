@@ -1,5 +1,7 @@
 import { useToken } from "naystack/auth/email/client";
 
+import { EnvVariable, getEnv } from "@/src";
+
 export const useFileUpload = () => {
   const token = useToken();
   return (file: File | Blob, type: string, data?: object) => {
@@ -7,7 +9,7 @@ export const useFileUpload = () => {
     formData.append("type", type);
     formData.append("file", file);
     if (data) formData.append("data", JSON.stringify(data));
-    return fetch(process.env.NEXT_PUBLIC_FILE_ENDPOINT!, {
+    return fetch(getEnv(EnvVariable.NEXT_PUBLIC_FILE_ENDPOINT), {
       method: "PUT",
       body: formData,
       headers: {
