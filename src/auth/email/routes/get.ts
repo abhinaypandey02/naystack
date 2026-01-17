@@ -14,10 +14,7 @@ export const getGetRoute =
   (options: InitRoutesOptions) => async (req: NextRequest) => {
     const refresh = req.cookies.get(REFRESH_COOKIE_NAME)?.value;
 
-    const userID = getUserIdFromRefreshToken(
-      getEnv(EnvVariable.REFRESH_KEY),
-      refresh,
-    );
+    const userID = getUserIdFromRefreshToken(refresh);
 
     if (userID) {
       if (options.onRefresh) {
