@@ -17,13 +17,11 @@ type ReturnOptions = Parameters<typeof Query>[1];
 type ArgsOptions = Parameters<typeof Arg>[2];
 
 type NormalizeNullUndefined<T> = {
-  // Keys that include null → make optional
-  [K in keyof T as null extends T[K] ? K : never]?: Exclude<T[K], undefined>;
+  // properties that include null become optional, value unchanged
+  [K in keyof T as null extends T[K] ? K : never]?: T[K];
 } & {
-  // Keys that do not include null → keep as is, but add null if optional
-  [K in keyof T as null extends T[K] ? never : K]: undefined extends T[K]
-    ? Exclude<T[K], undefined> | null // optional → add null
-    : T[K];
+  // all other properties unchanged
+  [K in keyof T as null extends T[K] ? never : K]: T[K];
 };
 
 type NullableOptions<T, X extends boolean> = T & { nullable: X };
