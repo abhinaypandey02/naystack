@@ -17,16 +17,21 @@ type ReturnOptions = Parameters<typeof Query>[1];
 type ArgsOptions = Parameters<typeof Arg>[2];
 
 type NormalizeNullUndefined<T> = {
-  // properties that include null become optional, value unchanged
-  [K in keyof T as null extends T[K] ? K : never]?: T[K];
+  // Keys that include null → make optional
+  [K in keyof T as null extends T[K] ? K : never]?: Exclude<T[K], undefined>;
 } & {
-  // all other properties unchanged
-  [K in keyof T as null extends T[K] ? never : K]: T[K];
+  // Keys that do not include null → keep as is, but add null if optional
+  [K in keyof T as null extends T[K] ? never : K]: undefined extends T[K]
+    ? Exclude<T[K], undefined> | null // optional → add null
+    : T[K];
 };
 
 type NullableOptions<T, X extends boolean> = T & { nullable: X };
 
-type ParsedGQLType<T> = T extends StringConstructor
+type ParsedGQLType<
+  T,
+  MergeNullUndefined extends boolean,
+> = T extends StringConstructor
   ? string
   : T extends NumberConstructor
     ? number
@@ -35,20 +40,25 @@ type ParsedGQLType<T> = T extends StringConstructor
       : T extends GraphQLScalarType<infer U>
         ? U
         : T extends ClassType<infer U>
-          ? NormalizeNullUndefined<U>
+          ? MergeNullUndefined extends true
+            ? NormalizeNullUndefined<U>
+            : U
           : T extends Record<infer K, string | number>
             ? T[K]
             : void;
 
-type ParsedGQLTypeWithArray<T> =
-  T extends Array<infer U> ? ParsedGQLType<U>[] : ParsedGQLType<T>;
+type ParsedGQLTypeWithArray<T, MergeNullUndefined extends boolean> =
+  T extends Array<infer U>
+    ? ParsedGQLType<U, MergeNullUndefined>[]
+    : ParsedGQLType<T, MergeNullUndefined>;
 
 type ParsedGQLTypeWithNullability<
   T,
   IsNullable extends boolean,
+  MergeNullUndefined extends boolean,
 > = IsNullable extends true
-  ? ParsedGQLTypeWithArray<T> | null | undefined
-  : ParsedGQLTypeWithArray<T>;
+  ? ParsedGQLTypeWithArray<T, MergeNullUndefined> | null | undefined
+  : ParsedGQLTypeWithArray<T, MergeNullUndefined>;
 
 interface BaseDefinition<
   T,
@@ -72,10 +82,10 @@ interface QueryDefinition<
 > extends BaseDefinition<T, U, IsAuth, OutputNullable, InputNullable> {
   fn: (
     ctx: IsAuth extends true ? AuthorizedContext : Context,
-    data: ParsedGQLTypeWithNullability<U, InputNullable>,
+    data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
   ) =>
-    | Promise<ParsedGQLTypeWithNullability<T, OutputNullable>>
-    | ParsedGQLTypeWithNullability<T, OutputNullable>;
+    | Promise<ParsedGQLTypeWithNullability<T, OutputNullable, true>>
+    | ParsedGQLTypeWithNullability<T, OutputNullable, true>;
   mutation?: boolean;
 }
 
@@ -106,10 +116,10 @@ interface FieldResolverDefinition<
   fn: (
     root: Root,
     ctx: IsAuth extends true ? AuthorizedContext : Context,
-    data: ParsedGQLTypeWithNullability<U, InputNullable>,
+    data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
   ) =>
-    | Promise<ParsedGQLTypeWithNullability<T, OutputNullable>>
-    | ParsedGQLTypeWithNullability<T, OutputNullable>;
+    | Promise<ParsedGQLTypeWithNullability<T, OutputNullable, true>>
+    | ParsedGQLTypeWithNullability<T, OutputNullable, true>;
 }
 
 export function field<
