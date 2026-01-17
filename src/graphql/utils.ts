@@ -444,3 +444,7 @@ export function FieldLibrary<
 
   return GeneratedResolver;
 }
+
+export type ResponseType<
+  T extends QueryDefinition<any, any, any, any, any, any>,
+> = Awaited<ReturnType<T["call"]>>;
