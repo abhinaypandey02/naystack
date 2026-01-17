@@ -10,7 +10,7 @@ import React, {
   useState,
 } from "react";
 
-import { EnvVariable, getEnv } from "@/src";
+import { EnvVariable, getEnv } from "@/src/env";
 
 export const TokenContext = createContext<{
   token: string | null;

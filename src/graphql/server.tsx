@@ -10,7 +10,7 @@ import { cookies } from "next/headers";
 import type { FC } from "react";
 import { Suspense } from "react";
 
-import { EnvVariable, getEnv } from "@/src";
+import { EnvVariable, getEnv } from "@/src/env";
 
 type OmittedProps<Y> = Omit<Omit<Y, "loading">, "data">;
 

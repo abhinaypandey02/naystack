@@ -1,4 +1,4 @@
-import { EnvVariable, getEnv } from "@/src";
+import { EnvVariable, getEnv } from "@/src/env";
 
 export async function getRefreshedAccessToken(token: string) {
   const request = await fetch(

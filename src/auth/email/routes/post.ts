@@ -1,7 +1,7 @@
 import { hash } from "bcryptjs";
 import { NextRequest } from "next/server";
 
-import { EnvVariable, getEnv } from "@/src";
+import { EnvVariable, getEnv } from "@/src/env";
 
 import { handleError } from "../../utils/errors";
 import {

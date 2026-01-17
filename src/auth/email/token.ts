@@ -4,8 +4,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
 
-import { EnvVariable, getEnv } from "@/src";
 import { UserOutput } from "@/src/auth/types";
+import { EnvVariable, getEnv } from "@/src/env";
 
 import { REFRESH_COOKIE_NAME } from "../constants";
 

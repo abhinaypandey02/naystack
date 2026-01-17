@@ -13,7 +13,7 @@ import {
   NonEmptyArray,
 } from "type-graphql";
 
-import { EnvVariable, getEnv } from "@/src";
+import { EnvVariable, getEnv } from "@/src/env";
 
 import { Context } from "./types";
 

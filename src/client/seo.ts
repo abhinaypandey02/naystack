@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 
-import { EnvVariable, getEnv } from "@/src";
+import { EnvVariable, getEnv } from "@/src/env";
 
 export const setupSEO =
   (SEO: {

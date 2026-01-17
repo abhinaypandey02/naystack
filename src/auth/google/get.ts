@@ -3,9 +3,9 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { v4 } from "uuid";
 
-import { EnvVariable, getEnv } from "@/src";
 import { generateRefreshToken } from "@/src/auth/email/token";
 import { InitGoogleAuthOptions } from "@/src/auth/google/index";
+import { EnvVariable, getEnv } from "@/src/env";
 
 import { REFRESH_COOKIE_NAME } from "../constants";
 

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { EnvVariable, getEnv } from "@/src";
 import { getUserIdFromAccessToken } from "@/src/auth/email/token";
 import { InitInstagramAuthOptions } from "@/src/auth/instagram/index";
 import { getLongLivedToken } from "@/src/auth/instagram/utils";
+import { EnvVariable, getEnv } from "@/src/env";
 import { getInstagramUser } from "@/src/socials";
 
 export const getInstagramRoute = ({

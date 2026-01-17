@@ -1,6 +1,6 @@
 import { useToken } from "naystack/auth/email/client";
 
-import { EnvVariable, getEnv } from "@/src";
+import { EnvVariable, getEnv } from "@/src/env";
 
 export const useFileUpload = () => {
   const token = useToken();

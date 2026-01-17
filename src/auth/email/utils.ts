@@ -1,8 +1,8 @@
 import { verify } from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
 
-import { EnvVariable, getEnv } from "@/src";
 import { getUserIdFromRefreshToken } from "@/src/auth/email/token";
+import { EnvVariable, getEnv } from "@/src/env";
 import { Context } from "@/src/graphql";
 
 import { REFRESH_COOKIE_NAME } from "../constants";

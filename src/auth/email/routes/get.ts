@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 
-import { EnvVariable, getEnv } from "@/src";
 import { InitRoutesOptions } from "@/src/auth/email/types";
+import { EnvVariable, getEnv } from "@/src/env";
 
 import { REFRESH_COOKIE_NAME } from "../../constants";
 import {

@@ -1,4 +1,4 @@
-import { EnvVariable, getEnv } from "@/src";
+import { EnvVariable, getEnv } from "@/src/env";
 
 export const getInstagramAuthorizationURLSetup =
   (redirectURL: string) => (token: string) =>
