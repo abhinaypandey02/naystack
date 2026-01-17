@@ -1,4 +1,5 @@
 import type { GraphQLScalarType } from "graphql";
+import { cookies } from "next/headers";
 import type { ClassType } from "type-graphql";
 import {
   Arg,
@@ -11,6 +12,8 @@ import {
   Root,
 } from "type-graphql";
 
+import { REFRESH_COOKIE_NAME } from "../auth/constants";
+import { getUserIdFromRefreshToken } from "../auth/email/token";
 import { AuthorizedContext, Context } from "./types";
 
 type ReturnOptions = Parameters<typeof Query>[1];
@@ -60,6 +63,8 @@ type ParsedGQLTypeWithNullability<
   ? ParsedGQLTypeWithArray<T, MergeNullUndefined> | null | undefined
   : ParsedGQLTypeWithArray<T, MergeNullUndefined>;
 
+type Promisify<T> = T | Promise<T>;
+
 interface BaseDefinition<
   T,
   U,
@@ -83,9 +88,10 @@ interface QueryDefinition<
   fn: (
     ctx: IsAuth extends true ? AuthorizedContext : Context,
     data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
-  ) =>
-    | Promise<ParsedGQLTypeWithNullability<T, OutputNullable, true>>
-    | ParsedGQLTypeWithNullability<T, OutputNullable, true>;
+  ) => Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>;
+  call: (
+    data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
+  ) => Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>;
   mutation?: boolean;
 }
 
@@ -99,10 +105,37 @@ export function query<
   fn: QueryDefinition<T, U, IsAuth, OutputNullable, InputNullable>["fn"],
   options: Omit<
     QueryDefinition<T, U, IsAuth, OutputNullable, InputNullable>,
-    "fn"
+    "fn" | "call"
   >,
 ): QueryDefinition<T, U, IsAuth, OutputNullable, InputNullable> {
-  return { ...options, fn };
+  return { ...options, fn, call: getCaller(fn, options) };
+}
+
+const getUserId = async () => {
+  const Cookie = await cookies();
+  const refresh = Cookie.get(REFRESH_COOKIE_NAME)?.value;
+  return refresh ? getUserIdFromRefreshToken(refresh) : null;
+};
+
+function getCaller<
+  T,
+  U,
+  IsAuth extends boolean = false,
+  OutputNullable extends boolean = false,
+  InputNullable extends boolean = false,
+>(
+  fn: QueryDefinition<T, U, IsAuth, OutputNullable, InputNullable>["fn"],
+  options: Omit<
+    QueryDefinition<T, U, IsAuth, OutputNullable, InputNullable>,
+    "fn" | "call"
+  >,
+) {
+  const ctx = {
+    userId: options.authorized ? getUserId() : null,
+    isRefreshID: true,
+  } as IsAuth extends true ? AuthorizedContext : Context;
+  return (data: ParsedGQLTypeWithNullability<U, InputNullable, false>) =>
+    fn(ctx, data);
 }
 
 interface FieldResolverDefinition<
@@ -117,9 +150,7 @@ interface FieldResolverDefinition<
     root: Root,
     ctx: IsAuth extends true ? AuthorizedContext : Context,
     data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
-  ) =>
-    | Promise<ParsedGQLTypeWithNullability<T, OutputNullable, true>>
-    | ParsedGQLTypeWithNullability<T, OutputNullable, true>;
+  ) => Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>;
 }
 
 export function field<
