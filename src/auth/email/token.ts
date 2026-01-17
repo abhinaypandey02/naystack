@@ -48,12 +48,11 @@ export function getTokenizedResponse(
 }
 
 export function getUserIdFromRefreshToken(
-  refreshKey: string,
   refreshToken?: string,
 ): number | null {
   if (refreshToken)
     try {
-      const decoded = verify(refreshToken, refreshKey);
+      const decoded = verify(refreshToken, getEnv(EnvVariable.REFRESH_KEY));
       if (typeof decoded !== "string" && typeof decoded.id === "number")
         return decoded.id;
     } catch (e) {
