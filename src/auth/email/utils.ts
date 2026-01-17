@@ -74,10 +74,7 @@ export const getContext = (req: NextRequest): Context => {
   const bearer = req.headers.get("authorization");
   if (!bearer) {
     const refresh = req.cookies.get(REFRESH_COOKIE_NAME)?.value;
-    const userId = getUserIdFromRefreshToken(
-      getEnv(EnvVariable.REFRESH_KEY),
-      refresh,
-    );
+    const userId = getUserIdFromRefreshToken(refresh);
     if (userId) return { userId: userId, isRefreshID: true };
     return { userId: null };
   }
@@ -93,3 +90,4 @@ export const getContext = (req: NextRequest): Context => {
   } catch {}
   return { userId: null };
 };
+

@@ -91,13 +91,12 @@ interface QueryDefinition<
   ) => Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>;
   call: (
     data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
-    config?: CallerConfig,
+  ) => Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>;
+  cachedCall: (
+    data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
   ) => Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>;
   mutation?: boolean;
 }
-type CallerConfig = {
-  alwaysPassAuth?: boolean;
-};
 export function query<
   T,
   U,
@@ -111,7 +110,7 @@ export function query<
     "fn" | "call"
   >,
 ): QueryDefinition<T, U, IsAuth, OutputNullable, InputNullable> {
-  return { ...options, fn, call: getCaller(fn, options) };
+  return { ...options, fn, call: getCaller(fn, options), cachedCall };
 }
 
 const getUserId = async () => {
@@ -135,11 +134,9 @@ function getCaller<
 ) {
   return async (
     data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
-    config?: CallerConfig,
   ) => {
     const ctx = {
-      userId:
-        options.authorized || config?.alwaysPassAuth ? await getUserId() : null,
+      userId: await getUserId(),
       isRefreshID: true,
     } as IsAuth extends true ? AuthorizedContext : Context;
     return fn(ctx, data);
