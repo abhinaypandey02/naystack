@@ -140,7 +140,7 @@ function getCaller<
     config?: CallerConfig<IsAuth>,
   ) => {
     if (config?.revalidate) {
-      const cachedFn = (
+      const cachedFn = async (
         data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
         config?: CallerConfig<IsAuth>,
       ) => {
