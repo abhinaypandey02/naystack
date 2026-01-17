@@ -1,4 +1,5 @@
 import type { GraphQLScalarType } from "graphql";
+import { cacheLife, cacheTag } from "next/cache";
 import { cookies } from "next/headers";
 import type { ClassType } from "type-graphql";
 import {
@@ -91,10 +92,14 @@ interface QueryDefinition<
   ) => Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>;
   call: (
     data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
+    config?: CallerConfig<IsAuth>,
   ) => Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>;
   mutation?: boolean;
 }
-
+type CallerConfig<IsAuth extends boolean> = {
+  revalidate?: IsAuth extends true ? never : Parameters<typeof cacheLife>[0];
+  tags?: IsAuth extends true ? never : string[];
+};
 export function query<
   T,
   U,
@@ -130,14 +135,32 @@ function getCaller<
     "fn" | "call"
   >,
 ) {
-  return (data: ParsedGQLTypeWithNullability<U, InputNullable, false>) =>
-    fn(
-      {
-        userId: options.authorized ? getUserId() : null,
-        isRefreshID: true,
-      } as IsAuth extends true ? AuthorizedContext : Context,
-      data,
-    );
+  return async (
+    data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
+    config?: CallerConfig<IsAuth>,
+  ) => {
+    if (config?.revalidate) {
+      const cachedFn = (
+        data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
+        config?: CallerConfig<IsAuth>,
+      ) => {
+        "use cache";
+        if (config?.revalidate) cacheLife(config.revalidate);
+        if (config?.tags) cacheTag(...config.tags);
+        const ctx = {
+          userId: null,
+          isRefreshID: true,
+        } as IsAuth extends true ? AuthorizedContext : Context;
+        return fn(ctx, data);
+      };
+      return cachedFn(data, config);
+    }
+    const ctx = {
+      userId: options.authorized ? await getUserId() : null,
+      isRefreshID: true,
+    } as IsAuth extends true ? AuthorizedContext : Context;
+    return fn(ctx, data);
+  };
 }
 
 interface FieldResolverDefinition<
