@@ -89,11 +89,9 @@ interface QueryDefinition<
     ctx: IsAuth extends true ? AuthorizedContext : Context,
     data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
   ) => Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>;
-  call: IsAuth extends true
-    ? never
-    : (
-        data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
-      ) => Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>;
+  call: (
+    data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
+  ) => Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>;
   authCall: (
     data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
   ) => Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>;
@@ -116,11 +114,7 @@ export function query<
     ...options,
     fn,
     authCall: getAuthCaller(fn),
-    call: getCaller(fn) as IsAuth extends true
-      ? never
-      : (
-          data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
-        ) => Promisify<ParsedGQLTypeWithNullability<T, OutputNullable, true>>,
+    call: options.authorized ? getAuthCaller(fn) : getCaller(fn),
   };
 }
 
