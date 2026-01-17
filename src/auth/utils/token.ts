@@ -4,5 +4,5 @@ import { REFRESH_COOKIE_NAME } from "../constants";
 
 export async function getRefreshToken() {
   const Cookie = await cookies();
-  return Cookie.get(REFRESH_COOKIE_NAME)?.value;
+  return Cookie.get(REFRESH_COOKIE_NAME)?.value || null;
 }
