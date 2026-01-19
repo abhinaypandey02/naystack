@@ -15,18 +15,17 @@ import {
 
 import { EnvVariable, getEnv } from "@/src/env";
 
+import { getContext } from "../auth/email/utils";
 import { Context } from "./types";
 
 export async function initGraphQLServer({
   authChecker,
   resolvers,
   plugins,
-  getContext,
 }: {
   authChecker?: AuthChecker<any>;
   resolvers: NonEmptyArray<Function>;
   plugins?: ApolloServerPlugin[];
-  getContext?: (req: NextRequest) => Promise<any> | any;
 }) {
   const { typeDefs, resolvers: builtResolvers } =
     await buildTypeDefsAndResolvers({
@@ -56,7 +55,7 @@ export async function initGraphQLServer({
     status400ForVariableCoercionErrors: true,
   });
   const handler = startServerAndCreateNextHandler(server, {
-    context: getContext,
+    context: getContext as (req: NextRequest) => Promise<any> | any,
   });
 
   return {

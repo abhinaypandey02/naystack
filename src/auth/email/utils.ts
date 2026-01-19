@@ -90,4 +90,3 @@ export const getContext = (req: NextRequest): Context => {
   } catch {}
   return { userId: null };
 };
-

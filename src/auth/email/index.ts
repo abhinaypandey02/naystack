@@ -1,7 +1,3 @@
-import { NextRequest } from "next/server";
-
-import { getContext } from "@/src/auth/email/utils";
-
 import { getDeleteRoute } from "./routes/delete";
 import { getGetRoute } from "./routes/get";
 import { getPostRoute } from "./routes/post";
@@ -15,6 +11,5 @@ export function getEmailAuthRoutes(options: InitRoutesOptions) {
     POST: getPostRoute(options),
     PUT: getPutRoute(options),
     DELETE: getDeleteRoute(options),
-    getContext,
   };
 }
