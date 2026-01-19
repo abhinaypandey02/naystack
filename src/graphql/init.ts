@@ -22,10 +22,12 @@ export async function initGraphQLServer({
   authChecker,
   resolvers,
   plugins,
+  getContext: overrideGetContext,
 }: {
   authChecker?: AuthChecker<any>;
   resolvers: NonEmptyArray<Function>;
   plugins?: ApolloServerPlugin[];
+  getContext?: (req: NextRequest) => Promise<any> | any;
 }) {
   const { typeDefs, resolvers: builtResolvers } =
     await buildTypeDefsAndResolvers({
@@ -55,7 +57,9 @@ export async function initGraphQLServer({
     status400ForVariableCoercionErrors: true,
   });
   const handler = startServerAndCreateNextHandler(server, {
-    context: getContext as (req: NextRequest) => Promise<any> | any,
+    context:
+      overrideGetContext ||
+      (getContext as (req: NextRequest) => Promise<any> | any),
   });
 
   return {
