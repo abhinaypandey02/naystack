@@ -4,7 +4,8 @@ export type { AuthorizedContext, Context } from "./types";
 export {
   field,
   FieldLibrary,
+  type FieldResponseType,
   query,
   QueryLibrary,
-  type ResponseType,
+  type QueryResponseType,
 } from "./utils";
