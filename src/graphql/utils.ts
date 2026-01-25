@@ -1,3 +1,5 @@
+import "server-only";
+
 import type { GraphQLScalarType } from "graphql";
 import { cookies } from "next/headers";
 import { cache } from "react";
@@ -151,16 +153,18 @@ function getAuthCaller<
     data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
   ) => R,
 ) {
-  return async (
-    data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
-  ): Promise<Awaited<R>> => {
-    "use server";
-    const ctx = {
-      userId: await getUserId(),
-      isRefreshID: true,
-    } as IsAuth extends true ? AuthorizedContext : Context;
-    return await fn(ctx, data);
-  };
+  return cache(
+    async (
+      data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
+    ): Promise<Awaited<R>> => {
+      "use server";
+      const ctx = {
+        userId: await getUserId(),
+        isRefreshID: true,
+      } as IsAuth extends true ? AuthorizedContext : Context;
+      return await fn(ctx, data);
+    },
+  );
 }
 
 function getCaller<
@@ -178,16 +182,18 @@ function getCaller<
     data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
   ) => R,
 ) {
-  return async (
-    data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
-  ): Promise<Awaited<R>> => {
-    "use server";
-    const ctx = {
-      userId: null,
-      isRefreshID: true,
-    } as IsAuth extends true ? AuthorizedContext : Context;
-    return await fn(ctx, data);
-  };
+  return cache(
+    async (
+      data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
+    ): Promise<Awaited<R>> => {
+      "use server";
+      const ctx = {
+        userId: null,
+        isRefreshID: true,
+      } as IsAuth extends true ? AuthorizedContext : Context;
+      return await fn(ctx, data);
+    },
+  );
 }
 
 interface FieldResolverDefinition<
