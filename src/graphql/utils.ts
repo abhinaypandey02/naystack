@@ -1,4 +1,4 @@
-import "server-only";
+"server-only";
 
 import type { GraphQLScalarType } from "graphql";
 import { cookies } from "next/headers";
