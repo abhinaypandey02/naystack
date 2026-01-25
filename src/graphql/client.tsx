@@ -34,6 +34,9 @@ export const ApolloWrapper = ({
       link: new HttpLink({
         uri: getEnv(EnvVariable.NEXT_PUBLIC_GRAPHQL_ENDPOINT),
       }),
+      devtools: {
+        enabled: true,
+      },
     });
   }
   return (
