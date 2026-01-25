@@ -155,6 +155,7 @@ function getAuthCaller<
     async (
       data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
     ): Promise<Awaited<R>> => {
+      "use server";
       const ctx = {
         userId: await getUserId(),
         isRefreshID: true,
@@ -183,6 +184,7 @@ function getCaller<
     async (
       data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
     ): Promise<Awaited<R>> => {
+      "use server";
       const ctx = {
         userId: null,
         isRefreshID: true,
