@@ -71,9 +71,10 @@ export function useAuthQuery<T, V extends OperationVariables>(
     }
   }, [fetch, token, variables, calledVars]);
   const reFetch = useCallback(
-    (v?: V) =>
+    (input: V["input"]) =>
       fetch({
-        variables: v,
+        // @ts-expect-error -- to allow dynamic props
+        variables: { input },
         context: tokenContext(token),
         fetchPolicy: "no-cache",
       }),
