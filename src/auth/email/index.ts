@@ -4,7 +4,7 @@ import { getPostRoute } from "./routes/post";
 import { getPutRoute } from "./routes/put";
 import { InitRoutesOptions } from "./types";
 export { checkAuthStatus } from "./token";
-export { getContext } from "./utils";
+export { getContext, logout } from "./utils";
 
 export function getEmailAuthRoutes(options: InitRoutesOptions) {
   return {

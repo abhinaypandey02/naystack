@@ -1,4 +1,5 @@
 import { verify } from "jsonwebtoken";
+import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getUserIdFromRefreshToken } from "@/src/auth/email/token";
@@ -90,3 +91,13 @@ export const getContext = (req: NextRequest): Context => {
   } catch {}
   return { userId: null };
 };
+
+export async function logout(data?: object) {
+  const Cookie = await cookies();
+  Cookie.delete(REFRESH_COOKIE_NAME);
+  await fetch(getEnv(EnvVariable.NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT), {
+    method: "DELETE",
+    credentials: "include",
+    body: JSON.stringify(data),
+  });
+}
