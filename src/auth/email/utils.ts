@@ -101,3 +101,8 @@ export async function logout(data?: object) {
     body: JSON.stringify(data),
   });
 }
+
+export async function getCurrentRefreshToken() {
+  const Cookie = await cookies();
+  return Cookie.get(REFRESH_COOKIE_NAME)?.value;
+}

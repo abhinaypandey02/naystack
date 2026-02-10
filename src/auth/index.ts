@@ -1,6 +1,7 @@
 export {
   checkAuthStatus,
   getContext,
+  getCurrentRefreshToken,
   getEmailAuthRoutes,
   logout,
 } from "./email";
