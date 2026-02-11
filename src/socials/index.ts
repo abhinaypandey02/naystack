@@ -1,3 +1,14 @@
+/**
+ * Socials module: Instagram and Threads API getters, setters, and webhook handlers.
+ *
+ * @example
+ * ```ts
+ * import { getInstagramUser, sendInstagramMessage, setupInstagramWebhook } from "naystack/socials";
+ * import { getThreads, createThreadsPost, setupThreadsWebhook } from "naystack/socials";
+ * ```
+ *
+ * @module
+ */
 export {
   getInstagramConversation,
   getInstagramConversationByUser,

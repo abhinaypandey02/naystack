@@ -10,10 +10,13 @@ import { handleError } from "../utils/errors";
 import { InitRoutesOptions } from "./types";
 
 /**
- * Parses and validates the request body for auth routes (password, captcha).
- * @param req - Next.js request
- * @param options - Init routes options including error handler
- * @returns Either an error response or validated data with password
+ * Parses and validates the JSON body for sign-up/login routes: ensures `password` is present and,
+ * if `TURNSTILE_KEY` is set, validates the Cloudflare Turnstile captcha.
+ *
+ * @param req - The NextRequest (body is read via `req.json()`).
+ * @param options - Same `InitRoutesOptions` passed to `getEmailAuthRoutes`; used for `onError` when validation fails.
+ * @returns Promise of either `{ error: NextResponse }` (validation failed) or `{ data: { password, ...rest } }` with the validated payload.
+ * @category Auth
  */
 export async function massageRequest(
   req: NextRequest,
@@ -56,10 +59,12 @@ export async function massageRequest(
 }
 
 /**
- * Verifies a Cloudflare Turnstile captcha token.
- * @param token - The captcha response token from the client
- * @param secret - Optional Turnstile secret key (uses env if omitted)
- * @returns True if verification succeeded
+ * Verifies a Cloudflare Turnstile captcha token via the siteverify API.
+ *
+ * @param token - The response token from the Turnstile widget on the client.
+ * @param secret - Your Turnstile secret key.
+ * @returns `true` if verification succeeded, `false` otherwise.
+ * @category Auth
  */
 export async function verifyCaptcha(token: string, secret?: string) {
   const res = await fetch(
@@ -83,9 +88,27 @@ export async function verifyCaptcha(token: string, secret?: string) {
 }
 
 /**
- * Extracts auth context from the request (Bearer token or refresh cookie).
- * @param req - Next.js request
- * @returns Context with userId (or null) and optional isRefreshID flag
+ * Builds the auth context from a NextRequest: reads either the `Authorization: Bearer <token>` header
+ * or the refresh cookie. Use this in REST API routes (outside GraphQL) to identify the current user.
+ *
+ * The GraphQL server uses this automatically — you typically only need it for custom REST endpoints.
+ *
+ * @param req - The NextRequest (headers and cookies are read).
+ * @returns `Context` with `userId: number | null`. If the user was identified via the refresh cookie
+ *   (not an access token), `isRefreshID` is set to `true`.
+ *
+ * @example
+ * ```ts
+ * import { getContext } from "naystack/auth";
+ *
+ * export const POST = async (req: NextRequest) => {
+ *   const ctx = getContext(req);
+ *   if (!ctx?.userId) return new NextResponse("Unauthorized", { status: 401 });
+ *   // ctx.userId is the authenticated user's id
+ * };
+ * ```
+ *
+ * @category Auth
  */
 export const getContext = (req: NextRequest): Context => {
   const bearer = req.headers.get("authorization");

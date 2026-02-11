@@ -1,29 +1,62 @@
-/** Environment variable keys used by the stack. */
+/**
+ * Enum of all environment variable keys used by the naystack stack.
+ * Use with {@link getEnv} or {@link getEnvValue} to read these variables.
+ *
+ * @category Environment
+ */
 export enum EnvVariable {
+  /** GraphQL endpoint URL (client-side, e.g. `/api/graphql`). */
   NEXT_PUBLIC_GRAPHQL_ENDPOINT = "NEXT_PUBLIC_GRAPHQL_ENDPOINT",
+  /** Email auth endpoint URL (client-side, e.g. `/api/email`). */
   NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT = "NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT",
+  /** Google OAuth endpoint URL (client-side, e.g. `/api/google`). */
   NEXT_PUBLIC_GOOGLE_AUTH_ENDPOINT = "NEXT_PUBLIC_GOOGLE_AUTH_ENDPOINT",
+  /** Instagram OAuth endpoint URL (client-side, e.g. `/api/instagram`). */
   NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT = "NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT",
+  /** File upload endpoint URL (client-side, e.g. `/api/file`). */
   NEXT_PUBLIC_FILE_ENDPOINT = "NEXT_PUBLIC_FILE_ENDPOINT",
+  /** Base URL of the app (e.g. `https://yourapp.com`). Used for SEO and Apple Web App metadata. */
   NEXT_PUBLIC_BASE_URL = "NEXT_PUBLIC_BASE_URL",
+  /** Secret key for signing JWT refresh tokens. */
   REFRESH_KEY = "REFRESH_KEY",
+  /** Secret key for signing JWT access tokens. */
   SIGNING_KEY = "SIGNING_KEY",
+  /** Instagram app client secret (from Meta Developer Portal). */
   INSTAGRAM_CLIENT_SECRET = "INSTAGRAM_CLIENT_SECRET",
+  /** Instagram app client id (from Meta Developer Portal). */
   INSTAGRAM_CLIENT_ID = "INSTAGRAM_CLIENT_ID",
+  /** Google OAuth client secret (from Google Cloud Console). */
   GOOGLE_CLIENT_SECRET = "GOOGLE_CLIENT_SECRET",
+  /** Google OAuth client id (from Google Cloud Console). */
   GOOGLE_CLIENT_ID = "GOOGLE_CLIENT_ID",
+  /** Cloudflare Turnstile secret key (optional — enables captcha on auth routes). */
   TURNSTILE_KEY = "TURNSTILE_KEY",
+  /** AWS access key id for S3. */
   AWS_ACCESS_KEY_ID = "AWS_ACCESS_KEY_ID",
+  /** AWS secret access key for S3. */
   AWS_ACCESS_KEY_SECRET = "AWS_ACCESS_KEY_SECRET",
+  /** AWS region for S3 (e.g. `us-east-1`). */
   AWS_REGION = "AWS_REGION",
+  /** AWS S3 bucket name. */
   AWS_BUCKET = "AWS_BUCKET",
+  /** Node environment (`development`, `production`, etc.). Used for Apollo landing page and introspection. */
   NODE_ENV = "NODE_ENV",
 }
 
 /**
- * Reads an environment variable by key (no throw).
- * @param key - EnvVariable enum member
- * @returns Value or undefined
+ * Reads an environment variable by key. Does **not** throw if the value is missing.
+ *
+ * @param key - One of the {@link EnvVariable} enum values.
+ * @returns The value of the env var, or `undefined` if unset.
+ *
+ * @example
+ * ```ts
+ * import { getEnvValue, EnvVariable } from "naystack/env";
+ *
+ * const region = getEnvValue(EnvVariable.AWS_REGION); // "us-east-1" or undefined
+ * ```
+ *
+ * @category Environment
  */
 export const getEnvValue = (key: EnvVariable): string | undefined => {
   switch (key) {
@@ -69,10 +102,26 @@ export const getEnvValue = (key: EnvVariable): string | undefined => {
 };
 
 /**
- * Reads a required env variable; throws if missing unless skipCheck is true.
- * @param key - EnvVariable enum member
- * @param skipCheck - If true, returns string | undefined without throwing
- * @returns Value (or undefined when skipCheck is true)
+ * Reads an environment variable and **throws** if it's missing (unless `skipCheck` is `true`).
+ * Use this for required configuration values.
+ *
+ * @param key - One of the {@link EnvVariable} enum values.
+ * @param skipCheck - If `true`, the function does **not** throw when the value is missing and returns `string | undefined`.
+ *   Useful for optional vars (e.g. `getEnv(EnvVariable.TURNSTILE_KEY, true)`).
+ * @returns The env value. When `skipCheck` is `true`, the type is `string | undefined`; otherwise `string` (throws before returning if missing).
+ *
+ * @example
+ * ```ts
+ * import { getEnv, EnvVariable } from "naystack/env";
+ *
+ * // Required — throws if missing:
+ * const signingKey = getEnv(EnvVariable.SIGNING_KEY);
+ *
+ * // Optional — returns undefined if missing:
+ * const turnstile = getEnv(EnvVariable.TURNSTILE_KEY, true);
+ * ```
+ *
+ * @category Environment
  */
 export function getEnv<T extends boolean = false>(
   key: EnvVariable,

@@ -1,11 +1,22 @@
 import { getInstagramData } from "./utils";
 
 /**
- * Sends a text message to an Instagram user via the Messaging API.
- * @param token - Access token
- * @param to - Recipient Instagram id
- * @param text - Message text
- * @returns Promise of API response (recipient_id, message_id)
+ * Sends a text message to an Instagram user via the Instagram Messaging API.
+ *
+ * @param token - Instagram access token.
+ * @param to - Recipient's Instagram user id.
+ * @param text - Message text to send.
+ * @returns Promise of `{ recipient_id, message_id }` on success.
+ *
+ * @example
+ * ```ts
+ * import { sendInstagramMessage } from "naystack/socials";
+ *
+ * const result = await sendInstagramMessage(accessToken, recipientId, "Hello!");
+ * console.log("Sent message:", result?.message_id);
+ * ```
+ *
+ * @category Socials
  */
 export const sendInstagramMessage = (
   token: string,

@@ -3,9 +3,50 @@ import { Metadata } from "next";
 import { EnvVariable, getEnv } from "@/src/env";
 
 /**
- * Creates a metadata generator for Next.js: (title?, description?, image?) => Metadata.
- * @param SEO - Base config: title, description, siteName, themeColor
- * @returns Function that returns Next.js Metadata for a page
+ * Creates a metadata factory for Next.js pages. Call once with your site's default SEO config,
+ * then call the returned function per-page to generate the `Metadata` object.
+ *
+ * The returned function supports page-specific `title`, `description`, and `image` overrides.
+ * When a page title is provided, it's formatted as `"Page Title • Site Name"`.
+ *
+ * @param SEO - Base defaults for the whole site.
+ * @param SEO.title - Default document title (used when no page-specific title is provided).
+ * @param SEO.description - Default meta description.
+ * @param SEO.siteName - Application/site name (used in openGraph, twitter, and as the separator in titles).
+ * @param SEO.themeColor - Theme color for mobile browsers (e.g. `"#000000"`).
+ * @returns A function `(title?, description?, image?) => Metadata`. Pass page-specific overrides; they fill in or replace the defaults.
+ *
+ * @example Setup in a utility file:
+ * ```ts
+ * // lib/utils/seo.ts
+ * import { setupSEO } from "naystack/client";
+ *
+ * export const getSEO = setupSEO({
+ *   title: "Land Exchange Toolbox - Premium Real Estate Tools",
+ *   description: "Empower your real estate business with advanced tools.",
+ *   siteName: "Land Exchange Toolbox",
+ *   themeColor: "#5b9364",
+ * });
+ * ```
+ *
+ * @example Usage in a page:
+ * ```ts
+ * // app/dashboard/page.tsx
+ * import { getSEO } from "@/lib/utils/seo";
+ *
+ * export const metadata = getSEO("Dashboard", "Your personalized dashboard");
+ * // => title: "Dashboard • Land Exchange Toolbox", description: "Your personalized dashboard"
+ * ```
+ *
+ * @example Usage in generateMetadata:
+ * ```ts
+ * export async function generateMetadata({ params }) {
+ *   const deal = await getDeal(params.id);
+ *   return getSEO(deal.title, deal.description, deal.coverImage);
+ * }
+ * ```
+ *
+ * @category Client
  */
 export const setupSEO =
   (SEO: {

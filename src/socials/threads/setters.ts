@@ -1,11 +1,14 @@
 import { getThreadsData } from "./utils";
 
 /**
- * Creates a Threads container (draft post); must be published with publishContainer.
- * @param token - Access token
- * @param text - Post text
- * @param reply_to_id - Optional parent post id
- * @returns Promise of creation id
+ * Creates a Threads container (draft post). Must be published with `publishContainer`.
+ * This is a low-level function — prefer using {@link createThreadsPost} which handles both steps.
+ *
+ * @param token - Threads access token.
+ * @param text - Post text.
+ * @param reply_to_id - Optional parent post id (for replies).
+ * @returns Promise of the container creation id.
+ * @category Socials
  */
 export function createContainer(
   token: string,
@@ -25,10 +28,13 @@ export function createContainer(
 }
 
 /**
- * Publishes a Threads container (created with createContainer).
- * @param token - Access token
- * @param creation_id - Container id from createContainer
- * @returns Promise of published post id
+ * Publishes a Threads container (created with `createContainer`).
+ * This is a low-level function — prefer using {@link createThreadsPost} which handles both steps.
+ *
+ * @param token - Threads access token.
+ * @param creation_id - Container id from `createContainer`.
+ * @returns Promise of the published post id.
+ * @category Socials
  */
 export function publishContainer(token: string, creation_id: string) {
   return getThreadsData<{ id: string }>(
@@ -42,11 +48,23 @@ export function publishContainer(token: string, creation_id: string) {
 }
 
 /**
- * Creates and publishes a single Threads post (container + publish with delay).
- * @param token - Access token
- * @param text - Post text
- * @param reply_to_id - Optional parent post id
- * @returns Promise of published post id or null
+ * Creates and publishes a single Threads post. Handles the two-step container + publish flow
+ * with an automatic 2-second delay between creation and publishing (required by the Threads API).
+ *
+ * @param token - Threads access token.
+ * @param text - Post text.
+ * @param reply_to_id - Optional parent post id (to make this post a reply).
+ * @returns Promise of the published post id, or `null` if creation failed.
+ *
+ * @example
+ * ```ts
+ * import { createThreadsPost } from "naystack/socials";
+ *
+ * const postId = await createThreadsPost(accessToken, "Hello from Naystack!");
+ * console.log("Published:", postId);
+ * ```
+ *
+ * @category Socials
  */
 export const createThreadsPost = async (
   token: string,
@@ -60,10 +78,25 @@ export const createThreadsPost = async (
 };
 
 /**
- * Creates a thread of posts in order (each can reply to the previous).
- * @param token - Access token
- * @param threads - Array of post text (newlines become %0A)
- * @returns Promise of first published post id
+ * Creates a thread — a sequence of posts where each replies to the previous one.
+ * Newlines in post text are converted to `%0A` for the API.
+ *
+ * @param token - Threads access token.
+ * @param threads - Array of post text strings (in order). Each post after the first becomes a reply to the previous.
+ * @returns Promise of the first published post's id.
+ *
+ * @example
+ * ```ts
+ * import { createThread } from "naystack/socials";
+ *
+ * const firstPostId = await createThread(accessToken, [
+ *   "First post in thread",
+ *   "Second post (reply to first)",
+ *   "Third post (reply to second)",
+ * ]);
+ * ```
+ *
+ * @category Socials
  */
 export const createThread = async (token: string, threads: string[]) => {
   const publishedIDs: string[] = [];

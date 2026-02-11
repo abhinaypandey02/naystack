@@ -25,8 +25,36 @@ import React, {
 import { EnvVariable, getEnv } from "@/src/env";
 
 /**
- * Apollo Client provider for Next.js; uses the configured GraphQL endpoint.
- * @param props - children and optional cacheConfig
+ * Apollo Client provider for Next.js. Wrap your app (or a subtree) so client components can run GraphQL queries and mutations.
+ * The GraphQL endpoint is read from `NEXT_PUBLIC_GRAPHQL_ENDPOINT` env var.
+ *
+ * Must be placed **inside** `AuthWrapper` (since `useAuthQuery` / `useAuthMutation` depend on the auth token).
+ *
+ * @param props - Component props.
+ * @param props.children - React children (your app or page content).
+ * @param props.cacheConfig - Optional `InMemoryCache` config (e.g. `typePolicies`, `addTypename`). Passed to Apollo's `InMemoryCache`.
+ * @returns Provider component that supplies Apollo Client to the tree.
+ *
+ * @example
+ * ```tsx
+ * // app/layout.tsx
+ * import { AuthWrapper } from "naystack/auth/email/client";
+ * import { ApolloWrapper } from "naystack/graphql/client";
+ *
+ * export default function RootLayout({ children }: { children: React.ReactNode }) {
+ *   return (
+ *     <html lang="en">
+ *       <body>
+ *         <AuthWrapper>
+ *           <ApolloWrapper>{children}</ApolloWrapper>
+ *         </AuthWrapper>
+ *       </body>
+ *     </html>
+ *   );
+ * }
+ * ```
+ *
+ * @category GraphQL
  */
 export const ApolloWrapper = ({
   children,
@@ -48,9 +76,13 @@ export const ApolloWrapper = ({
 };
 
 /**
- * Builds Apollo context for authenticated requests (Bearer header).
- * @param token - Access token or null
- * @returns Context object with authorization header, or undefined if no token
+ * Builds the Apollo link context so requests include the user's Bearer token.
+ * Used internally by `useAuthQuery` / `useAuthMutation`; you typically don't call this directly.
+ *
+ * @param token - The JWT access token. If `null`/`undefined`, returns `undefined` (no auth header).
+ * @returns Context object with `headers.authorization` and `credentials: 'omit'`, or `undefined` if no token.
+ *
+ * @category GraphQL
  */
 export const tokenContext = (token?: string | null) => {
   if (!token) return undefined;
@@ -63,10 +95,41 @@ export const tokenContext = (token?: string | null) => {
 };
 
 /**
- * Lazy query hook that runs when token and variables are available; returns [reFetch, result].
- * @param query - TypedDocumentNode for the query
- * @param variables - Query variables
- * @returns Tuple of reFetch(input) and query result
+ * Hook to run a GraphQL query with the current user's token. The query auto-fires when both the token
+ * and variables are available. Returns a refetch function and the Apollo query result.
+ *
+ * Uses `fetchPolicy: "no-cache"` by default to always get fresh data.
+ *
+ * @param query - A `TypedDocumentNode` for the query (e.g. from codegen or a `gql` template).
+ * @param variables - Optional initial variables. Query fires automatically when this and token are set; change to refetch.
+ * @returns Tuple: `[refetch, result]`.
+ *   - `refetch(input)` — runs the query again with the given input (passed as `variables.input`).
+ *   - `result` — `{ data, loading, error }` from Apollo.
+ *
+ * @example Lazy query (no initial variables, manually triggered):
+ * ```tsx
+ * import { useAuthQuery } from "naystack/graphql/client";
+ * import { GET_SUMMARY } from "@/constants/graphql/queries";
+ *
+ * function SummaryCard({ type }: { type: string }) {
+ *   const [getSummary, { loading, data }] = useAuthQuery(GET_SUMMARY);
+ *
+ *   const handleFetch = async () => {
+ *     const result = await getSummary({ type });
+ *     if (result.data?.getSummary) setSummary(result.data.getSummary);
+ *   };
+ *
+ *   return <button onClick={handleFetch} disabled={loading}>Get Summary</button>;
+ * }
+ * ```
+ *
+ * @example Auto-firing query with variables:
+ * ```tsx
+ * const [refetch, { data, loading }] = useAuthQuery(GET_ORGANIZATION_DETAILS, { id: orgId });
+ * // Query fires automatically when orgId and token are available
+ * ```
+ *
+ * @category GraphQL
  */
 export function useAuthQuery<T, V extends OperationVariables>(
   query: TypedDocumentNode<T, V>,
@@ -99,10 +162,39 @@ export function useAuthQuery<T, V extends OperationVariables>(
 }
 
 /**
- * Mutation hook with auth context; returns [method, result] where method(input) runs the mutation.
- * @param mutation - TypedDocumentNode for the mutation
- * @param options - Optional MutationHookOptions
- * @returns Tuple of (input) => mutate and mutation result
+ * Hook to run a GraphQL mutation with the current user's token. Returns a function you call with the mutation input.
+ *
+ * The input is sent as `variables.input` to the GraphQL endpoint.
+ *
+ * @param mutation - A `TypedDocumentNode` for the mutation (e.g. from codegen or a `gql` template).
+ * @param options - Optional Apollo `MutationHookOptions` (e.g. `onCompleted`, `onError`, `refetchQueries`).
+ * @returns Tuple: `[mutate, result]`.
+ *   - `mutate(input)` — runs the mutation with the given input. Returns a Promise with `{ data }`.
+ *   - `result` — `{ data, loading, error }` from Apollo.
+ *
+ * @example
+ * ```tsx
+ * import { useAuthMutation } from "naystack/graphql/client";
+ * import { CREATE_DEAL } from "@/lib/gql/mutations";
+ *
+ * function CreateDealModal({ propertyId }: { propertyId: number }) {
+ *   const [createDeal, { loading }] = useAuthMutation(CREATE_DEAL);
+ *
+ *   const onSubmit = async (values: FormFields) => {
+ *     const response = await createDeal({
+ *       propertyId,
+ *       share: Number(values.share),
+ *       targetProfit: Number(values.targetProfit),
+ *     });
+ *     const dealId = response.data?.createDeal;
+ *     if (dealId) router.push(`/deals/${dealId}`);
+ *   };
+ *
+ *   return <form onSubmit={handleSubmit(onSubmit)}>...</form>;
+ * }
+ * ```
+ *
+ * @category GraphQL
  */
 export function useAuthMutation<T, V extends OperationVariables>(
   mutation: TypedDocumentNode<T, V>,

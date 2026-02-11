@@ -19,9 +19,37 @@ import { getContext } from "../auth/email/utils";
 import { Context } from "./types";
 
 /**
- * Builds the Apollo GraphQL server and Next.js route handlers (GET/POST).
- * @param options - authChecker, resolvers, plugins, optional getContext override
- * @returns Object with GET and POST request handlers
+ * Builds the Apollo GraphQL server and Next.js GET/POST route handlers.
+ * Call this at the top level of your GraphQL route file (e.g. `app/api/(graphql)/route.ts`) and export the returned `GET` and `POST`.
+ *
+ * Uses `type-graphql` to build the schema from the resolver classes you provide (created with `QueryLibrary` and `FieldLibrary`).
+ * The default `authChecker` authorizes requests where `context.userId` is truthy.
+ * The default `getContext` reads the `Authorization: Bearer` header or the refresh cookie — pass a custom one to override.
+ *
+ * In production (`NODE_ENV=production`), introspection is disabled and the Apollo production landing page is shown.
+ * In development, the Apollo Sandbox is available.
+ *
+ * @param options - Configuration object.
+ * @param options.authChecker - Optional custom type-graphql `AuthChecker`. Default: authorized if `context.userId` is truthy.
+ * @param options.resolvers - Array of type-graphql resolver classes (from `QueryLibrary` / `FieldLibrary`). **Required.**
+ * @param options.plugins - Optional Apollo Server plugins (e.g. logging, tracing, caching).
+ * @param options.getContext - Optional function to build context from the request. Default: reads Bearer token or refresh cookie.
+ *   Signature: `(req: NextRequest) => Promise<Context> | Context`. Must return at least `{ userId: number | null }`.
+ * @returns Promise of `{ GET, POST }` — export these as your route's handlers.
+ *
+ * @example
+ * ```ts
+ * // app/api/(graphql)/route.ts
+ * import { initGraphQLServer } from "naystack/graphql";
+ * import { UserResolvers, UserFieldResolvers } from "./User/graphql";
+ * import { ChatResolvers } from "./Chat/graphql";
+ *
+ * export const { GET, POST } = await initGraphQLServer({
+ *   resolvers: [UserResolvers, UserFieldResolvers, ChatResolvers],
+ * });
+ * ```
+ *
+ * @category GraphQL
  */
 export async function initGraphQLServer({
   authChecker,

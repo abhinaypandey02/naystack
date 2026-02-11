@@ -16,6 +16,7 @@ export const getInstagramRoute = ({
   errorRedirectURL,
   onUser,
 }: InitInstagramAuthOptions) => {
+  /** Redirects to error URL with message query param. */
   const handleError = (message: string) =>
     NextResponse.redirect(`${errorRedirectURL}?error=${message}`);
   return async (req: NextRequest) => {

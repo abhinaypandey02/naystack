@@ -7,10 +7,15 @@ import { SetupFileUploadOptions } from "@/src/file/setup";
 import { getDownloadURL, uploadBlob } from "@/src/file/utils";
 
 /**
- * Returns the PUT route handler for file upload (auth required, multipart form with file + type + data).
- * @param options - SetupFileUploadOptions
- * @param client - S3 client
- * @returns Async route handler
+ * Returns the PUT route handler for file upload.
+ *
+ * Requires authentication (Bearer token, not refresh cookie).
+ * Expects multipart form data with fields: `file` (File), `type` (string), and optional `data` (JSON string).
+ *
+ * @param options - `SetupFileUploadOptions` (getKey, onUpload).
+ * @param client - S3 client instance.
+ * @returns Async Next.js route handler for PUT requests.
+ * @category File
  */
 export const getFileUploadPutRoute =
   (options: SetupFileUploadOptions, client: S3Client) =>

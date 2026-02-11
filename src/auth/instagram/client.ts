@@ -2,8 +2,22 @@ import { EnvVariable, getEnv } from "@/src/env";
 
 /**
  * Creates a function that builds the Instagram OAuth authorization URL for a given state token.
- * @param redirectURL - OAuth redirect URI
- * @returns Function (token) => authorization URL string
+ * The state token is typically the user's access token, used to link the Instagram account to the logged-in user.
+ *
+ * @param redirectURL - The OAuth redirect URI registered with Instagram (e.g. `NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT`).
+ * @returns A function `(stateToken: string) => string` that returns the full authorization URL.
+ *
+ * @example
+ * ```ts
+ * import { getInstagramAuthorizationURLSetup } from "naystack/auth/instagram/client";
+ *
+ * const getAuthURL = getInstagramAuthorizationURLSetup("/api/instagram");
+ * const url = getAuthURL(userAccessToken);
+ * // => "https://www.instagram.com/oauth/authorize?client_id=...&state=...&redirect_uri=..."
+ * window.location.href = url;
+ * ```
+ *
+ * @category Auth
  */
 export const getInstagramAuthorizationURLSetup =
   (redirectURL: string) => (token: string) =>

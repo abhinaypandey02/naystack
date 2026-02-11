@@ -7,7 +7,7 @@
   "excludeExternals": true,
   "includeVersion": true,
   "readme": "README.md",
-  "plugin": [],
+  "plugin": ["./typedoc-hide-type-params.mjs"],
   "categorizeByGroup": true,
   "categoryOrder": ["Auth", "GraphQL", "File", "Client", "Socials", "Environment", "*"]
 }

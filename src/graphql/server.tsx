@@ -13,16 +13,67 @@ import { Suspense } from "react";
 
 import { EnvVariable, getEnv } from "@/src/env";
 
+/** Component props type minus loading and data (inferred from Injector Component). */
 type OmittedProps<Y> = Omit<Omit<Y, "loading">, "data">;
 
+/** Props for Injector: either optional or required based on remaining Component props. */
 type ComponentProps<Y> =
   OmittedProps<Y> extends Record<string, never>
     ? { props?: object }
     : { props: OmittedProps<Y> };
 
 /**
- * Wraps a component that needs server-fetched data; shows loading state until fetch resolves.
- * @param props - fetch function, Component (data?, loading), and optional props for Component
+ * Server component that wraps a client component with server-fetched data using Suspense.
+ *
+ * While the `fetch` function is resolving, the `Component` is rendered with `loading={true}` (and no `data`).
+ * Once the fetch resolves, the `Component` re-renders with `loading={false}` and `data` set to the result.
+ *
+ * This is the primary way to inject server-side data into client components in naystack.
+ * Use `.authCall()` or `.call()` from your query definitions inside the `fetch` function.
+ *
+ * @param injectorProps - Configuration object.
+ * @param injectorProps.fetch - Async function that returns the data to pass to the component. Runs on the server.
+ * @param injectorProps.Component - React component that receives `{ data?: T; loading: boolean }` plus any extra props.
+ * @param injectorProps.props - Optional. Any additional props to pass to `Component`. Required if the Component has props other than `data` and `loading`.
+ * @returns A React element that suspends until `fetch()` completes, then renders `Component` with the data.
+ *
+ * @example Simple usage:
+ * ```tsx
+ * import { Injector } from "naystack/graphql/server";
+ * import getCurrentUser from "@/app/api/(graphql)/User/resolvers/get-current-user";
+ * import AuthChecker from "./components/auth-checker";
+ *
+ * export default async function Layout({ children }: { children: React.ReactNode }) {
+ *   return (
+ *     <div>
+ *       {children}
+ *       <Injector fetch={getCurrentUser.authCall} Component={AuthChecker} />
+ *     </div>
+ *   );
+ * }
+ * ```
+ *
+ * @example Fetching multiple queries:
+ * ```tsx
+ * import { Injector } from "naystack/graphql/server";
+ * import getCurrentUser from "@/app/api/(graphql)/User/resolvers/get-current-user";
+ * import getChats from "@/app/api/(graphql)/Chat/resolvers/get-chats";
+ * import { ChatWindow } from "./components/chat-window";
+ *
+ * export default async function ChatPage() {
+ *   return (
+ *     <Injector
+ *       fetch={async () => ({
+ *         user: await getCurrentUser.authCall(),
+ *         chats: await getChats.authCall(),
+ *       })}
+ *       Component={ChatWindow}
+ *     />
+ *   );
+ * }
+ * ```
+ *
+ * @category GraphQL
  */
 export function Injector<T, Y>({
   fetch,
@@ -39,6 +90,8 @@ export function Injector<T, Y>({
     </Suspense>
   );
 }
+
+/** Internal: fetches data and renders Component with data and loading=false. */
 async function InjectorSuspensed<T, Y>({
   fetch,
   Component,
@@ -51,6 +104,7 @@ async function InjectorSuspensed<T, Y>({
   return <Component loading={false} {...((props || {}) as Y)} data={data} />;
 }
 
+/** Registered Apollo client used for server-side query with cookies. */
 const { query: gqlQuery } = registerApolloClient(() => {
   return new ApolloClient({
     cache: new InMemoryCache(),
@@ -61,10 +115,37 @@ const { query: gqlQuery } = registerApolloClient(() => {
 });
 
 /**
- * Server-side GraphQL query using cookies for auth; supports revalidate and tags.
- * @param _query - TypedDocumentNode
- * @param options - variables, revalidate, tags, noCookie
- * @returns Promise of query data
+ * Runs a raw GraphQL query on the server using the registered Apollo client.
+ * Cookies are forwarded automatically so the backend can identify the user.
+ *
+ * Use this in Server Components, Server Actions, or route handlers when you need to
+ * run a query against the GraphQL endpoint (rather than calling a resolver directly with `.call()`/`.authCall()`).
+ *
+ * Supports Next.js ISR via `revalidate` and on-demand revalidation via `tags`.
+ *
+ * @param _query - A `TypedDocumentNode` (e.g. from codegen) defining the query and its result type.
+ * @param options - Optional query options.
+ * @param options.variables - Variables object for the query (must match the document's variable types).
+ * @param options.revalidate - Next.js revalidate in seconds; when set, enables caching with this TTL.
+ * @param options.tags - Next.js cache tags for on-demand revalidation.
+ * @param options.noCookie - If `true`, the request is sent without cookies (unauthenticated).
+ * @returns Promise resolving to the query result data (typed by the document).
+ *
+ * @example
+ * ```ts
+ * import { query } from "naystack/graphql/server";
+ * import { GetUserDocument } from "@/generated/graphql";
+ *
+ * // In a Server Component:
+ * const data = await query(GetUserDocument, {
+ *   variables: { id: userId },
+ *   revalidate: 60,       // Cache for 60s (Next.js ISR)
+ *   tags: ["user"],        // For on-demand revalidation
+ * });
+ * return <Profile user={data.user} />;
+ * ```
+ *
+ * @category GraphQL
  */
 export const query = async <T, V extends OperationVariables>(
   _query: TypedDocumentNode<T, V>,

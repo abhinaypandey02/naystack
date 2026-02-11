@@ -2,6 +2,16 @@ import { getInstagramRoute } from "@/src/auth/instagram/route";
 import { getRefreshedAccessToken } from "@/src/auth/instagram/utils";
 import { InstagramUser } from "@/src/socials/instagram/types";
 
+/**
+ * Options for initializing Instagram OAuth via {@link initInstagramAuth}.
+ *
+ * @property onUser - Called with `(instagramUser, appUserId, accessToken)` after successful OAuth. Return a string to show as error (redirects to `errorRedirectURL`); return `void` on success.
+ * @property successRedirectURL - Where to redirect after successful Instagram auth.
+ * @property errorRedirectURL - Where to redirect on error (with `?error=` query param).
+ * @property refreshKey - Your app secret (e.g. `REFRESH_KEY` env var) used in the flow.
+ *
+ * @category Auth
+ */
 export interface InitInstagramAuthOptions {
   onUser: (
     data: InstagramUser,
@@ -14,9 +24,31 @@ export interface InitInstagramAuthOptions {
 }
 
 /**
- * Initializes Instagram OAuth auth: returns GET route handler and token refresh helper.
- * @param props - Options including onUser, redirect URLs, refreshKey
- * @returns Object with GET route and getRefreshedAccessToken
+ * Initializes Instagram OAuth. Returns a GET handler for the OAuth callback and a helper to refresh long-lived tokens.
+ *
+ * Mount the GET handler on your Instagram auth route (e.g. `app/api/(auth)/instagram/route.ts`).
+ *
+ * Requires env vars: `INSTAGRAM_CLIENT_ID`, `INSTAGRAM_CLIENT_SECRET`, `NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT`.
+ *
+ * @param props - Options. See {@link InitInstagramAuthOptions}.
+ * @returns Object with `GET` (route handler) and `getRefreshedAccessToken` (refreshes a long-lived token).
+ *
+ * @example
+ * ```ts
+ * // app/api/(auth)/instagram/route.ts
+ * import { initInstagramAuth } from "naystack/auth";
+ *
+ * export const { GET, getRefreshedAccessToken } = initInstagramAuth({
+ *   onUser: async (igUser, appUserId, accessToken) => {
+ *     await saveInstagramUser(appUserId, igUser, accessToken);
+ *   },
+ *   successRedirectURL: "/dashboard",
+ *   errorRedirectURL: "/login",
+ *   refreshKey: process.env.REFRESH_KEY!,
+ * });
+ * ```
+ *
+ * @category Auth
  */
 export function initInstagramAuth(props: InitInstagramAuthOptions) {
   return {
