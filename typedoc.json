@@ -1,0 +1,13 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src"],
+  "entryPointStrategy": "expand",
+  "out": "docs",
+  "exclude": ["**/node_modules/**", "**/*.test.ts", "**/*.spec.ts"],
+  "excludeExternals": true,
+  "includeVersion": true,
+  "readme": "README.md",
+  "plugin": [],
+  "categorizeByGroup": true,
+  "categoryOrder": ["Auth", "GraphQL", "File", "Client", "Socials", "Environment", "*"]
+}

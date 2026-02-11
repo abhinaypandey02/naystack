@@ -20,6 +20,12 @@ export interface SetupFileUploadOptions {
     data: object;
   }) => Promise<object>;
 }
+
+/**
+ * Configures file upload: returns PUT route handler and server-side helpers (uploadFile, deleteFile, getUploadURL, getDownloadURL).
+ * @param options - getKey and onUpload callbacks
+ * @returns Object with PUT handler and utility functions
+ */
 export function setupFileUpload(options: SetupFileUploadOptions) {
   const client = getS3Client();
   return {

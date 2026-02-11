@@ -2,6 +2,11 @@ import { Metadata } from "next";
 
 import { EnvVariable, getEnv } from "@/src/env";
 
+/**
+ * Creates a metadata generator for Next.js: (title?, description?, image?) => Metadata.
+ * @param SEO - Base config: title, description, siteName, themeColor
+ * @returns Function that returns Next.js Metadata for a page
+ */
 export const setupSEO =
   (SEO: {
     title: string;

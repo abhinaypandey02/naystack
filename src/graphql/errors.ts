@@ -13,6 +13,12 @@ function getErrorMessage(status?: number) {
   }
 }
 
+/**
+ * Creates a GraphQL error with an optional HTTP status code in extensions.
+ * @param status - HTTP status code (400, 403, 404, or 500)
+ * @param message - Custom message (defaults based on status)
+ * @returns GraphQLError instance
+ */
 export function GQLError(status?: number, message?: string) {
   return new GraphQLError(message || getErrorMessage(status), {
     extensions: {

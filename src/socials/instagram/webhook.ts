@@ -2,6 +2,11 @@ import { NextRequest } from "next/server";
 
 import { verifyWebhook } from "@/src/socials/meta-webhook";
 
+/**
+ * Sets up GET (verification) and POST (events) handlers for the Instagram webhook.
+ * @param options - secret and callback(type, value, id)
+ * @returns Object with GET and POST handlers
+ */
 export const setupInstagramWebhook = (options: {
   secret: string;
   // eslint-disable-next-line -- flexible

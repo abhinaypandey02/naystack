@@ -1,5 +1,12 @@
 import { getThreadsData } from "./utils";
 
+/**
+ * Creates a Threads container (draft post); must be published with publishContainer.
+ * @param token - Access token
+ * @param text - Post text
+ * @param reply_to_id - Optional parent post id
+ * @returns Promise of creation id
+ */
 export function createContainer(
   token: string,
   text: string,
@@ -17,6 +24,12 @@ export function createContainer(
   ).then((res) => res?.id);
 }
 
+/**
+ * Publishes a Threads container (created with createContainer).
+ * @param token - Access token
+ * @param creation_id - Container id from createContainer
+ * @returns Promise of published post id
+ */
 export function publishContainer(token: string, creation_id: string) {
   return getThreadsData<{ id: string }>(
     token,
@@ -28,6 +41,13 @@ export function publishContainer(token: string, creation_id: string) {
   ).then((res) => res?.id);
 }
 
+/**
+ * Creates and publishes a single Threads post (container + publish with delay).
+ * @param token - Access token
+ * @param text - Post text
+ * @param reply_to_id - Optional parent post id
+ * @returns Promise of published post id or null
+ */
 export const createThreadsPost = async (
   token: string,
   text: string,
@@ -39,6 +59,12 @@ export const createThreadsPost = async (
   return publishContainer(token, containerID);
 };
 
+/**
+ * Creates a thread of posts in order (each can reply to the previous).
+ * @param token - Access token
+ * @param threads - Array of post text (newlines become %0A)
+ * @returns Promise of first published post id
+ */
 export const createThread = async (token: string, threads: string[]) => {
   const publishedIDs: string[] = [];
   for (const thread of threads) {

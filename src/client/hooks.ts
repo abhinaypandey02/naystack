@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 
+/**
+ * Tracks element visibility via IntersectionObserver; calls onVisible when the ref target enters view.
+ * @param onVisible - Callback when element becomes visible
+ * @returns Ref to attach to the observed element
+ */
 export function useVisibility(onVisible?: () => void) {
   const visibilityRef = useRef(null);
 
@@ -34,6 +39,11 @@ export function useVisibility(onVisible?: () => void) {
   return visibilityRef;
 }
 
+/**
+ * Returns whether a media query matches (e.g. "(min-width: 768px)").
+ * @param query - Media query string
+ * @returns true/false when on client, null during SSR
+ */
 export function useBreakpoint(query: string) {
   const [matches, setMatches] = useState<boolean | null>(null);
 

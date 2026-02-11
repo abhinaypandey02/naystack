@@ -18,6 +18,11 @@ import { EnvVariable, getEnv } from "@/src/env";
 import { getContext } from "../auth/email/utils";
 import { Context } from "./types";
 
+/**
+ * Builds the Apollo GraphQL server and Next.js route handlers (GET/POST).
+ * @param options - authChecker, resolvers, plugins, optional getContext override
+ * @returns Object with GET and POST request handlers
+ */
 export async function initGraphQLServer({
   authChecker,
   resolvers,

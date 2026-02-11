@@ -24,6 +24,10 @@ import React, {
 
 import { EnvVariable, getEnv } from "@/src/env";
 
+/**
+ * Apollo Client provider for Next.js; uses the configured GraphQL endpoint.
+ * @param props - children and optional cacheConfig
+ */
 export const ApolloWrapper = ({
   children,
   cacheConfig,
@@ -43,6 +47,11 @@ export const ApolloWrapper = ({
   );
 };
 
+/**
+ * Builds Apollo context for authenticated requests (Bearer header).
+ * @param token - Access token or null
+ * @returns Context object with authorization header, or undefined if no token
+ */
 export const tokenContext = (token?: string | null) => {
   if (!token) return undefined;
   return {
@@ -53,6 +62,12 @@ export const tokenContext = (token?: string | null) => {
   };
 };
 
+/**
+ * Lazy query hook that runs when token and variables are available; returns [reFetch, result].
+ * @param query - TypedDocumentNode for the query
+ * @param variables - Query variables
+ * @returns Tuple of reFetch(input) and query result
+ */
 export function useAuthQuery<T, V extends OperationVariables>(
   query: TypedDocumentNode<T, V>,
   variables?: V,
@@ -83,6 +98,12 @@ export function useAuthQuery<T, V extends OperationVariables>(
   return [reFetch, result] as const;
 }
 
+/**
+ * Mutation hook with auth context; returns [method, result] where method(input) runs the mutation.
+ * @param mutation - TypedDocumentNode for the mutation
+ * @param options - Optional MutationHookOptions
+ * @returns Tuple of (input) => mutate and mutation result
+ */
 export function useAuthMutation<T, V extends OperationVariables>(
   mutation: TypedDocumentNode<T, V>,
   options?: MutationHookOptions<T, V>,

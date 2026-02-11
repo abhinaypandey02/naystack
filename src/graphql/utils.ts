@@ -101,6 +101,13 @@ interface QueryDefinition<
   ) => Promise<Awaited<R>>;
   mutation?: boolean;
 }
+
+/**
+ * Defines a type-graphql query or mutation with typed input/output and optional auth.
+ * @param fn - Resolver function (ctx, data) => result
+ * @param options - output, input, outputOptions, inputOptions, authorized, mutation
+ * @returns QueryDefinition with call and authCall
+ */
 export function query<
   T,
   U,
@@ -280,6 +287,12 @@ function getFieldCaller<
   );
 }
 
+/**
+ * Defines a type-graphql field resolver with typed root, context, and input.
+ * @param fn - Resolver (root, ctx, data) => result
+ * @param options - output, input, outputOptions, inputOptions, authorized
+ * @returns FieldResolverDefinition with call and authCall
+ */
 export function field<
   T,
   U,
@@ -345,6 +358,11 @@ export function field<
   };
 }
 
+/**
+ * Builds a type-graphql Resolver class from a map of query definitions.
+ * @param queries - Record of query name to QueryDefinition
+ * @returns Resolver class to pass to buildTypeDefsAndResolvers
+ */
 export function QueryLibrary<
   T extends Record<string, QueryDefinition<any, any, any, any, any, any>>,
 >(queries: T) {
@@ -397,6 +415,12 @@ export function QueryLibrary<
   return GeneratedResolver;
 }
 
+/**
+ * Builds a type-graphql Resolver class for field resolvers on a given type.
+ * @param type - Parent class type
+ * @param queries - Record of field name to FieldResolverDefinition
+ * @returns Resolver class
+ */
 export function FieldLibrary<
   X extends object,
   T extends Record<
@@ -445,10 +469,12 @@ export function FieldLibrary<
   return GeneratedResolver;
 }
 
+/** Inferred response type from a QueryDefinition's call. */
 export type QueryResponseType<
   T extends QueryDefinition<any, any, any, any, any, any>,
 > = Awaited<ReturnType<T["call"]>>;
 
+/** Inferred response type from a FieldResolverDefinition's call. */
 export type FieldResponseType<
   T extends FieldResolverDefinition<any, any, any, any, any, any, any>,
 > = Awaited<ReturnType<T["call"]>>;

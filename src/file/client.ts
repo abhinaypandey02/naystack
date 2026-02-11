@@ -2,6 +2,10 @@ import { useToken } from "naystack/auth/email/client";
 
 import { EnvVariable, getEnv } from "@/src/env";
 
+/**
+ * Hook that returns an upload function (file, type, data?) that PUTs to the file endpoint with the current token.
+ * @returns (file, type, data?) => Promise of { url?, onUploadResponse? } or null
+ */
 export const useFileUpload = () => {
   const token = useToken();
   return (file: File | Blob, type: string, data?: object) => {

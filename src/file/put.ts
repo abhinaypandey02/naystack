@@ -6,6 +6,12 @@ import { getContext } from "@/src/auth/email/utils";
 import { SetupFileUploadOptions } from "@/src/file/setup";
 import { getDownloadURL, uploadBlob } from "@/src/file/utils";
 
+/**
+ * Returns the PUT route handler for file upload (auth required, multipart form with file + type + data).
+ * @param options - SetupFileUploadOptions
+ * @param client - S3 client
+ * @returns Async route handler
+ */
 export const getFileUploadPutRoute =
   (options: SetupFileUploadOptions, client: S3Client) =>
   async (req: NextRequest) => {

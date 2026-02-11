@@ -7,6 +7,13 @@ import {
 
 import { getInstagramData } from "./utils";
 
+/**
+ * Fetches Instagram user (default "me") with optional fields.
+ * @param token - Access token
+ * @param id - User id (default "me")
+ * @param fields - Optional field list
+ * @returns Promise of user data
+ */
 export const getInstagramUser = <T = InstagramUser>(
   token: string,
   id?: string,
@@ -17,6 +24,13 @@ export const getInstagramUser = <T = InstagramUser>(
   });
 };
 
+/**
+ * Fetches current user's media list.
+ * @param token - Access token
+ * @param fields - Optional field list
+ * @param limit - Max items (default 12)
+ * @returns Promise of media list response
+ */
 export const getInstagramMedia = <T = InstagramMedia>(
   token: string,
   fields?: string[],
@@ -28,6 +42,13 @@ export const getInstagramMedia = <T = InstagramMedia>(
   });
 };
 
+/**
+ * Fetches Instagram conversations with pagination (fetchMore).
+ * @param token - Access token
+ * @param limit - Page size (default 25)
+ * @param cursor - Optional after cursor
+ * @returns Promise of { data, fetchMore? }
+ */
 export const getInstagramConversations = async (
   token: string,
   limit: number = 25,
@@ -55,6 +76,12 @@ export const getInstagramConversations = async (
   };
 };
 
+/**
+ * Fetches conversations filtered by user id.
+ * @param token - Access token
+ * @param userID - Instagram user id
+ * @returns Promise of conversations response
+ */
 export const getInstagramConversationsByUser = (
   token: string,
   userID: string,
@@ -68,6 +95,13 @@ export const getInstagramConversationsByUser = (
     },
   );
 };
+
+/**
+ * Fetches the single conversation between the current user and the given user.
+ * @param token - Access token
+ * @param userID - Other participant's id
+ * @returns Promise of conversation or undefined
+ */
 export const getInstagramConversationByUser = async (
   token: string,
   userID: string,
@@ -76,6 +110,13 @@ export const getInstagramConversationByUser = async (
   return res?.data?.find((item) => item.participants?.data.length === 2);
 };
 
+/**
+ * Fetches a single conversation by id with messages and participants.
+ * @param token - Access token
+ * @param id - Conversation id
+ * @param cursor - Optional pagination cursor
+ * @returns Promise of { messages, participants, fetchMore? }
+ */
 export const getInstagramConversation = async (
   token: string,
   id: string,
@@ -99,6 +140,13 @@ export const getInstagramConversation = async (
   };
 };
 
+/**
+ * Fetches a single Instagram message by id.
+ * @param token - Access token
+ * @param id - Message id
+ * @param fields - Optional field list
+ * @returns Promise of message data
+ */
 export const getInstagramMessage = <T = InstagramMessage>(
   token: string,
   id: string,

@@ -2,6 +2,11 @@ import { NextRequest } from "next/server";
 
 import { verifyWebhook } from "@/src/socials/meta-webhook";
 
+/**
+ * Sets up GET (verification) and POST (events) handlers for the Threads webhook.
+ * @param options - secret and callback(field, value) returning boolean
+ * @returns Object with GET and POST handlers
+ */
 export const setupThreadsWebhook = (options: {
   secret: string;
   // eslint-disable-next-line -- flexible

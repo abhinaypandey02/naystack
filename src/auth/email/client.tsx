@@ -19,6 +19,11 @@ export const TokenContext = createContext<{
   token: null,
   setToken: () => null,
 });
+
+/**
+ * Provider that fetches the current access token and exposes it via TokenContext.
+ * @param props - React children
+ */
 export const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   useEffect(() => {
@@ -35,16 +40,27 @@ export const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+/**
+ * Returns the current access token from TokenContext.
+ * @returns Token string or null
+ */
 export function useToken() {
   const { token } = useContext(TokenContext);
   return token;
 }
 
+/**
+ * Returns the setState function for the access token from TokenContext.
+ */
 export function useSetToken() {
   const { setToken } = useContext(TokenContext);
   return setToken;
 }
 
+/**
+ * Returns a sign-up function that POSTs to the auth endpoint and updates the token on success.
+ * @returns Async (data) => null on success, error text on failure
+ */
 export function useSignUp() {
   const setToken = useSetToken();
   return useCallback(
@@ -68,6 +84,10 @@ export function useSignUp() {
   );
 }
 
+/**
+ * Returns a login function that PUTs to the auth endpoint and updates the token on success.
+ * @returns Async (data) => null on success, error text on failure
+ */
 export function useLogin() {
   const setToken = useSetToken();
   return useCallback(
@@ -91,6 +111,10 @@ export function useLogin() {
   );
 }
 
+/**
+ * Returns a logout function that clears the token and calls the auth DELETE endpoint.
+ * @returns Async (data?) => void
+ */
 export function useLogout() {
   const setToken = useSetToken();
   return useCallback(

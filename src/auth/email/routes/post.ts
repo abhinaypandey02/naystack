@@ -13,6 +13,11 @@ import {
 import { InitRoutesOptions } from "../types";
 import { massageRequest } from "../utils";
 
+/**
+ * Returns the POST route handler for sign up.
+ * @param options - InitRoutesOptions
+ * @returns Async route handler
+ */
 export const getPostRoute =
   (options: InitRoutesOptions) => async (req: NextRequest) => {
     const { data, error } = await massageRequest(req, options);

@@ -12,6 +12,11 @@ import {
 import { InitRoutesOptions } from "../types";
 import { massageRequest } from "../utils";
 
+/**
+ * Returns the PUT route handler for login.
+ * @param options - InitRoutesOptions
+ * @returns Async route handler
+ */
 export const getPutRoute =
   (options: InitRoutesOptions) => async (req: NextRequest) => {
     const { data, error } = await massageRequest(req, options);

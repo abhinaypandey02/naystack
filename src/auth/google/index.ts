@@ -10,6 +10,11 @@ export interface InitGoogleAuthOptions {
   errorRedirectURL?: string;
 }
 
+/**
+ * Initializes Google OAuth: returns GET route handler for auth flow.
+ * @param props - Options including getUserIdFromEmail, redirectURL, errorRedirectURL
+ * @returns Object with GET route handler
+ */
 export function initGoogleAuth(props: InitGoogleAuthOptions) {
   return {
     GET: getGoogleGetRoute(props),

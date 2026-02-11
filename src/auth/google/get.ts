@@ -9,6 +9,11 @@ import { EnvVariable, getEnv } from "@/src/env";
 
 import { REFRESH_COOKIE_NAME } from "../constants";
 
+/**
+ * Returns the GET route handler for Google OAuth (initiate and callback).
+ * @param options - InitGoogleAuthOptions
+ * @returns Async route handler
+ */
 export const getGoogleGetRoute = ({
   getUserIdFromEmail,
   redirectURL,

@@ -1,3 +1,10 @@
+/**
+ * Builds Threads Graph API URL with path and query params (includes access_token).
+ * @param token - Access token
+ * @param path - API path
+ * @param params - Query params
+ * @returns Full URL string
+ */
 export function getThreadsURL(
   token: string,
   path: string,
@@ -8,6 +15,14 @@ export function getThreadsURL(
     .join("&")}&access_token=${token}`;
 }
 
+/**
+ * Fetches JSON from Threads Graph API (GET or POST).
+ * @param token - Access token
+ * @param path - API path
+ * @param params - Query params
+ * @param method - "POST" for mutations
+ * @returns Promise of response data or null
+ */
 export function getThreadsData<T>(
   token: string,
   path: string,

@@ -1,3 +1,4 @@
+/** Environment variable keys used by the stack. */
 export enum EnvVariable {
   NEXT_PUBLIC_GRAPHQL_ENDPOINT = "NEXT_PUBLIC_GRAPHQL_ENDPOINT",
   NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT = "NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT",
@@ -19,6 +20,11 @@ export enum EnvVariable {
   NODE_ENV = "NODE_ENV",
 }
 
+/**
+ * Reads an environment variable by key (no throw).
+ * @param key - EnvVariable enum member
+ * @returns Value or undefined
+ */
 export const getEnvValue = (key: EnvVariable): string | undefined => {
   switch (key) {
     case EnvVariable.NEXT_PUBLIC_GRAPHQL_ENDPOINT:
@@ -62,6 +68,12 @@ export const getEnvValue = (key: EnvVariable): string | undefined => {
   }
 };
 
+/**
+ * Reads a required env variable; throws if missing unless skipCheck is true.
+ * @param key - EnvVariable enum member
+ * @param skipCheck - If true, returns string | undefined without throwing
+ * @returns Value (or undefined when skipCheck is true)
+ */
 export function getEnv<T extends boolean = false>(
   key: EnvVariable,
   skipCheck?: T,

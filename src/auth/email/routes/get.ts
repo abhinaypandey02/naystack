@@ -10,6 +10,11 @@ import {
   getUserIdFromRefreshToken,
 } from "../token";
 
+/**
+ * Returns the GET route handler for token refresh (exchange refresh cookie for new tokens).
+ * @param options - InitRoutesOptions
+ * @returns Async route handler
+ */
 export const getGetRoute =
   (options: InitRoutesOptions) => async (req: NextRequest) => {
     const refresh = req.cookies.get(REFRESH_COOKIE_NAME)?.value;

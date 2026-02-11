@@ -1,5 +1,10 @@
 import { EnvVariable, getEnv } from "@/src/env";
 
+/**
+ * Exchanges a long-lived Instagram token for a refreshed token.
+ * @param token - Current long-lived access token
+ * @returns New access token or undefined
+ */
 export async function getRefreshedAccessToken(token: string) {
   const request = await fetch(
     `https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${token}`,
@@ -8,6 +13,14 @@ export async function getRefreshedAccessToken(token: string) {
   return response.access_token;
 }
 
+/**
+ * Exchanges an OAuth code for a long-lived Instagram access token.
+ * @param code - OAuth authorization code from redirect
+ * @param redirectURL - Registered redirect URI
+ * @param clientId - Instagram app client id
+ * @param clientSecret - Instagram app client secret
+ * @returns Object with accessToken and userId, or undefined
+ */
 export async function getLongLivedToken(
   code: string,
   redirectURL: string,

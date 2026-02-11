@@ -7,6 +7,10 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 import { EnvVariable, getEnv } from "@/src/env";
 
+/**
+ * Creates an S3 client using env credentials (AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY_SECRET, AWS_REGION).
+ * @returns S3Client instance
+ */
 export const getS3Client = () =>
   new S3Client({
     region: getEnv(EnvVariable.AWS_REGION),
@@ -24,6 +28,11 @@ function getKey(keys: string | string[]) {
   return typeof keys === "string" ? keys : keys.join("/");
 }
 
+/**
+ * Returns a function that generates a presigned PUT URL for uploading to the given key(s).
+ * @param client - S3 client
+ * @returns (keys) => presigned URL (5min expiry)
+ */
 export const getUploadURL = (client: S3Client) => (keys: string | string[]) => {
   const command = new PutObjectCommand({
     Bucket: getEnv(EnvVariable.AWS_BUCKET),
@@ -32,10 +41,21 @@ export const getUploadURL = (client: S3Client) => (keys: string | string[]) => {
   });
   return getSignedUrl(client, command, { expiresIn: 300 });
 };
+
+/**
+ * Builds the public download URL for one or more keys in the configured bucket.
+ * @param keys - Key or key path (array joined by /)
+ * @returns Full HTTPS URL
+ */
 export const getDownloadURL = (keys: string | string[]) => {
   return `${URL_PREFIX}${getKey(keys)}`;
 };
 
+/**
+ * Returns a function that uploads a file (by URL or Blob) to the given key(s).
+ * @param client - S3 client
+ * @returns Async (keys, { url?, blob? }) => download URL or null
+ */
 export const uploadFile =
   (client: S3Client) =>
   async (
@@ -58,6 +78,11 @@ export const uploadFile =
     return null;
   };
 
+/**
+ * Returns a function that deletes an object by its full S3 URL.
+ * @param client - S3 client
+ * @returns Async (url) => true if deleted, false otherwise
+ */
 export const deleteFile = (client: S3Client) => async (url: string) => {
   const key = url.split(URL_PREFIX)[1];
   if (key) {
@@ -76,6 +101,11 @@ export const deleteFile = (client: S3Client) => async (url: string) => {
   return false;
 };
 
+/**
+ * Returns a function that uploads a Blob/File to S3 at the given key.
+ * @param client - S3 client
+ * @returns Async (file, key) => PutObjectCommand result
+ */
 export const uploadBlob =
   (client: S3Client) => async (file: File | Blob, key: string) => {
     const fileBuffer = await file.arrayBuffer();

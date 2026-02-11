@@ -20,6 +20,10 @@ type ComponentProps<Y> =
     ? { props?: object }
     : { props: OmittedProps<Y> };
 
+/**
+ * Wraps a component that needs server-fetched data; shows loading state until fetch resolves.
+ * @param props - fetch function, Component (data?, loading), and optional props for Component
+ */
 export function Injector<T, Y>({
   fetch,
   Component,
@@ -56,6 +60,12 @@ const { query: gqlQuery } = registerApolloClient(() => {
   });
 });
 
+/**
+ * Server-side GraphQL query using cookies for auth; supports revalidate and tags.
+ * @param _query - TypedDocumentNode
+ * @param options - variables, revalidate, tags, noCookie
+ * @returns Promise of query data
+ */
 export const query = async <T, V extends OperationVariables>(
   _query: TypedDocumentNode<T, V>,
   options?: {

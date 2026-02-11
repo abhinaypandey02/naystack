@@ -1,5 +1,4 @@
 import { verify } from "jsonwebtoken";
-import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getUserIdFromRefreshToken } from "@/src/auth/email/token";
@@ -10,6 +9,12 @@ import { REFRESH_COOKIE_NAME } from "../constants";
 import { handleError } from "../utils/errors";
 import { InitRoutesOptions } from "./types";
 
+/**
+ * Parses and validates the request body for auth routes (password, captcha).
+ * @param req - Next.js request
+ * @param options - Init routes options including error handler
+ * @returns Either an error response or validated data with password
+ */
 export async function massageRequest(
   req: NextRequest,
   options: InitRoutesOptions,
@@ -50,6 +55,12 @@ export async function massageRequest(
   };
 }
 
+/**
+ * Verifies a Cloudflare Turnstile captcha token.
+ * @param token - The captcha response token from the client
+ * @param secret - Optional Turnstile secret key (uses env if omitted)
+ * @returns True if verification succeeded
+ */
 export async function verifyCaptcha(token: string, secret?: string) {
   const res = await fetch(
     "https://challenges.cloudflare.com/turnstile/v0/siteverify",
@@ -71,6 +82,11 @@ export async function verifyCaptcha(token: string, secret?: string) {
   return false;
 }
 
+/**
+ * Extracts auth context from the request (Bearer token or refresh cookie).
+ * @param req - Next.js request
+ * @returns Context with userId (or null) and optional isRefreshID flag
+ */
 export const getContext = (req: NextRequest): Context => {
   const bearer = req.headers.get("authorization");
   if (!bearer) {
@@ -91,18 +107,3 @@ export const getContext = (req: NextRequest): Context => {
   } catch {}
   return { userId: null };
 };
-
-export async function logout(data?: object) {
-  const Cookie = await cookies();
-  Cookie.delete(REFRESH_COOKIE_NAME);
-  await fetch(getEnv(EnvVariable.NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT), {
-    method: "DELETE",
-    credentials: "include",
-    body: JSON.stringify(data),
-  });
-}
-
-export async function getCurrentRefreshToken() {
-  const Cookie = await cookies();
-  return Cookie.get(REFRESH_COOKIE_NAME)?.value;
-}

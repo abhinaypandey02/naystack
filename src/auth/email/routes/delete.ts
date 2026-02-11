@@ -5,6 +5,11 @@ import { InitRoutesOptions } from "@/src/auth/email/types";
 import { getTokenizedResponse } from "../token";
 import { getContext } from "../utils";
 
+/**
+ * Returns the DELETE route handler for logout.
+ * @param options - InitRoutesOptions
+ * @returns Async route handler
+ */
 export const getDeleteRoute =
   (options: InitRoutesOptions) => async (req: NextRequest) => {
     if (options.onLogout) {
