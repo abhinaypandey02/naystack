@@ -1,6 +1,6 @@
 # Naystack
 
-A minimal, powerful stack for Next.js app development. Built with **Next.js + Drizzle ORM + GraphQL + S3 + Auth**.
+A minimal, powerful stack for Next.js app development. Provides end-to-end **Auth + GraphQL + File Upload + Other utilities**. With bring-your-own database.
 
 [![npm version](https://img.shields.io/npm/v/naystack.svg)](https://www.npmjs.com/package/naystack)
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
