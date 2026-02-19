@@ -95,9 +95,6 @@
     "drizzle-orm": "^0.44.5",
     "googleapis": "^160.0.0",
     "jsonwebtoken": "^9.0.2",
-    "next": "^16",
-    "react": "^19.2",
-    "react-dom": "^19.2",
     "reflect-metadata": "^0.2.2",
     "type-graphql": "2.0.0-rc.2",
     "uuid": "^13.0.0",
@@ -133,5 +130,10 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/abhinaypandey02/naystack.git"
+  },
+  "peerDependencies": {
+    "react": "^18 || ^19",
+    "react-dom": "^18 || ^19",
+    "next": ">=13"
   }
 }

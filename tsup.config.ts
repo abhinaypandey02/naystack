@@ -2,12 +2,24 @@ import { defineConfig } from "tsup";
 
 export default defineConfig({
   entry: ["src"],
-  format: ["esm", "cjs"], // only esm
+  format: ["esm", "cjs"],
   dts: true,
   clean: true,
   outDir: "dist",
   splitting: false,
-  external: ["naystack/auth/email/client"],
+  external: [
+    "next",
+    "react",
+    "react-dom",
+    "@apollo/server",
+    "@as-integrations/next",
+    "@vercel/functions",
+    "bcryptjs",
+    "@aws-sdk/client-s3",
+    "@aws-sdk/s3-request-presigner",
+    "googleapis",
+    "naystack/auth/email/client",
+  ],
   outExtension({ format }) {
     return {
       js: `.${format}.js`,
