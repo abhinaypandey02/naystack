@@ -1,14 +1,13 @@
 import { getInstagramRoute } from "@/src/auth/instagram/route";
-import { getRefreshedAccessToken } from "@/src/auth/instagram/utils";
+export { getRefreshedInstagramAccessToken } from "@/src/auth/instagram/utils";
 import { InstagramUser } from "@/src/socials/instagram/types";
 
 /**
  * Options for initializing Instagram OAuth via {@link initInstagramAuth}.
  *
  * @property onUser - Called with `(instagramUser, appUserId, accessToken)` after successful OAuth. Return a string to show as error (redirects to `errorRedirectURL`); return `void` on success.
- * @property successRedirectURL - Where to redirect after successful Instagram auth.
+ * @property redirectURL - Where to redirect after successful Instagram auth.
  * @property errorRedirectURL - Where to redirect on error (with `?error=` query param).
- * @property refreshKey - Your app secret (e.g. `REFRESH_KEY` env var) used in the flow.
  *
  * @category Auth
  */
@@ -18,9 +17,8 @@ export interface InitInstagramAuthOptions {
     id: number | null,
     accessToken: string,
   ) => Promise<string | void>;
-  successRedirectURL: string;
+  redirectURL: string;
   errorRedirectURL: string;
-  refreshKey: string;
 }
 
 /**
@@ -53,6 +51,5 @@ export interface InitInstagramAuthOptions {
 export function initInstagramAuth(props: InitInstagramAuthOptions) {
   return {
     GET: getInstagramRoute(props),
-    getRefreshedAccessToken,
   };
 }

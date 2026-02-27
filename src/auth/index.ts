@@ -17,5 +17,5 @@
  */
 export { checkAuthStatus, getContext, getEmailAuthRoutes } from "./email";
 export { initGoogleAuth } from "./google";
-export { initInstagramAuth } from "./instagram";
+export { initInstagramAuth, getRefreshedInstagramAccessToken } from "./instagram";
 export { getRefreshToken } from "./utils/token";

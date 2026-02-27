@@ -12,7 +12,7 @@ import { getInstagramUser } from "@/src/socials";
  * @returns Async route handler for the OAuth callback
  */
 export const getInstagramRoute = ({
-  successRedirectURL,
+  redirectURL,
   errorRedirectURL,
   onUser,
 }: InitInstagramAuthOptions) => {
@@ -44,6 +44,6 @@ export const getInstagramRoute = ({
       instagramData.accessToken,
     );
     if (errorMessage) return handleError(errorMessage);
-    return NextResponse.redirect(successRedirectURL);
+    return NextResponse.redirect(redirectURL);
   };
 };

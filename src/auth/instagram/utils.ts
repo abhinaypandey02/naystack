@@ -5,7 +5,7 @@ import { EnvVariable, getEnv } from "@/src/env";
  * @param token - Current long-lived access token
  * @returns New access token or undefined
  */
-export async function getRefreshedAccessToken(token: string) {
+export async function getRefreshedInstagramAccessToken(token: string) {
   const request = await fetch(
     `https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${token}`,
   );
