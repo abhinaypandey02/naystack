@@ -1,4 +1,4 @@
-import { S3Client } from "@aws-sdk/client-s3";
+import { waitUntil } from "@vercel/functions";
 import { NextRequest, NextResponse } from "next/server";
 import { v4 } from "uuid";
 
@@ -13,13 +13,11 @@ import { getDownloadURL, uploadBlob } from "@/src/file/utils";
  * Expects multipart form data with fields: `file` (File), `type` (string), and optional `data` (JSON string).
  *
  * @param options - `SetupFileUploadOptions` (getKey, onUpload).
- * @param client - S3 client instance.
  * @returns Async Next.js route handler for PUT requests.
  * @category File
  */
 export const getFileUploadPutRoute =
-  (options: SetupFileUploadOptions, client: S3Client) =>
-  async (req: NextRequest) => {
+  (options: SetupFileUploadOptions) => async (req: NextRequest) => {
     const ctx = getContext(req);
     if (!ctx?.userId || ctx.isRefreshID)
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -29,6 +27,7 @@ export const getFileUploadPutRoute =
     if (!file) return NextResponse.json({ error: "no file" }, { status: 400 });
 
     const data = formData.get("data");
+    const async = formData.get("async");
 
     const inputData = {
       type: formData.get("type") + "",
@@ -38,7 +37,10 @@ export const getFileUploadPutRoute =
 
     const fileKey = options.getKey ? await options.getKey(inputData) : v4();
     const url = getDownloadURL(fileKey);
-    await uploadBlob(client)(file, fileKey);
+
+    if (async) waitUntil(uploadBlob(file, fileKey));
+    else await uploadBlob(file, fileKey);
+
     const onUploadResponse = await options.onUpload({
       ...inputData,
       url,

@@ -9,3 +9,4 @@
  * @module
  */
 export { setupFileUpload } from "./setup";
+export { deleteFile, getDownloadURL, getUploadURL, uploadFile } from "./utils";

@@ -8,18 +8,16 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { EnvVariable, getEnv } from "@/src/env";
 
 /**
- * Creates an S3 client using env credentials (`AWS_ACCESS_KEY_ID`, `AWS_ACCESS_KEY_SECRET`, `AWS_REGION`).
- * @returns Configured `S3Client` instance.
+ * S3 client initialised at module load using `AWS_ACCESS_KEY_ID`, `AWS_ACCESS_KEY_SECRET`, and `AWS_REGION`.
  * @category File
  */
-export const getS3Client = () =>
-  new S3Client({
-    region: getEnv(EnvVariable.AWS_REGION),
-    credentials: {
-      accessKeyId: getEnv(EnvVariable.AWS_ACCESS_KEY_ID),
-      secretAccessKey: getEnv(EnvVariable.AWS_ACCESS_KEY_SECRET),
-    },
-  });
+const client = new S3Client({
+  region: getEnv(EnvVariable.AWS_REGION),
+  credentials: {
+    accessKeyId: getEnv(EnvVariable.AWS_ACCESS_KEY_ID),
+    secretAccessKey: getEnv(EnvVariable.AWS_ACCESS_KEY_SECRET),
+  },
+});
 
 const URL_PREFIX = `https://${getEnv(EnvVariable.AWS_BUCKET)}.s3.${getEnv(
   EnvVariable.AWS_REGION,
@@ -31,14 +29,16 @@ function getKey(keys: string | string[]) {
 }
 
 /**
- * Returns a function that generates a presigned PUT URL for uploading to the given S3 key(s).
- * The presigned URL expires after 5 minutes.
+ * Generates a presigned PUT URL for uploading a file to the given S3 key(s).
+ * The URL expires after 5 minutes.
  *
- * @param client - S3 client instance.
- * @returns `(keys: string | string[]) => Promise<string>` — the presigned upload URL.
+ * @param keys - S3 key or key path segments (array joined by `/`).
+ * @returns A presigned upload URL.
  * @category File
  */
-export const getUploadURL = (client: S3Client) => (keys: string | string[]) => {
+export const getUploadURL = (keys: string | string[]) => {
+  if (!checkClient(client)) return;
+
   const command = new PutObjectCommand({
     Bucket: getEnv(EnvVariable.AWS_BUCKET),
     Key: getKey(keys),
@@ -59,43 +59,47 @@ export const getDownloadURL = (keys: string | string[]) => {
 };
 
 /**
- * Returns a function that uploads a file (by URL or Blob) to the given S3 key(s).
+ * Uploads a file to S3 at the given key(s), either from a Blob or a remote URL.
  *
- * @param client - S3 client instance.
- * @returns `(keys, { url?, blob? }) => Promise<string | null>` — the download URL on success, or `null` if no input.
+ * @param keys - S3 key or key path segments (array joined by `/`).
+ * @param options.blob - A Blob/File to upload directly.
+ * @param options.url - A remote URL to fetch and upload. Ignored if `blob` is provided.
+ * @returns The public download URL of the uploaded file, or `null` if neither `blob` nor `url` was provided.
  * @category File
  */
-export const uploadFile =
-  (client: S3Client) =>
-  async (
-    keys: string | string[],
-    {
-      url,
-      blob,
-    }: {
-      blob?: Blob;
-      url?: string;
-    },
-  ) => {
-    if (!blob && !url) return null;
-    const fileBlob = blob || (await fetch(url!).then((file) => file.blob()));
-    if (fileBlob) {
-      const key = getKey(keys);
-      await uploadBlob(client)(fileBlob, key);
-      return getDownloadURL(key);
-    }
-    return null;
-  };
+export const uploadFile = async (
+  keys: string | string[],
+  {
+    url,
+    blob,
+  }: {
+    blob?: Blob;
+    url?: string;
+  },
+) => {
+  if (!checkClient(client)) return;
+
+  if (!blob && !url) return null;
+  const fileBlob = blob || (await fetch(url!).then((file) => file.blob()));
+  if (fileBlob) {
+    const key = getKey(keys);
+    await uploadBlob(fileBlob, key);
+    return getDownloadURL(key);
+  }
+  return null;
+};
 
 /**
- * Returns a function that deletes an S3 object by its full URL.
+ * Deletes an S3 object identified by its full public URL.
  *
- * @param client - S3 client instance.
- * @returns `(url: string) => Promise<boolean>` — `true` if deleted successfully, `false` otherwise.
+ * @param url - The full public URL of the S3 object to delete.
+ * @returns `true` if the object was deleted successfully, `false` otherwise.
  * @category File
  */
-export const deleteFile = (client: S3Client) => async (url: string) => {
+export const deleteFile = async (url: string) => {
   const key = url.split(URL_PREFIX)[1];
+  if (!checkClient(client)) return;
+
   if (key) {
     try {
       await client.send(
@@ -112,24 +116,30 @@ export const deleteFile = (client: S3Client) => async (url: string) => {
   return false;
 };
 
+function checkClient(client: S3Client | undefined): client is S3Client {
+  if (!client) throw new Error("Client does not exist");
+  return true;
+}
+
 /**
- * Returns a function that uploads a Blob/File to S3 at the given key.
+ * Uploads a Blob or File to S3 at the given key with public-read ACL.
  *
- * @param client - S3 client instance.
- * @returns `(file: File | Blob, key: string) => Promise<PutObjectCommandOutput>`.
+ * @param file - The Blob or File to upload.
+ * @param key - The S3 object key.
+ * @returns The `PutObjectCommandOutput` from S3.
  * @category File
  */
-export const uploadBlob =
-  (client: S3Client) => async (file: File | Blob, key: string) => {
-    const fileBuffer = await file.arrayBuffer();
-    return client.send(
-      new PutObjectCommand({
-        Bucket: getEnv(EnvVariable.AWS_BUCKET),
-        Key: key,
-        ACL: "public-read",
-        Body: Buffer.from(fileBuffer),
-        ContentType: file.type,
-        ContentLength: file.size,
-      }),
-    );
-  };
+export const uploadBlob = async (file: File | Blob, key: string) => {
+  if (!checkClient(client)) return;
+  const fileBuffer = await file.arrayBuffer();
+  return client.send(
+    new PutObjectCommand({
+      Bucket: getEnv(EnvVariable.AWS_BUCKET),
+      Key: key,
+      ACL: "public-read",
+      Body: Buffer.from(fileBuffer),
+      ContentType: file.type,
+      ContentLength: file.size,
+    }),
+  );
+};

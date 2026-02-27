@@ -1,11 +1,4 @@
 import { getFileUploadPutRoute } from "@/src/file/put";
-import {
-  deleteFile,
-  getDownloadURL,
-  getS3Client,
-  getUploadURL,
-  uploadFile,
-} from "@/src/file/utils";
 
 /**
  * Options for setting up file upload via {@link setupFileUpload}.
@@ -70,12 +63,7 @@ export interface SetupFileUploadOptions {
  * @category File
  */
 export function setupFileUpload(options: SetupFileUploadOptions) {
-  const client = getS3Client();
   return {
-    PUT: getFileUploadPutRoute(options, client),
-    uploadFile: uploadFile(client),
-    deleteFile: deleteFile(client),
-    getUploadURL: getUploadURL(client),
-    getDownloadURL,
+    PUT: getFileUploadPutRoute(options),
   };
 }
