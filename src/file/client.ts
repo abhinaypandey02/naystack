@@ -80,5 +80,5 @@ export const useFileUpload = () => {
  */
 export interface FileUploadResponseType {
   url?: string;
-  onUploadResponse?: object;
+  data?: object | null;
 }
