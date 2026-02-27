@@ -48,11 +48,16 @@ import { EnvVariable, getEnv } from "@/src/env";
  */
 export const useFileUpload = () => {
   const token = useToken();
-  return (file: File | Blob, type: string, data?: object) => {
+  return (
+    file: File | Blob,
+    type: string,
+    config?: { data?: object; async?: boolean },
+  ) => {
     const formData = new FormData();
     formData.append("type", type);
     formData.append("file", file);
-    if (data) formData.append("data", JSON.stringify(data));
+    if (config?.async) formData.append("async", "true");
+    if (config?.data) formData.append("data", JSON.stringify(config.data));
     return fetch(getEnv(EnvVariable.NEXT_PUBLIC_FILE_ENDPOINT), {
       method: "PUT",
       body: formData,
