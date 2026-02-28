@@ -133,7 +133,7 @@ export const tokenContext = (token?: string | null) => {
  */
 export function useAuthQuery<T, V extends OperationVariables>(
   query: TypedDocumentNode<T, V>,
-  variables?: V,
+  variables?: V["input"],
 ) {
   const token = useToken();
   const [fetch, result] = useLazyQuery(query);
@@ -142,14 +142,15 @@ export function useAuthQuery<T, V extends OperationVariables>(
     if (token && variables && calledVars !== JSON.stringify(variables)) {
       setCalledVars(JSON.stringify(variables));
       void fetch({
-        variables,
+        // @ts-expect-error -- to allow dynamic props
+        variables: { input },
         context: tokenContext(token),
         fetchPolicy: "no-cache",
       });
     }
   }, [fetch, token, variables, calledVars]);
   const reFetch = useCallback(
-    (input: V["input"]) =>
+    (input?: V["input"]) =>
       fetch({
         // @ts-expect-error -- to allow dynamic props
         variables: { input },
@@ -203,7 +204,7 @@ export function useAuthMutation<T, V extends OperationVariables>(
   const token = useToken();
   const [mutate, result] = useMutation(mutation, options);
   const method = useCallback(
-    (input: V["input"]) =>
+    (input?: V["input"]) =>
       mutate({
         // @ts-expect-error -- to allow dynamic props
         variables: { input },
