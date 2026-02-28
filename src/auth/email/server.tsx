@@ -1,5 +1,6 @@
 import { AuthApply } from "naystack/auth/email/client";
 import { cookies } from "next/headers";
+import React from "react";
 
 import { Injector } from "@/src/graphql/server";
 
