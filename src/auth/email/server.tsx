@@ -1,6 +1,6 @@
+import { AuthApply } from "naystack/auth/email/client";
 import { cookies } from "next/headers";
 
-import { AuthApply } from "@/src/auth/email/client";
 import { Injector } from "@/src/graphql/server";
 
 export default function AuthFetch() {
