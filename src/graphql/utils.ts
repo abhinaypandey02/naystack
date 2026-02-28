@@ -22,15 +22,26 @@ type ReturnOptions = Parameters<typeof Query>[1];
 /** Options for @Arg() (e.g. nullable). */
 type ArgsOptions = Parameters<typeof Arg>[2];
 
-/** Maps nullable keys to optional and normalizes null/undefined. */
+/** Recursively applies NormalizeNullUndefined to plain object types, leaves primitives/builtins as-is. */
+type RecurseNNU<T> = T extends (infer U)[]
+  ? RecurseNNU<U>[]
+  : T extends Date | Map<unknown, unknown> | Set<unknown> | Function
+    ? T
+    : T extends object
+      ? NormalizeNullUndefined<T>
+      : T;
+
+/** Maps nullable keys to optional and normalizes null/undefined, recursively. */
 type NormalizeNullUndefined<T> = {
-  // Keys that include null → make optional
-  [K in keyof T as null extends T[K] ? K : never]?: Exclude<T[K], undefined>;
+  // Keys that include null → make optional, recurse into value
+  [K in keyof T as null extends T[K] ? K : never]?: RecurseNNU<
+    Exclude<T[K], null | undefined>
+  > | null;
 } & {
-  // Keys that do not include null → keep as is, but add null if optional
+  // Keys that do not include null → keep as is, but add null if optional, recurse into value
   [K in keyof T as null extends T[K] ? never : K]: undefined extends T[K]
-    ? Exclude<T[K], undefined> | null // optional → add null
-    : T[K];
+    ? RecurseNNU<Exclude<T[K], undefined>> | null // optional → add null
+    : RecurseNNU<T[K]>;
 };
 
 /** Adds nullable option to Query/Arg options. */
