@@ -57,13 +57,7 @@ export const TokenContext = createContext<{
  */
 export const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
-  useEffect(() => {
-    fetch(getEnv(EnvVariable.NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT), {
-      credentials: "include",
-    })
-      .then((res) => res.json())
-      .then((data) => setToken(data.accessToken));
-  }, []);
+
   return (
     <TokenContext.Provider value={{ token, setToken }}>
       {children}
@@ -71,6 +65,26 @@ export const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+export function useAuthFetch() {
+  const setToken = useSetToken();
+  useEffect(() => {
+    fetch(getEnv(EnvVariable.NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT), {
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => setToken(data.accessToken));
+  }, []);
+}
+
+export function AuthApply({ data }: { data?: string | null }) {
+  const setToken = useSetToken();
+  useEffect(() => {
+    if (data) {
+      setToken(data);
+    }
+  }, [data]);
+  return null;
+}
 /**
  * Returns the current JWT access token from TokenContext. Must be used inside `AuthWrapper`.
  *
