@@ -3,9 +3,9 @@ import { getGetRoute } from "./routes/get";
 import { getPostRoute } from "./routes/post";
 import { getPutRoute } from "./routes/put";
 import { InitRoutesOptions } from "./types";
+export { default as AuthFetch } from "./server";
 export { checkAuthStatus } from "./token";
 export { getContext } from "./utils";
-
 /**
  * Returns Next.js route handlers for email auth. Mount them in your auth API route (e.g. `app/api/(auth)/email/route.ts`).
  *
