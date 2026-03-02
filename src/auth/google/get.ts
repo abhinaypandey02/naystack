@@ -71,7 +71,7 @@ export const getGoogleGetRoute = ({
 
       const user = userInfoRequest.data;
       if (user.email) {
-        const { data } = JSON.parse(localState) as { id: string; data: object };
+        const { data } = JSON.parse(localState) as { id: string; data: string };
         const id = await getUserIdFromEmail(user, data);
         const res = NextResponse.redirect(redirectURL);
         if (id) {
