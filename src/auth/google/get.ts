@@ -73,8 +73,8 @@ export const getGoogleGetRoute = ({
       if (user.email) {
         const { data } = JSON.parse(localState) as { id: string; data: string };
         const id = await getUserIdFromEmail(user, data);
-        const res = NextResponse.redirect(redirectURL);
         if (id) {
+          const res = NextResponse.redirect(redirectURL);
           res.cookies.set(
             REFRESH_COOKIE_NAME,
             generateRefreshToken(id, getEnv(EnvVariable.REFRESH_KEY)),
@@ -83,13 +83,13 @@ export const getGoogleGetRoute = ({
               secure: true,
             },
           );
+          res.cookies.set("state", "", {
+            httpOnly: true,
+            secure: true,
+            maxAge: 0,
+          });
+          return res;
         }
-        res.cookies.set("state", "", {
-          httpOnly: true,
-          secure: true,
-          maxAge: 0,
-        });
-        return res;
       }
     }
     return NextResponse.redirect(errorURL);
