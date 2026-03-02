@@ -30,7 +30,10 @@ export const getGoogleGetRoute = ({
     const error = req.nextUrl.searchParams.get("error");
 
     if (!code && !error) {
-      const state = v4();
+      const data = req.nextUrl.searchParams.get("data");
+
+      const stateData = { data, id: v4() };
+      const state = JSON.stringify(stateData);
       const authorizationUrl = oauth2Client.generateAuthUrl({
         scope: [
           "https://www.googleapis.com/auth/userinfo.profile",
@@ -68,7 +71,8 @@ export const getGoogleGetRoute = ({
 
       const user = userInfoRequest.data;
       if (user.email) {
-        const id = await getUserIdFromEmail(user);
+        const { data } = JSON.parse(localState) as { id: string; data: object };
+        const id = await getUserIdFromEmail(user, data);
         const res = NextResponse.redirect(redirectURL);
         if (id) {
           res.cookies.set(

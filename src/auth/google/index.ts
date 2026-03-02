@@ -15,7 +15,10 @@ type Schema$Userinfo = oauth2_v2.Schema$Userinfo;
  * @category Auth
  */
 export interface InitGoogleAuthOptions {
-  getUserIdFromEmail: (email: Schema$Userinfo) => Promise<number | null>;
+  getUserIdFromEmail: (
+    email: Schema$Userinfo,
+    data?: object,
+  ) => Promise<number | null>;
   redirectURL: string;
   errorRedirectURL?: string;
 }
