@@ -61,17 +61,34 @@ export enum EnvVariable {
 export const getEnvValue = (key: EnvVariable): string | undefined => {
   switch (key) {
     case EnvVariable.NEXT_PUBLIC_GRAPHQL_ENDPOINT:
-      return process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT;
+      return (
+        process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT ||
+        process.env.EXPO_PUBLIC_GRAPHQL_ENDPOINT
+      );
     case EnvVariable.NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT:
-      return process.env.NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT;
+      return (
+        process.env.NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT ||
+        process.env.EXPO_PUBLIC_EMAIL_AUTH_ENDPOINT
+      );
     case EnvVariable.NEXT_PUBLIC_GOOGLE_AUTH_ENDPOINT:
-      return process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENDPOINT;
+      return (
+        process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENDPOINT ||
+        process.env.EXPO_PUBLIC_GOOGLE_AUTH_ENDPOINT
+      );
     case EnvVariable.NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT:
-      return process.env.NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT;
+      return (
+        process.env.NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT ||
+        process.env.EXPO_PUBLIC_INSTAGRAM_AUTH_ENDPOINT
+      );
     case EnvVariable.NEXT_PUBLIC_FILE_ENDPOINT:
-      return process.env.NEXT_PUBLIC_FILE_ENDPOINT;
+      return (
+        process.env.NEXT_PUBLIC_FILE_ENDPOINT ||
+        process.env.EXPO_PUBLIC_FILE_ENDPOINT
+      );
     case EnvVariable.NEXT_PUBLIC_BASE_URL:
-      return process.env.NEXT_PUBLIC_BASE_URL;
+      return (
+        process.env.NEXT_PUBLIC_BASE_URL || process.env.EXPO_PUBLIC_BASE_URL
+      );
     case EnvVariable.REFRESH_KEY:
       return process.env.REFRESH_KEY;
     case EnvVariable.SIGNING_KEY:
