@@ -14,6 +14,7 @@ import {
 } from "type-graphql";
 
 import { EnvVariable, getEnv } from "@/src/env";
+import { withCors } from "@/src/utils/route";
 
 import { getContext } from "../auth/email/utils";
 import { Context } from "./types";
@@ -56,11 +57,13 @@ export async function initGraphQLServer({
   resolvers,
   plugins,
   getContext: overrideGetContext,
+  allowedOrigins,
 }: {
   authChecker?: AuthChecker<any>;
   resolvers: NonEmptyArray<Function>;
   plugins?: ApolloServerPlugin[];
   getContext?: (req: NextRequest) => Promise<any> | any;
+  allowedOrigins?: string[];
 }) {
   const { typeDefs, resolvers: builtResolvers } =
     await buildTypeDefsAndResolvers({
@@ -96,7 +99,7 @@ export async function initGraphQLServer({
   });
 
   return {
-    GET: (request: NextRequest) => handler(request),
-    POST: (request: NextRequest) => handler(request),
+    GET: withCors((request: NextRequest) => handler(request), allowedOrigins),
+    POST: withCors((request: NextRequest) => handler(request), allowedOrigins),
   };
 }
