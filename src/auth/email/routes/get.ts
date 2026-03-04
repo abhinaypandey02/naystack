@@ -17,14 +17,10 @@ import {
  */
 export const getGetRoute =
   (options: InitRoutesOptions) => async (req: NextRequest) => {
-    let refresh = req.cookies.get(REFRESH_COOKIE_NAME)?.value;
-
-    if (!refresh) {
-      try {
-        const requestBody = await req.json();
-        refresh = requestBody?.[REFRESH_COOKIE_NAME];
-      } catch (e) {}
-    }
+    const refresh =
+      req.cookies.get(REFRESH_COOKIE_NAME)?.value ||
+      req.nextUrl.searchParams.get(REFRESH_COOKIE_NAME) ||
+      undefined;
 
     const userID = getUserIdFromRefreshToken(refresh);
 

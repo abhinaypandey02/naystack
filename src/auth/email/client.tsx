@@ -82,13 +82,13 @@ export function useAuthFetch(getRefreshToken?: () => Promise<string | null>) {
   const setToken = useSetToken();
 
   const fetchToken = async () => {
-    fetch(getEnv(EnvVariable.NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT), {
+    const url = new URL(getEnv(EnvVariable.NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT));
+    if (getRefreshToken) {
+      const token = await getRefreshToken();
+      if (token) url.searchParams.set(REFRESH_COOKIE_NAME, token);
+    }
+    fetch(url, {
       credentials: "include",
-      body: getRefreshToken
-        ? JSON.stringify({
-            [REFRESH_COOKIE_NAME]: await getRefreshToken(),
-          })
-        : undefined,
     })
       .then((res) => res.json())
       .then((data) => setToken(data.accessToken));
