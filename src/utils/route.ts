@@ -27,9 +27,13 @@ export function withCors<
   if (!allowedOrigins?.length) return handler;
   return (async (req: NextRequest) => {
     const origin = req.headers.get("origin");
-    const corsHeaders = getCorsHeaders(origin, allowedOrigins);
-    // If request has an origin but it's not allowed, reject before executing handler
-    if (origin && !corsHeaders) {
+    // Same-origin POSTs include Origin header — skip CORS logic for those
+    const isSameOrigin = origin === req.nextUrl.origin;
+    const corsHeaders = isSameOrigin
+      ? null
+      : getCorsHeaders(origin, allowedOrigins);
+    // If cross-origin request has an origin but it's not allowed, reject before executing handler
+    if (origin && !isSameOrigin && !corsHeaders) {
       return new NextResponse(null, { status: 403 });
     }
     const response = await handler(req);
