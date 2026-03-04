@@ -78,7 +78,7 @@ export const AuthWrapper = ({
   );
 };
 
-export function useAuthFetch(getRefreshToken?: () => Promise<string>) {
+export function useAuthFetch(getRefreshToken?: () => Promise<string | null>) {
   const setToken = useSetToken();
 
   const fetchToken = async () => {
