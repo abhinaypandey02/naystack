@@ -17,11 +17,16 @@ import {
  */
 export const getGetRoute =
   (options: InitRoutesOptions) => async (req: NextRequest) => {
-    const refresh = req.cookies.get(REFRESH_COOKIE_NAME)?.value;
-    const requestBody = refresh ? null : await req.json();
-    const bodyRefresh = requestBody?.[REFRESH_COOKIE_NAME];
+    let refresh = req.cookies.get(REFRESH_COOKIE_NAME)?.value;
 
-    const userID = getUserIdFromRefreshToken(refresh || bodyRefresh);
+    if (!refresh) {
+      try {
+        const requestBody = await req.json();
+        refresh = requestBody?.[REFRESH_COOKIE_NAME];
+      } catch (e) {}
+    }
+
+    const userID = getUserIdFromRefreshToken(refresh);
 
     if (userID) {
       if (options.onRefresh) {
