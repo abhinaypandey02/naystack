@@ -14,7 +14,7 @@ import {
 } from "type-graphql";
 
 import { EnvVariable, getEnv } from "@/src/env";
-import { withCors } from "@/src/utils/route";
+import { getCorsHeaders, withCors } from "@/src/utils/route";
 
 import { getContext } from "../auth/email/utils";
 import { Context } from "./types";
@@ -101,10 +101,19 @@ export async function initGraphQLServer({
   return {
     GET: withCors((request: NextRequest) => handler(request), allowedOrigins),
     POST: withCors((request: NextRequest) => handler(request), allowedOrigins),
-    OPTIONS: withCors(
-      (_request: NextRequest) =>
-        Promise.resolve(new NextResponse(null, { status: 204 })),
-      allowedOrigins,
-    ),
+    ...(allowedOrigins?.length
+      ? {
+          OPTIONS: (req: NextRequest) => {
+            const corsHeaders = getCorsHeaders(
+              req.headers.get("origin"),
+              allowedOrigins,
+            );
+            return new NextResponse(null, {
+              status: 204,
+              headers: corsHeaders ?? undefined,
+            });
+          },
+        }
+      : {}),
   };
 }
