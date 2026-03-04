@@ -27,9 +27,15 @@ export function withCors<
         allowedOrigins,
       );
       if (corsHeaders) {
-        Object.entries(corsHeaders).forEach(([key, value]) => {
-          response.headers.set(key, value);
+        const newResponse = new NextResponse(response.body, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: new Headers(response.headers),
         });
+        Object.entries(corsHeaders).forEach(([key, value]) => {
+          newResponse.headers.set(key, value);
+        });
+        return newResponse;
       }
       return response;
     });
