@@ -30,4 +30,5 @@ export type InitRoutesOptions = {
   onLogin?: (userId: number | null, body: any) => Promise<void>;
   onRefresh?: (userId: number | null, body: any) => Promise<void>;
   onLogout?: (userId: number | null, body: any) => Promise<void>;
+  allowedOrigins?: string[];
 };

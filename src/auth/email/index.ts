@@ -1,3 +1,6 @@
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+
 import { getDeleteRoute } from "./routes/delete";
 import { getGetRoute } from "./routes/get";
 import { getPostRoute } from "./routes/post";
@@ -6,6 +9,37 @@ import { InitRoutesOptions } from "./types";
 export { default as AuthFetch } from "./server";
 export { checkAuthStatus } from "./token";
 export { getContext } from "./utils";
+
+function getCorsHeaders(origin: string | null, allowedOrigins: string[]) {
+  if (!origin || !allowedOrigins.includes(origin)) return null;
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Credentials": "true",
+  };
+}
+
+function withCors<
+  T extends (req: NextRequest) => Promise<NextResponse | undefined>,
+>(handler: T, allowedOrigins?: string[]): T {
+  if (!allowedOrigins?.length) return handler;
+  return ((req: NextRequest) => {
+    return handler(req).then((response) => {
+      if (!response) return response;
+      const corsHeaders = getCorsHeaders(
+        req.headers.get("origin"),
+        allowedOrigins,
+      );
+      if (corsHeaders) {
+        Object.entries(corsHeaders).forEach(([key, value]) => {
+          response.headers.set(key, value);
+        });
+      }
+      return response;
+    });
+  }) as T;
+}
 /**
  * Returns Next.js route handlers for email auth. Mount them in your auth API route (e.g. `app/api/(auth)/email/route.ts`).
  *
@@ -47,10 +81,25 @@ export { getContext } from "./utils";
  * @category Auth
  */
 export function getEmailAuthRoutes(options: InitRoutesOptions) {
+  const { allowedOrigins } = options;
   return {
-    GET: getGetRoute(options),
-    POST: getPostRoute(options),
-    PUT: getPutRoute(options),
-    DELETE: getDeleteRoute(options),
+    GET: withCors(getGetRoute(options), allowedOrigins),
+    POST: withCors(getPostRoute(options), allowedOrigins),
+    PUT: withCors(getPutRoute(options), allowedOrigins),
+    DELETE: withCors(getDeleteRoute(options), allowedOrigins),
+    ...(allowedOrigins?.length
+      ? {
+          OPTIONS: (req: NextRequest) => {
+            const corsHeaders = getCorsHeaders(
+              req.headers.get("origin"),
+              allowedOrigins,
+            );
+            return new NextResponse(null, {
+              status: 204,
+              headers: corsHeaders ?? undefined,
+            });
+          },
+        }
+      : {}),
   };
 }
