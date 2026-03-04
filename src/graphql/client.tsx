@@ -1,7 +1,10 @@
 "use client";
 
 import {
+  ApolloClient as ApolloClientBasic,
+  ApolloProvider,
   HttpLink,
+  InMemoryCache as InMemoryCacheBasic,
   type InMemoryCacheConfig,
   MutationHookOptions,
   type OperationVariables,
@@ -56,22 +59,43 @@ import { EnvVariable, getEnv } from "@/src/env";
  *
  * @category GraphQL
  */
+
+function makeClient(cacheConfig?: InMemoryCacheConfig) {
+  return new ApolloClient({
+    cache: new InMemoryCache(cacheConfig),
+    link: new HttpLink({
+      uri: getEnv(EnvVariable.NEXT_PUBLIC_GRAPHQL_ENDPOINT),
+    }),
+  });
+}
+
+export const ApolloWrapperNext = ({
+  children,
+  cacheConfig,
+}: PropsWithChildren<{ cacheConfig?: InMemoryCacheConfig }>) => {
+  return (
+    <ApolloNextAppProvider makeClient={() => makeClient(cacheConfig)}>
+      {children}
+    </ApolloNextAppProvider>
+  );
+};
+function makeClientBasic(cacheConfig?: InMemoryCacheConfig) {
+  return new ApolloClientBasic({
+    cache: new InMemoryCacheBasic(cacheConfig),
+    link: new HttpLink({
+      uri: getEnv(EnvVariable.NEXT_PUBLIC_GRAPHQL_ENDPOINT),
+    }),
+  });
+}
+
 export const ApolloWrapper = ({
   children,
   cacheConfig,
 }: PropsWithChildren<{ cacheConfig?: InMemoryCacheConfig }>) => {
-  function makeClient() {
-    return new ApolloClient({
-      cache: new InMemoryCache(cacheConfig),
-      link: new HttpLink({
-        uri: getEnv(EnvVariable.NEXT_PUBLIC_GRAPHQL_ENDPOINT),
-      }),
-    });
-  }
   return (
-    <ApolloNextAppProvider makeClient={makeClient}>
+    <ApolloProvider client={makeClientBasic(cacheConfig)}>
       {children}
-    </ApolloNextAppProvider>
+    </ApolloProvider>
   );
 };
 

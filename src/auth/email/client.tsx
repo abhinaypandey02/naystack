@@ -10,6 +10,7 @@ import React, {
   useState,
 } from "react";
 
+import { REFRESH_COOKIE_NAME } from "@/src/auth/constants";
 import { EnvVariable, getEnv } from "@/src/env";
 
 /**
@@ -17,10 +18,10 @@ import { EnvVariable, getEnv } from "@/src/env";
  * @category Auth
  */
 export const TokenContext = createContext<{
-  token: string | null;
-  setToken: Dispatch<SetStateAction<string | null>>;
+  token: string | null | undefined;
+  setToken: Dispatch<SetStateAction<string | null | undefined>>;
 }>({
-  token: null,
+  token: undefined,
   setToken: () => null,
 });
 
@@ -55,8 +56,20 @@ export const TokenContext = createContext<{
  *
  * @category Auth
  */
-export const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
-  const [token, setToken] = useState<string | null>(null);
+export const AuthWrapper = ({
+  children,
+  onTokenUpdate,
+}: {
+  children: React.ReactNode;
+  onTokenUpdate?: (token: string | null) => void;
+}) => {
+  const [token, setToken] = useState<string | null | undefined>();
+
+  useEffect(() => {
+    if (onTokenUpdate && token !== undefined) {
+      onTokenUpdate(token);
+    }
+  }, [token]);
 
   return (
     <TokenContext.Provider value={{ token, setToken }}>
@@ -65,14 +78,24 @@ export const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export function useAuthFetch() {
+export function useAuthFetch(getRefreshToken?: () => Promise<string>) {
   const setToken = useSetToken();
-  useEffect(() => {
+
+  const fetchToken = async () => {
     fetch(getEnv(EnvVariable.NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT), {
       credentials: "include",
+      body: getRefreshToken
+        ? JSON.stringify({
+            [REFRESH_COOKIE_NAME]: await getRefreshToken(),
+          })
+        : undefined,
     })
       .then((res) => res.json())
       .then((data) => setToken(data.accessToken));
+  };
+
+  useEffect(() => {
+    fetchToken();
   }, []);
 }
 

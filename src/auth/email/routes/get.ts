@@ -18,8 +18,10 @@ import {
 export const getGetRoute =
   (options: InitRoutesOptions) => async (req: NextRequest) => {
     const refresh = req.cookies.get(REFRESH_COOKIE_NAME)?.value;
+    const requestBody = refresh ? null : await req.json();
+    const bodyRefresh = requestBody?.[REFRESH_COOKIE_NAME];
 
-    const userID = getUserIdFromRefreshToken(refresh);
+    const userID = getUserIdFromRefreshToken(refresh || bodyRefresh);
 
     if (userID) {
       if (options.onRefresh) {
