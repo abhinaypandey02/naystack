@@ -1,21 +1,16 @@
 "use client";
 
 import {
-  ApolloClient as ApolloClientBasic,
+  ApolloClient,
   ApolloProvider,
   HttpLink,
-  InMemoryCache as InMemoryCacheBasic,
+  InMemoryCache,
   type InMemoryCacheConfig,
   MutationHookOptions,
   type OperationVariables,
   useLazyQuery,
   useMutation,
 } from "@apollo/client";
-import {
-  ApolloClient,
-  ApolloNextAppProvider,
-  InMemoryCache,
-} from "@apollo/client-integration-nextjs";
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 import { useToken } from "naystack/auth/email/client";
 import React, {
@@ -69,33 +64,12 @@ function makeClient(cacheConfig?: InMemoryCacheConfig) {
   });
 }
 
-export const ApolloWrapperNext = ({
-  children,
-  cacheConfig,
-}: PropsWithChildren<{ cacheConfig?: InMemoryCacheConfig }>) => {
-  return (
-    <ApolloNextAppProvider makeClient={() => makeClient(cacheConfig)}>
-      {children}
-    </ApolloNextAppProvider>
-  );
-};
-function makeClientBasic(cacheConfig?: InMemoryCacheConfig) {
-  return new ApolloClientBasic({
-    cache: new InMemoryCacheBasic(cacheConfig),
-    link: new HttpLink({
-      uri: getEnv(EnvVariable.NEXT_PUBLIC_GRAPHQL_ENDPOINT),
-    }),
-  });
-}
-
 export const ApolloWrapper = ({
   children,
   cacheConfig,
 }: PropsWithChildren<{ cacheConfig?: InMemoryCacheConfig }>) => {
   return (
-    <ApolloProvider client={makeClientBasic(cacheConfig)}>
-      {children}
-    </ApolloProvider>
+    <ApolloProvider client={makeClient(cacheConfig)}>{children}</ApolloProvider>
   );
 };
 

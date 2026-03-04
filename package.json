@@ -33,6 +33,11 @@
       "import": "./dist/graphql/client.esm.js",
       "require": "./dist/graphql/client.cjs.js"
     },
+    "./graphql/next": {
+      "types": "./dist/graphql/next.d.ts",
+      "import": "./dist/graphql/next.esm.js",
+      "require": "./dist/graphql/next.cjs.js"
+    },
     "./auth/email/client": {
       "types": "./dist/auth/email/client.d.ts",
       "import": "./dist/auth/email/client.esm.js",
