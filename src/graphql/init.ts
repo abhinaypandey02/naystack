@@ -6,7 +6,7 @@ import {
   ApolloServerPluginLandingPageProductionDefault,
 } from "@apollo/server/plugin/landingPage/default";
 import { startServerAndCreateNextHandler } from "@as-integrations/next";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
   AuthChecker,
   buildTypeDefsAndResolvers,
@@ -101,5 +101,10 @@ export async function initGraphQLServer({
   return {
     GET: withCors((request: NextRequest) => handler(request), allowedOrigins),
     POST: withCors((request: NextRequest) => handler(request), allowedOrigins),
+    OPTIONS: withCors(
+      (_request: NextRequest) =>
+        Promise.resolve(new NextResponse(null, { status: 204 })),
+      allowedOrigins,
+    ),
   };
 }

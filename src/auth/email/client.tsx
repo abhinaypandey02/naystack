@@ -10,7 +10,7 @@ import React, {
   useState,
 } from "react";
 
-import { REFRESH_COOKIE_NAME } from "@/src/auth/constants";
+import { REFRESH_HEADER_NAME } from "@/src/auth/constants";
 import { EnvVariable, getEnv } from "@/src/env";
 
 /**
@@ -82,13 +82,14 @@ export function useAuthFetch(getRefreshToken?: () => Promise<string | null>) {
   const setToken = useSetToken();
 
   const fetchToken = async () => {
-    const url = new URL(getEnv(EnvVariable.NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT));
-    if (getRefreshToken) {
-      const token = await getRefreshToken();
-      if (token) url.searchParams.set(REFRESH_COOKIE_NAME, token);
-    }
-    fetch(url, {
+    const token = getRefreshToken ? await getRefreshToken() : null;
+    fetch(getEnv(EnvVariable.NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT), {
       credentials: "include",
+      headers: token
+        ? {
+            [REFRESH_HEADER_NAME]: token,
+          }
+        : undefined,
     })
       .then((res) => res.json())
       .then((data) => setToken(data.accessToken));

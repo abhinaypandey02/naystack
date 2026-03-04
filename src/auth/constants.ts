@@ -3,3 +3,5 @@
  * @category Auth
  */
 export const REFRESH_COOKIE_NAME = "refresh";
+
+export const REFRESH_HEADER_NAME = "X-Refresh-Token";

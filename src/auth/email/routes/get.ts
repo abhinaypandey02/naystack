@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { InitRoutesOptions } from "@/src/auth/email/types";
 import { EnvVariable, getEnv } from "@/src/env";
 
-import { REFRESH_COOKIE_NAME } from "../../constants";
+import { REFRESH_COOKIE_NAME, REFRESH_HEADER_NAME } from "../../constants";
 import {
   generateAccessToken,
   getTokenizedResponse,
@@ -19,14 +19,14 @@ export const getGetRoute =
   (options: InitRoutesOptions) => async (req: NextRequest) => {
     const refresh =
       req.cookies.get(REFRESH_COOKIE_NAME)?.value ||
-      req.nextUrl.searchParams.get(REFRESH_COOKIE_NAME) ||
+      req.headers.get(REFRESH_HEADER_NAME) ||
       undefined;
 
     const userID = getUserIdFromRefreshToken(refresh);
 
     if (userID) {
       if (options.onRefresh) {
-        const body = await req.json();
+        const body = await req.json().catch(() => null);
         await options.onRefresh?.(userID, body);
       }
       return getTokenizedResponse(
