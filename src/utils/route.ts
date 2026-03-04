@@ -16,28 +16,27 @@ export function getCorsHeaders(
 }
 
 export function withCors<
-  T extends (req: NextRequest) => Promise<NextResponse | Response | undefined>,
+  T extends (
+    req: NextRequest,
+  ) =>
+    | Promise<NextResponse | Response | undefined>
+    | NextResponse
+    | Response
+    | undefined,
 >(handler: T, allowedOrigins?: string[]): T {
   if (!allowedOrigins?.length) return handler;
-  return ((req: NextRequest) => {
-    return handler(req).then((response) => {
-      if (!response) return response;
-      const corsHeaders = getCorsHeaders(
-        req.headers.get("origin"),
-        allowedOrigins,
-      );
-      if (corsHeaders) {
-        const newResponse = new NextResponse(response.body, {
-          status: response.status,
-          statusText: response.statusText,
-          headers: new Headers(response.headers),
-        });
-        Object.entries(corsHeaders).forEach(([key, value]) => {
-          newResponse.headers.set(key, value);
-        });
-        return newResponse;
-      }
-      return response;
+  return (async (req: NextRequest) => {
+    const origin = req.headers.get("origin");
+    const corsHeaders = getCorsHeaders(origin, allowedOrigins);
+    // If request has an origin but it's not allowed, reject before executing handler
+    if (origin && !corsHeaders) {
+      return new NextResponse(null, { status: 403 });
+    }
+    const response = await handler(req);
+    if (!response || !corsHeaders) return response;
+    Object.entries(corsHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value);
     });
+    return response;
   }) as T;
 }
