@@ -46,6 +46,7 @@ export enum EnvVariable {
 const EXTRA_ENV: Record<string, string> = {};
 
 export function addEnv(key: string, value: string) {
+  console.log("Adding env", key, value);
   EXTRA_ENV[key] = value;
 }
 
@@ -65,6 +66,7 @@ export function addEnv(key: string, value: string) {
  * @category Environment
  */
 export const getEnvValue = (key: EnvVariable): string | undefined => {
+  console.log(EXTRA_ENV, key);
   switch (key) {
     case EnvVariable.NEXT_PUBLIC_GRAPHQL_ENDPOINT:
       return (
