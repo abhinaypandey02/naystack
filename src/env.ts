@@ -43,7 +43,9 @@ export enum EnvVariable {
   NODE_ENV = "NODE_ENV",
 }
 
-const EXTRA_ENV: Record<string, string> = {};
+const EXTRA_ENV =
+  (globalThis as any).__NAYSTACK_ENV__ ||
+  ((globalThis as any).__NAYSTACK_ENV__ = {});
 
 export function addEnv(key: string, value: string) {
   console.log("Adding env", key, value);
