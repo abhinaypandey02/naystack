@@ -67,6 +67,11 @@
       "types": "./dist/file/index.d.ts",
       "import": "./dist/file/index.esm.js",
       "require": "./dist/file/index.cjs.js"
+    },
+    "./env": {
+      "types": "./dist/env.d.ts",
+      "import": "./dist/env.esm.js",
+      "require": "./dist/env.cjs.js"
     }
   },
   "keywords": [
