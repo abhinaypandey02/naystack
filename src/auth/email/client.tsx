@@ -92,7 +92,7 @@ export function useAuthFetch(getRefreshToken?: () => Promise<string | null>) {
         : undefined,
     })
       .then((res) => res.json())
-      .then((data) => setToken(data.accessToken));
+      .then((data) => setToken(data.accessToken || null));
   };
 
   useEffect(() => {
