@@ -18,8 +18,10 @@ export type { AuthorizedContext, Context } from "./types";
 export {
   field,
   FieldLibrary,
+  type FieldResolverDefinition,
   type FieldResponseType,
   query,
+  type QueryDefinition,
   QueryLibrary,
   type QueryResponseType,
 } from "./utils";

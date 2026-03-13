@@ -106,7 +106,7 @@ interface BaseDefinition<
  *
  * @category GraphQL
  */
-interface QueryDefinition<
+export interface QueryDefinition<
   T,
   U,
   IsAuth extends boolean = false,
@@ -283,7 +283,7 @@ function getCaller<
  *
  * @category GraphQL
  */
-interface FieldResolverDefinition<
+export interface FieldResolverDefinition<
   T,
   U,
   Root,
@@ -612,6 +612,7 @@ export function FieldLibrary<
 
     Object.defineProperty(GeneratedResolver.prototype, key, {
       value: async function (root: any, ctx: Context, input?: any) {
+        if (root[key]) return root[key];
         return def.fn(root, ctx, input);
       },
       writable: false,
