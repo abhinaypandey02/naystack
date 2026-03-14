@@ -17,7 +17,7 @@ import React, {
   PropsWithChildren,
   useCallback,
   useEffect,
-  useState,
+  useRef,
 } from "react";
 
 import { EnvVariable, getEnv } from "@/src/env";
@@ -135,18 +135,21 @@ export function useAuthQuery<T, V extends OperationVariables>(
 ) {
   const token = useToken();
   const [fetch, result] = useLazyQuery(query);
-  const [calledVars, setCalledVars] = useState<string | undefined>();
+  const prevVarsRef = useRef<string>(null);
+
   useEffect(() => {
-    if (token && variables && calledVars !== JSON.stringify(variables)) {
-      setCalledVars(JSON.stringify(variables));
+    const serialized = JSON.stringify(variables);
+    if (token && variables && prevVarsRef.current !== serialized) {
+      prevVarsRef.current = serialized;
       void fetch({
         // @ts-expect-error -- to allow dynamic props
-        variables: { input },
+        variables: { input: variables },
         context: tokenContext(token),
         fetchPolicy: "no-cache",
       });
     }
-  }, [fetch, token, variables, calledVars]);
+  }, [fetch, token, variables]);
+
   const reFetch = useCallback(
     (input?: V["input"]) =>
       fetch({
@@ -157,7 +160,8 @@ export function useAuthQuery<T, V extends OperationVariables>(
       }),
     [fetch, token],
   );
-  return [reFetch, result] as const;
+
+  return [reFetch, { ...result, hasAuth: !!token }] as const;
 }
 
 /**
@@ -210,5 +214,5 @@ export function useAuthMutation<T, V extends OperationVariables>(
       }),
     [token],
   );
-  return [method, result] as const;
+  return [method, { ...result, hasAuth: !!token }] as const;
 }
