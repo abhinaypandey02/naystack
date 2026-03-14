@@ -134,7 +134,9 @@ export function useAuthQuery<T, V extends OperationVariables>(
   variables?: V["input"],
 ) {
   const token = useToken();
-  const [fetch, result] = useLazyQuery(query);
+  const [fetch, result] = useLazyQuery(query, {
+    fetchPolicy: "no-cache",
+  });
   const prevVarsRef = useRef<string>(null);
 
   useEffect(() => {
@@ -145,7 +147,6 @@ export function useAuthQuery<T, V extends OperationVariables>(
         // @ts-expect-error -- to allow dynamic props
         variables: { input: variables },
         context: tokenContext(token),
-        fetchPolicy: "no-cache",
       });
     }
   }, [fetch, token, variables]);
@@ -156,7 +157,6 @@ export function useAuthQuery<T, V extends OperationVariables>(
         // @ts-expect-error -- to allow dynamic props
         variables: { input },
         context: tokenContext(token),
-        fetchPolicy: "no-cache",
       }),
     [fetch, token],
   );
