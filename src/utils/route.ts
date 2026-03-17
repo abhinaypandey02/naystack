@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { REFRESH_HEADER_NAME } from "@/src/auth/constants";
 
+/**
+ * Returns CORS headers for the given origin if it is in the allowed list.
+ *
+ * @param origin - The `Origin` header value from the request.
+ * @param allowedOrigins - List of permitted origins.
+ * @returns CORS headers object, or `null` if the origin is not allowed.
+ *
+ * @category Utils
+ */
 export function getCorsHeaders(
   origin: string | null,
   allowedOrigins: string[],
@@ -15,6 +24,17 @@ export function getCorsHeaders(
   };
 }
 
+/**
+ * Wraps a Next.js route handler to add CORS headers for the specified allowed origins.
+ * Same-origin requests are passed through unchanged. Cross-origin requests from
+ * unlisted origins are rejected with HTTP 403.
+ *
+ * @param handler - The route handler to wrap.
+ * @param allowedOrigins - List of permitted origins. If empty or undefined, the handler is returned as-is (no CORS).
+ * @returns The wrapped handler with CORS support.
+ *
+ * @category Utils
+ */
 export function withCors<
   T extends (
     req: NextRequest,

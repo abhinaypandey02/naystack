@@ -33,6 +33,7 @@ export const TokenContext = createContext<{
  * Must be placed **above** `ApolloWrapper` in the component tree (since `ApolloWrapper` needs the token).
  *
  * @param children - React children (e.g. your app or a layout).
+ * @param onTokenUpdate - Optional callback fired whenever the token changes (after initial load). Receives `token` (string) or `null` on logout.
  * @returns TokenContext.Provider wrapping children.
  *
  * @example
@@ -78,6 +79,14 @@ export const AuthWrapper = ({
   );
 };
 
+/**
+ * Fetches the access token on mount by calling the auth endpoint. Stores the result in TokenContext.
+ * Used internally by auth setup; prefer `AuthWrapper` for typical usage.
+ *
+ * @param getRefreshToken - Optional async function that returns a refresh token string (e.g. from cookies or storage). If omitted, the request relies on httpOnly cookies via `credentials: "include"`.
+ *
+ * @category Auth
+ */
 export function useAuthFetch(getRefreshToken?: () => Promise<string | null>) {
   const setToken = useSetToken();
 
@@ -100,6 +109,14 @@ export function useAuthFetch(getRefreshToken?: () => Promise<string | null>) {
   }, []);
 }
 
+/**
+ * Component that applies a server-provided access token into TokenContext on mount.
+ * Useful for hydrating auth state from server-side rendering.
+ *
+ * @param data - The access token string to set. If falsy, no update occurs.
+ *
+ * @category Auth
+ */
 export function AuthApply({ data }: { data?: string | null }) {
   const setToken = useSetToken();
   useEffect(() => {

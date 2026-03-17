@@ -96,14 +96,14 @@ export function getUserIdFromRefreshToken(
 
 /**
  * Decodes an access token and returns the user id from the JWT payload.
- * @param refreshToken - JWT access token string (parameter name is legacy).
+ * @param accessToken - JWT access token string.
  * @returns User id (number) or `null` if the token is invalid, expired, or missing.
  * @category Auth
  */
-export function getUserIdFromAccessToken(refreshToken?: string): number | null {
-  if (refreshToken)
+export function getUserIdFromAccessToken(accessToken?: string): number | null {
+  if (accessToken)
     try {
-      const decoded = verify(refreshToken, getEnv(EnvVariable.SIGNING_KEY));
+      const decoded = verify(accessToken, getEnv(EnvVariable.SIGNING_KEY));
       if (typeof decoded !== "string" && typeof decoded.id === "number")
         return decoded.id;
     } catch (e) {

@@ -9,11 +9,13 @@ import { EnvVariable, getEnv } from "@/src/env";
  * The endpoint is read from `NEXT_PUBLIC_FILE_ENDPOINT` env var. The file is sent as multipart form data
  * along with a `type` string and optional JSON `data` for metadata.
  *
- * @returns A function `(file, type, data?) => Promise<FileUploadResponseType | null>`.
+ * @returns A function `(file, type, config?) => Promise<FileUploadResponseType | null>`.
  *   - `file` — `File` or `Blob` to upload.
  *   - `type` — String category (e.g. `"avatar"`, `"DealDocument"`); sent as form field `type`.
- *   - `data` — Optional JSON-serializable object for metadata; sent as form field `data`.
- *   Resolves to the JSON response `{ url, onUploadResponse }` or `null`.
+ *   - `config` — Optional object with:
+ *     - `data` — JSON-serializable metadata object; sent as form field `data`.
+ *     - `async` — If `true`, the upload is processed asynchronously on the server.
+ *   Resolves to the JSON response `{ url, data }` or `null`.
  *
  * @example
  * ```tsx
@@ -27,9 +29,7 @@ import { EnvVariable, getEnv } from "@/src/env";
  *     setUploading(true);
  *     try {
  *       const result = await uploadFile(file, "DealDocument", {
- *         dealId,
- *         fileName: file.name,
- *         category: "Contract",
+ *         data: { dealId, fileName: file.name, category: "Contract" },
  *       });
  *       if (result?.url) {
  *         console.log("Uploaded:", result.url);
@@ -74,7 +74,7 @@ export const useFileUpload = () => {
  * Shape of the JSON response from the file upload PUT endpoint.
  *
  * @property url - The public S3 URL of the uploaded file.
- * @property onUploadResponse - The return value from the `onUpload` callback in `setupFileUpload`.
+ * @property data - The return value from the `onUpload` callback in `setupFileUpload`.
  *
  * @category File
  */

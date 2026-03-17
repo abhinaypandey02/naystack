@@ -36,13 +36,12 @@ export interface InitInstagramAuthOptions {
  * // app/api/(auth)/instagram/route.ts
  * import { initInstagramAuth } from "naystack/auth";
  *
- * export const { GET, getRefreshedAccessToken } = initInstagramAuth({
+ * export const { GET } = initInstagramAuth({
  *   onUser: async (igUser, appUserId, accessToken) => {
  *     await saveInstagramUser(appUserId, igUser, accessToken);
  *   },
- *   successRedirectURL: "/dashboard",
+ *   redirectURL: "/dashboard",
  *   errorRedirectURL: "/login",
- *   refreshKey: process.env.REFRESH_KEY!,
  * });
  * ```
  *

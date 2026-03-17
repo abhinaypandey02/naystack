@@ -231,14 +231,23 @@ export const { GET } = initGoogleAuth({
 ```typescript
 import { initInstagramAuth } from "naystack/auth";
 
-export const { GET, getRefreshedAccessToken } = initInstagramAuth({
+export const { GET } = initInstagramAuth({
   onUser: async (igUser, appUserId, accessToken) => {
     await saveInstagramUser(appUserId, igUser, accessToken);
   },
-  successRedirectURL: "/dashboard",
+  redirectURL: "/dashboard",
   errorRedirectURL: "/login",
-  refreshKey: process.env.REFRESH_KEY!,
 });
+```
+
+#### `getRefreshedInstagramAccessToken(token)`
+
+Refreshes a long-lived Instagram access token. Exported separately from `naystack/auth`.
+
+```typescript
+import { getRefreshedInstagramAccessToken } from "naystack/auth";
+
+const newToken = await getRefreshedInstagramAccessToken(existingToken);
 ```
 
 ---
@@ -374,18 +383,20 @@ if (!ctx.userId)  throw GQLError(403);                  // "You are not allowed 
 if (!deal)        throw GQLError(404, "Deal not found"); // Custom message
 ```
 
-### Type Helper: `QueryResponseType`
+### Type Helpers: `QueryResponseType` / `FieldResponseType`
 
-Infer the return type of a query definition. Use it to type component props that receive query results.
+Infer the return type of a query or field resolver definition. Use them to type component props that receive resolver results.
 
 ```typescript
-import type { QueryResponseType } from "naystack/graphql";
+import type { QueryResponseType, FieldResponseType } from "naystack/graphql";
 import type getCurrentUser from "@/app/api/(graphql)/User/resolvers/get-current-user";
 import type getDeal from "@/app/api/(graphql)/Deal/queries/get-deal";
+import type sellerField from "@/app/api/(graphql)/Property/resolvers/seller-field";
 
 interface DealDetailsProps {
   user: QueryResponseType<typeof getCurrentUser>;
   deal: QueryResponseType<typeof getDeal>;
+  seller: FieldResponseType<typeof sellerField>;
 }
 ```
 
@@ -571,9 +582,7 @@ function FileUploader({ dealId }: { dealId: number }) {
     setUploading(true);
     try {
       const result = await uploadFile(file, "DealDocument", {
-        dealId,
-        fileName: file.name,
-        category: "Contract",
+        data: { dealId, fileName: file.name, category: "Contract" },
       });
       if (result?.url) {
         console.log("Uploaded:", result.url);
@@ -653,6 +662,8 @@ import {
   getInstagramMedia,
   getInstagramConversations,
   getInstagramConversation,
+  getInstagramConversationByUser,
+  getInstagramConversationsByUser,
   getInstagramMessage,
   sendInstagramMessage,
   setupInstagramWebhook,
@@ -674,6 +685,12 @@ for (const convo of convos.data ?? []) {
 if (convos.fetchMore) {
   const nextPage = await convos.fetchMore();
 }
+
+// Fetch conversations filtered by a specific user
+const userConvos = await getInstagramConversationsByUser(accessToken, userId);
+
+// Fetch the single conversation with a specific user (2-participant thread)
+const convo = await getInstagramConversationByUser(accessToken, userId);
 
 // Send a message
 await sendInstagramMessage(accessToken, recipientId, "Hello!");
