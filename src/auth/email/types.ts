@@ -10,6 +10,7 @@ import { ErrorHandler, UserOutput } from "@/src/auth/types";
  * @property onLogin - Optional callback after successful login. Receives `(userId, requestBody)`.
  * @property onRefresh - Optional callback when GET refresh is used. Receives `(userId, requestBody)`.
  * @property onLogout - Optional callback when DELETE logout is used. Receives `(userId, requestBody)`.
+ * @property allowedOrigins - Optional list of allowed CORS origins. If set, cross-origin requests from unlisted origins are rejected with 403.
  *
  * @example
  * ```ts

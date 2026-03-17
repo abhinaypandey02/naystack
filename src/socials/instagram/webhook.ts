@@ -10,10 +10,10 @@ import { verifyWebhook } from "@/src/socials/meta-webhook";
  *
  * @param options - Configuration object.
  * @param options.secret - The verify token you configured in the Meta Developer Portal.
- * @param options.callback - Called for each webhook event: `(type, value, pageId) => Promise<void>`.
+ * @param options.callback - Called for each webhook event: `(type, value, id) => Promise<void>`.
  *   - `type` — Event type (e.g. `"messaging"`, `"changes"`).
  *   - `value` — Event payload.
- *   - `id` — The page/account id from the entry.
+ *   - `id` — The entry id (page or account id) from the webhook payload.
  * @returns Object with `GET` and `POST` — export as your route's handlers.
  *
  * @example

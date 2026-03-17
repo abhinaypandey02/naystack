@@ -99,10 +99,10 @@ export const tokenContext = (token?: string | null) => {
  * Uses `fetchPolicy: "no-cache"` by default to always get fresh data.
  *
  * @param query - A `TypedDocumentNode` for the query (e.g. from codegen or a `gql` template).
- * @param variables - Optional initial variables. Query fires automatically when this and token are set; change to refetch.
+ * @param variables - Optional initial variables (the `input` value). Automatically wrapped as `{ input: variables }` before sending. Query fires automatically when this and token are set; change to refetch.
  * @returns Tuple: `[refetch, result]`.
- *   - `refetch(input)` — runs the query again with the given input (passed as `variables.input`).
- *   - `result` — `{ data, loading, error }` from Apollo.
+ *   - `refetch(input)` — runs the query again with the given input (wrapped as `variables.input`).
+ *   - `result` — `{ data, loading, error, hasAuth }` from Apollo. `hasAuth` is `true` when an auth token is available.
  *
  * @example Lazy query (no initial variables, manually triggered):
  * ```tsx
@@ -172,8 +172,8 @@ export function useAuthQuery<T, V extends OperationVariables>(
  * @param mutation - A `TypedDocumentNode` for the mutation (e.g. from codegen or a `gql` template).
  * @param options - Optional Apollo `MutationHookOptions` (e.g. `onCompleted`, `onError`, `refetchQueries`).
  * @returns Tuple: `[mutate, result]`.
- *   - `mutate(input)` — runs the mutation with the given input. Returns a Promise with `{ data }`.
- *   - `result` — `{ data, loading, error }` from Apollo.
+ *   - `mutate(input)` — runs the mutation with the given input (wrapped as `variables.input`). Returns a Promise with `{ data }`.
+ *   - `result` — `{ data, loading, error, hasAuth }` from Apollo. `hasAuth` is `true` when an auth token is available.
  *
  * @example
  * ```tsx
