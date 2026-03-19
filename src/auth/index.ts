@@ -4,13 +4,13 @@
  * @example
  * ```ts
  * // Email auth
- * import { getEmailAuthRoutes, getContext, checkAuthStatus, getRefreshToken } from "naystack/auth";
+ * import { setupEmailAuth, getContext, checkAuthStatus, getRefreshToken } from "naystack/auth";
  *
  * // Google OAuth
- * import { initGoogleAuth } from "naystack/auth";
+ * import { setupGoogleAuth } from "naystack/auth";
  *
  * // Instagram OAuth
- * import { initInstagramAuth } from "naystack/auth";
+ * import { setupInstagramAuth } from "naystack/auth";
  * ```
  *
  * @module
@@ -19,11 +19,11 @@ export {
   AuthFetch,
   checkAuthStatus,
   getContext,
-  getEmailAuthRoutes,
+  setupEmailAuth,
 } from "./email";
-export { initGoogleAuth } from "./google";
+export { setupGoogleAuth } from "./google";
 export {
   getRefreshedInstagramAccessToken,
-  initInstagramAuth,
+  setupInstagramAuth,
 } from "./instagram";
 export { getRefreshToken } from "./utils/token";

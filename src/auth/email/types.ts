@@ -1,7 +1,7 @@
 import { ErrorHandler, UserOutput } from "@/src/auth/types";
 
 /**
- * Options for initializing email auth routes (GET/POST/PUT/DELETE) via `getEmailAuthRoutes`.
+ * Options for initializing email auth routes (GET/POST/PUT/DELETE) via `setupEmailAuth`.
  *
  * @property getUser - Fetches user by request data (e.g. `{ email }`); used for login and sign-up duplicate check. Must return a {@link UserOutput} or `undefined`.
  * @property createUser - Creates a new user with the hashed password; returns the created user as {@link UserOutput}.
@@ -14,7 +14,7 @@ import { ErrorHandler, UserOutput } from "@/src/auth/types";
  *
  * @example
  * ```ts
- * const options: InitRoutesOptions = {
+ * const options: SetupEmailAuthOptions = {
  *   getUser: async ({ email }) => db.query.users.findFirst({ where: eq(users.email, email) }),
  *   createUser: async (data) => (await db.insert(users).values(data).returning())[0],
  *   onSignUp: async (userId, body) => { console.log("New user:", userId); },
@@ -23,7 +23,7 @@ import { ErrorHandler, UserOutput } from "@/src/auth/types";
  *
  * @category Auth
  */
-export type InitRoutesOptions = {
+export type SetupEmailAuthOptions = {
   getUser: (data: any) => Promise<UserOutput | undefined>;
   createUser: (user: any) => Promise<UserOutput | undefined>;
   onError?: ErrorHandler;

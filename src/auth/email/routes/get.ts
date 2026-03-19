@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 
-import { InitRoutesOptions } from "@/src/auth/email/types";
+import { SetupEmailAuthOptions } from "@/src/auth/email/types";
 import { EnvVariable, getEnv } from "@/src/env";
 
 import { REFRESH_COOKIE_NAME, REFRESH_HEADER_NAME } from "../../constants";
@@ -12,11 +12,11 @@ import {
 
 /**
  * Returns the GET route handler for token refresh (exchange refresh cookie for new tokens).
- * @param options - InitRoutesOptions
+ * @param options - SetupEmailAuthOptions
  * @returns Async route handler
  */
 export const getGetRoute =
-  (options: InitRoutesOptions) => async (req: NextRequest) => {
+  (options: SetupEmailAuthOptions) => async (req: NextRequest) => {
     const refresh =
       req.cookies.get(REFRESH_COOKIE_NAME)?.value ||
       req.headers.get(REFRESH_HEADER_NAME) ||

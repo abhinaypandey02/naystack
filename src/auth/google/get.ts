@@ -4,21 +4,21 @@ import { NextResponse } from "next/server";
 import { v4 } from "uuid";
 
 import { generateRefreshToken } from "@/src/auth/email/token";
-import { InitGoogleAuthOptions } from "@/src/auth/google/index";
+import { SetupGoogleAuthOptions } from "@/src/auth/google/index";
 import { EnvVariable, getEnv } from "@/src/env";
 
 import { REFRESH_COOKIE_NAME } from "../constants";
 
 /**
  * Returns the GET route handler for Google OAuth (initiate and callback).
- * @param options - InitGoogleAuthOptions
+ * @param options - SetupGoogleAuthOptions
  * @returns Async route handler
  */
 export const getGoogleGetRoute = ({
   getUserIdFromEmail,
   redirectURL,
   errorRedirectURL,
-}: InitGoogleAuthOptions) => {
+}: SetupGoogleAuthOptions) => {
   const url = getEnv(EnvVariable.NEXT_PUBLIC_GOOGLE_AUTH_ENDPOINT);
   const oauth2Client = new google.auth.OAuth2(
     getEnv(EnvVariable.GOOGLE_CLIENT_ID),

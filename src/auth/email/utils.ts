@@ -7,20 +7,20 @@ import { Context } from "@/src/graphql";
 
 import { REFRESH_COOKIE_NAME } from "../constants";
 import { handleError } from "../utils/errors";
-import { InitRoutesOptions } from "./types";
+import { SetupEmailAuthOptions } from "./types";
 
 /**
  * Parses and validates the JSON body for sign-up/login routes: ensures `password` is present and,
  * if `TURNSTILE_KEY` is set, validates the Cloudflare Turnstile captcha.
  *
  * @param req - The NextRequest (body is read via `req.json()`).
- * @param options - Same `InitRoutesOptions` passed to `getEmailAuthRoutes`; used for `onError` when validation fails.
+ * @param options - Same `SetupEmailAuthOptions` passed to `setupEmailAuth`; used for `onError` when validation fails.
  * @returns Promise of either `{ error: NextResponse }` (validation failed) or `{ data: { password, ...rest } }` with the validated payload.
  * @category Auth
  */
 export async function massageRequest(
   req: NextRequest,
-  options: InitRoutesOptions,
+  options: SetupEmailAuthOptions,
 ): Promise<{
   error?: NextResponse;
   data?: { password: string } & {

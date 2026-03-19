@@ -10,16 +10,16 @@ import {
   getTokenizedResponse,
   verifyUser,
 } from "../token";
-import { InitRoutesOptions } from "../types";
+import { SetupEmailAuthOptions } from "../types";
 import { massageRequest } from "../utils";
 
 /**
  * Returns the POST route handler for sign up.
- * @param options - InitRoutesOptions
+ * @param options - SetupEmailAuthOptions
  * @returns Async route handler
  */
 export const getPostRoute =
-  (options: InitRoutesOptions) => async (req: NextRequest) => {
+  (options: SetupEmailAuthOptions) => async (req: NextRequest) => {
     const { data, error } = await massageRequest(req, options);
     if (error || !data) return error;
 

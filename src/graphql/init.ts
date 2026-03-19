@@ -41,18 +41,18 @@ import { Context } from "./types";
  * @example
  * ```ts
  * // app/api/(graphql)/route.ts
- * import { initGraphQLServer } from "naystack/graphql";
+ * import { setupGraphQL } from "naystack/graphql";
  * import { UserResolvers, UserFieldResolvers } from "./User/graphql";
  * import { ChatResolvers } from "./Chat/graphql";
  *
- * export const { GET, POST } = await initGraphQLServer({
+ * export const { GET, POST } = await setupGraphQL({
  *   resolvers: [UserResolvers, UserFieldResolvers, ChatResolvers],
  * });
  * ```
  *
  * @category GraphQL
  */
-export async function initGraphQLServer({
+export async function setupGraphQL({
   authChecker,
   resolvers,
   plugins,

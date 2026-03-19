@@ -7,7 +7,7 @@ import { getDeleteRoute } from "./routes/delete";
 import { getGetRoute } from "./routes/get";
 import { getPostRoute } from "./routes/post";
 import { getPutRoute } from "./routes/put";
-import { InitRoutesOptions } from "./types";
+import { SetupEmailAuthOptions } from "./types";
 export { default as AuthFetch } from "./server";
 export { checkAuthStatus } from "./token";
 export { getContext } from "./utils";
@@ -18,7 +18,7 @@ export { getContext } from "./utils";
  * The library automatically hashes passwords on sign-up and reads `SIGNING_KEY` / `REFRESH_KEY` from env vars.
  * Optionally supports Cloudflare Turnstile captcha validation when `TURNSTILE_KEY` is set.
  *
- * @param options - Configuration for the auth routes. See {@link InitRoutesOptions}.
+ * @param options - Configuration for the auth routes. See {@link SetupEmailAuthOptions}.
  * @param options.getUser - Given request body (e.g. `{ email }`), returns the user from DB or undefined. Used for login and duplicate check on sign-up.
  * @param options.createUser - Given sign-up data with hashed password, inserts the user and returns the created record.
  * @param options.onError - Optional. Called on validation/auth errors; return a NextResponse to customize the error response.
@@ -31,9 +31,9 @@ export { getContext } from "./utils";
  * @example
  * ```ts
  * // app/api/(auth)/email/route.ts
- * import { getEmailAuthRoutes } from "naystack/auth";
+ * import { setupEmailAuth } from "naystack/auth";
  *
- * export const { GET, POST, PUT, DELETE } = getEmailAuthRoutes({
+ * export const { GET, POST, PUT, DELETE } = setupEmailAuth({
  *   getUser: async ({ email }: { email: string }) => {
  *     const [user] = await db.select({ id: UserTable.id, password: UserTable.password })
  *       .from(UserTable).where(eq(UserTable.email, email));
@@ -52,7 +52,7 @@ export { getContext } from "./utils";
  *
  * @category Auth
  */
-export function getEmailAuthRoutes(options: InitRoutesOptions) {
+export function setupEmailAuth(options: SetupEmailAuthOptions) {
   const { allowedOrigins } = options;
   return {
     GET: withCors(getGetRoute(options), allowedOrigins),
