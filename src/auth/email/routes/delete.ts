@@ -1,17 +1,17 @@
 import { NextRequest } from "next/server";
 
-import { InitRoutesOptions } from "@/src/auth/email/types";
+import { SetupEmailAuthOptions } from "@/src/auth/email/types";
 
 import { getTokenizedResponse } from "../token";
 import { getContext } from "../utils";
 
 /**
  * Returns the DELETE route handler for logout.
- * @param options - InitRoutesOptions
+ * @param options - SetupEmailAuthOptions
  * @returns Async route handler
  */
 export const getDeleteRoute =
-  (options: InitRoutesOptions) => async (req: NextRequest) => {
+  (options: SetupEmailAuthOptions) => async (req: NextRequest) => {
     if (options.onLogout) {
       const ctx = await getContext(req);
       const body = await req.json();

@@ -1,21 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getUserIdFromAccessToken } from "@/src/auth/email/token";
-import { InitInstagramAuthOptions } from "@/src/auth/instagram/index";
+import { SetupInstagramAuthOptions } from "@/src/auth/instagram/index";
 import { getLongLivedToken } from "@/src/auth/instagram/utils";
 import { EnvVariable, getEnv } from "@/src/env";
 import { getInstagramUser } from "@/src/socials";
 
 /**
  * Returns the GET route handler for Instagram OAuth callback.
- * @param options - InitInstagramAuthOptions (onUser, redirect URLs)
+ * @param options - SetupInstagramAuthOptions (onUser, redirect URLs)
  * @returns Async route handler for the OAuth callback
  */
 export const getInstagramRoute = ({
   redirectURL,
   errorRedirectURL,
   onUser,
-}: InitInstagramAuthOptions) => {
+}: SetupInstagramAuthOptions) => {
   /** Redirects to error URL with message query param. */
   const handleError = (message: string) =>
     NextResponse.redirect(`${errorRedirectURL}?error=${message}`);

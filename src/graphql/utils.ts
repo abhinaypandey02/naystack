@@ -101,7 +101,7 @@ interface BaseDefinition<
 }
 
 /**
- * Full query/mutation definition returned by {@link query}. Contains the resolver function,
+ * Full query/mutation definition returned by {@link resolver}. Contains the resolver function,
  * plus `.call()` and `.authCall()` for direct server-side invocation.
  *
  * @category GraphQL
@@ -133,7 +133,7 @@ export interface QueryDefinition<
 
 /**
  * Defines a type-graphql query or mutation with typed input/output and optional auth.
- * Use with {@link QueryLibrary} to build resolver classes for `initGraphQLServer`.
+ * Use with {@link QueryLibrary} to build resolver classes for `setupGraphQL`.
  *
  * Each query definition gets `.call(data)` and `.authCall(data)` methods for direct server-side invocation
  * (e.g. in Server Components or other resolvers). Both are cached via React's `cache()`.
@@ -152,9 +152,9 @@ export interface QueryDefinition<
  *
  * @example Simple query (no input, nullable output):
  * ```ts
- * import { query } from "naystack/graphql";
+ * import { resolver } from "naystack/graphql";
  *
- * export default query(
+ * export default resolver(
  *   async (ctx) => {
  *     if (!ctx.userId) return null;
  *     const [user] = await db.select().from(UserTable).where(eq(UserTable.id, ctx.userId));
@@ -166,7 +166,7 @@ export interface QueryDefinition<
  *
  * @example Mutation with input and authorization:
  * ```ts
- * export default query(
+ * export default resolver(
  *   async (ctx, input: SubmitFeedbackInput) => {
  *     await db.insert(FeedbackTable).values({ userId: ctx.userId, score: input.score, text: input.text });
  *     return true;
@@ -183,7 +183,7 @@ export interface QueryDefinition<
  *
  * @category GraphQL
  */
-export function query<
+export function resolver<
   T,
   U,
   IsAuth extends boolean = false,
@@ -379,13 +379,13 @@ function getFieldCaller<
  * Defines a type-graphql field resolver with typed root, context, and input.
  * Use with {@link FieldLibrary} to attach computed fields to a parent GraphQL type.
  *
- * Like `query()`, each field definition gets `.call(root, data)` and `.authCall(root, data)` for server-side invocation.
+ * Like `resolver()`, each field definition gets `.call(root, data)` and `.authCall(root, data)` for server-side invocation.
  *
  * @param fn - Resolver function: `(root, ctx, data) => result`.
  *   - `root` is the parent object (e.g. the `User` row from the database).
  *   - `ctx` is `Context` (or `AuthorizedContext` when `authorized: true`).
  *   - `data` is the optional typed input argument.
- * @param options - Configuration (same as `query()` but without `mutation`).
+ * @param options - Configuration (same as `resolver()` but without `mutation`).
  * @returns A `FieldResolverDefinition` with `.call` and `.authCall` for server-side invocation.
  *
  * @example
@@ -484,14 +484,14 @@ export function field<
 }
 
 /**
- * Builds a type-graphql `@Resolver` class from a map of query/mutation definitions created with {@link query}.
+ * Builds a type-graphql `@Resolver` class from a map of query/mutation definitions created with {@link resolver}.
  * Each key in the `queries` object becomes a Query or Mutation field on the GraphQL schema.
  *
- * Pass the returned class in the `resolvers` array of `initGraphQLServer`.
+ * Pass the returned class in the `resolvers` array of `setupGraphQL`.
  *
- * @param queries - Object mapping GraphQL field names to `QueryDefinition`s (from `query()`).
+ * @param queries - Object mapping GraphQL field names to `QueryDefinition`s (from `resolver()`).
  *   Each key becomes the field name in the schema. Mutations are determined by `{ mutation: true }` in the definition.
- * @returns A `@Resolver` class suitable for `initGraphQLServer`.
+ * @returns A `@Resolver` class suitable for `setupGraphQL`.
  *
  * @example
  * ```ts
@@ -514,6 +514,21 @@ export function QueryLibrary<
 >(queries: T) {
   @Resolver()
   class GeneratedResolver {}
+
+  const hasQuery = Object.values(queries).some((def) => !def.mutation);
+  if (!hasQuery) {
+    Object.defineProperty(GeneratedResolver.prototype, "_health", {
+      value: async function () {
+        return true;
+      },
+      writable: false,
+    });
+    const descriptor = Object.getOwnPropertyDescriptor(
+      GeneratedResolver.prototype,
+      "_health",
+    )!;
+    Query(() => Boolean)(GeneratedResolver.prototype, "_health", descriptor);
+  }
 
   for (const key in queries) {
     const def = queries[key];
@@ -565,12 +580,12 @@ export function QueryLibrary<
  * Builds a type-graphql `@Resolver(() => type)` class that resolves computed fields on a parent GraphQL type.
  * Each key in the `queries` object becomes a `@FieldResolver` on that type.
  *
- * Pass the returned class in the `resolvers` array of `initGraphQLServer`.
+ * Pass the returned class in the `resolvers` array of `setupGraphQL`.
  *
  * @typeParam X - The database/plain type of the parent object (e.g. `UserDB`).
  * @param type - The parent GraphQL type class (e.g. `User`). Must be a `@ObjectType` class.
  * @param queries - Object mapping field names to `FieldResolverDefinition`s (from `field()`).
- * @returns A `@Resolver` class for the given type; pass it in `initGraphQLServer`'s resolvers array.
+ * @returns A `@Resolver` class for the given type; pass it in `setupGraphQL`'s resolvers array.
  *
  * @example
  * ```ts
@@ -649,7 +664,7 @@ export function FieldLibrary<
  * Infers the TypeScript return type of a query definition's `.call()` method.
  * Use this to type component props that receive query results, ensuring full type safety.
  *
- * @typeParam T - A `QueryDefinition` (the default export from a resolver file created with `query()`).
+ * @typeParam T - A `QueryDefinition` (the default export from a resolver file created with `resolver()`).
  *
  * @example
  * ```ts

@@ -24,12 +24,12 @@ Naystack provides a seamless email-based authentication system with optional sup
 Define your auth routes in `app/api/(auth)/email/route.ts`. The library reads `SIGNING_KEY` and `REFRESH_KEY` from environment variables automatically.
 
 ```typescript
-import { getEmailAuthRoutes } from "naystack/auth";
+import { setupEmailAuth } from "naystack/auth";
 import { db } from "@/app/api/lib/db";
 import { UserTable } from "@/app/api/(graphql)/User/db";
 import { eq } from "drizzle-orm";
 
-export const { GET, POST, PUT, DELETE } = getEmailAuthRoutes({
+export const { GET, POST, PUT, DELETE } = setupEmailAuth({
   // Fetch user by request data (used for login & sign-up duplicate check)
   getUser: async ({ email }: { email: string }) => {
     const [user] = await db
@@ -214,9 +214,9 @@ await checkAuthStatus("/login"); // Redirects to /login if not authorized
 ### Google OAuth
 
 ```typescript
-import { initGoogleAuth } from "naystack/auth";
+import { setupGoogleAuth } from "naystack/auth";
 
-export const { GET } = initGoogleAuth({
+export const { GET } = setupGoogleAuth({
   getUserIdFromEmail: async (googleUser) => {
     // Find or create user by Google email
     return findOrCreateUserByEmail(googleUser.email!);
@@ -229,9 +229,9 @@ export const { GET } = initGoogleAuth({
 ### Instagram OAuth
 
 ```typescript
-import { initInstagramAuth } from "naystack/auth";
+import { setupInstagramAuth } from "naystack/auth";
 
-export const { GET } = initInstagramAuth({
+export const { GET } = setupInstagramAuth({
   onUser: async (igUser, appUserId, accessToken) => {
     await saveInstagramUser(appUserId, igUser, accessToken);
   },
@@ -258,13 +258,13 @@ Naystack provides a type-safe GraphQL layer built on `type-graphql` and `Apollo 
 
 ### Defining Queries and Mutations
 
-Use `query()` to define a resolver. It returns an object with the resolver function, plus `.call()` and `.authCall()` for direct server-side invocation (e.g. in Server Components).
+Use `resolver()` to define a resolver. It returns an object with the resolver function, plus `.call()` and `.authCall()` for direct server-side invocation (e.g. in Server Components).
 
 ```typescript
 // app/api/(graphql)/User/resolvers/get-current-user.ts
-import { query } from "naystack/graphql";
+import { resolver } from "naystack/graphql";
 
-export default query(
+export default resolver(
   async (ctx) => {
     if (!ctx.userId) return null;
     const [user] = await db
@@ -284,9 +284,9 @@ export default query(
 
 ```typescript
 // app/api/(graphql)/Feedback/resolvers/submit-feedback.ts
-import { query } from "naystack/graphql";
+import { resolver } from "naystack/graphql";
 
-export default query(
+export default resolver(
   async (ctx, input: SubmitFeedbackInput) => {
     await db.insert(FeedbackTable).values({
       userId: ctx.userId,  // guaranteed non-null when authorized: true
@@ -330,7 +330,7 @@ export default field(
 
 ### Registering Resolvers
 
-Use `QueryLibrary()` for queries/mutations and `FieldLibrary()` for field resolvers. Pass the result to `initGraphQLServer`.
+Use `QueryLibrary()` for queries/mutations and `FieldLibrary()` for field resolvers. Pass the returned classes to `setupGraphQL`.
 
 ```typescript
 // app/api/(graphql)/User/graphql.ts
@@ -358,12 +358,12 @@ export const UserFieldResolvers = FieldLibrary<UserDB>(User, {
 
 ```typescript
 // app/api/(graphql)/route.ts
-import { initGraphQLServer } from "naystack/graphql";
+import { setupGraphQL } from "naystack/graphql";
 import { UserResolvers, UserFieldResolvers } from "./User/graphql";
 import { ChatResolvers } from "./Chat/graphql";
 import { FeedbackResolvers } from "./Feedback/graphql";
 
-export const { GET, POST } = await initGraphQLServer({
+export const { GET, POST } = await setupGraphQL({
   resolvers: [UserResolvers, UserFieldResolvers, ChatResolvers, FeedbackResolvers],
 });
 ```

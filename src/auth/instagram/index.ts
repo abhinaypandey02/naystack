@@ -3,7 +3,7 @@ export { getRefreshedInstagramAccessToken } from "@/src/auth/instagram/utils";
 import { InstagramUser } from "@/src/socials/instagram/types";
 
 /**
- * Options for initializing Instagram OAuth via {@link initInstagramAuth}.
+ * Options for initializing Instagram OAuth via {@link setupInstagramAuth}.
  *
  * @property onUser - Called with `(instagramUser, appUserId, accessToken)` after successful OAuth. Return a string to show as error (redirects to `errorRedirectURL`); return `void` on success.
  * @property redirectURL - Where to redirect after successful Instagram auth.
@@ -11,7 +11,7 @@ import { InstagramUser } from "@/src/socials/instagram/types";
  *
  * @category Auth
  */
-export interface InitInstagramAuthOptions {
+export interface SetupInstagramAuthOptions {
   onUser: (
     data: InstagramUser,
     id: number | null,
@@ -28,15 +28,15 @@ export interface InitInstagramAuthOptions {
  *
  * Requires env vars: `INSTAGRAM_CLIENT_ID`, `INSTAGRAM_CLIENT_SECRET`, `NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT`.
  *
- * @param props - Options. See {@link InitInstagramAuthOptions}.
+ * @param props - Options. See {@link SetupInstagramAuthOptions}.
  * @returns Object with `GET` (route handler) and `getRefreshedAccessToken` (refreshes a long-lived token).
  *
  * @example
  * ```ts
  * // app/api/(auth)/instagram/route.ts
- * import { initInstagramAuth } from "naystack/auth";
+ * import { setupInstagramAuth } from "naystack/auth";
  *
- * export const { GET } = initInstagramAuth({
+ * export const { GET } = setupInstagramAuth({
  *   onUser: async (igUser, appUserId, accessToken) => {
  *     await saveInstagramUser(appUserId, igUser, accessToken);
  *   },
@@ -47,7 +47,7 @@ export interface InitInstagramAuthOptions {
  *
  * @category Auth
  */
-export function initInstagramAuth(props: InitInstagramAuthOptions) {
+export function setupInstagramAuth(props: SetupInstagramAuthOptions) {
   return {
     GET: getInstagramRoute(props),
   };

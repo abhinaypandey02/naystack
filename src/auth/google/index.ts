@@ -6,7 +6,7 @@ import { getGoogleGetRoute } from "@/src/auth/google/get";
 type Schema$Userinfo = oauth2_v2.Schema$Userinfo;
 
 /**
- * Options for initializing Google OAuth via {@link initGoogleAuth}.
+ * Options for initializing Google OAuth via {@link setupGoogleAuth}.
  *
  * @property getUserIdFromEmail - Given Google userinfo (email, name, picture, etc.), resolves to your app's user id. Return `null` if the user should not be authenticated.
  * @property redirectURL - Where to redirect after successful Google auth (e.g. `"/dashboard"`).
@@ -14,7 +14,7 @@ type Schema$Userinfo = oauth2_v2.Schema$Userinfo;
  *
  * @category Auth
  */
-export interface InitGoogleAuthOptions {
+export interface SetupGoogleAuthOptions {
   getUserIdFromEmail: (
     email: Schema$Userinfo,
     data?: string,
@@ -31,15 +31,15 @@ export interface InitGoogleAuthOptions {
  *
  * Requires env vars: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `NEXT_PUBLIC_GOOGLE_AUTH_ENDPOINT`.
  *
- * @param props - Options. See {@link InitGoogleAuthOptions}.
+ * @param props - Options. See {@link SetupGoogleAuthOptions}.
  * @returns Object with `GET` — export as your route's GET handler.
  *
  * @example
  * ```ts
  * // app/api/(auth)/google/route.ts
- * import { initGoogleAuth } from "naystack/auth";
+ * import { setupGoogleAuth } from "naystack/auth";
  *
- * export const { GET } = initGoogleAuth({
+ * export const { GET } = setupGoogleAuth({
  *   getUserIdFromEmail: async (googleUser) => {
  *     // Find or create user by Google email
  *     const user = await findOrCreateUserByEmail(googleUser.email!);
@@ -52,7 +52,7 @@ export interface InitGoogleAuthOptions {
  *
  * @category Auth
  */
-export function initGoogleAuth(props: InitGoogleAuthOptions) {
+export function setupGoogleAuth(props: SetupGoogleAuthOptions) {
   return {
     GET: getGoogleGetRoute(props),
   };
