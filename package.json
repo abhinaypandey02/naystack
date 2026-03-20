@@ -18,10 +18,10 @@
       "import": "./dist/auth/index.esm.js",
       "require": "./dist/auth/index.cjs.js"
     },
-    "./socials": {
-      "types": "./dist/socials/index.d.ts",
-      "import": "./dist/socials/index.esm.js",
-      "require": "./dist/socials/index.cjs.js"
+    "./auth/client": {
+      "types": "./dist/auth/client.d.ts",
+      "import": "./dist/auth/client.esm.js",
+      "require": "./dist/auth/client.cjs.js"
     },
     "./graphql": {
       "types": "./dist/graphql/index.d.ts",
@@ -33,40 +33,25 @@
       "import": "./dist/graphql/client.esm.js",
       "require": "./dist/graphql/client.cjs.js"
     },
-    "./graphql/next": {
-      "types": "./dist/graphql/next.d.ts",
-      "import": "./dist/graphql/next.esm.js",
-      "require": "./dist/graphql/next.cjs.js"
-    },
-    "./auth/email/client": {
-      "types": "./dist/auth/email/client.d.ts",
-      "import": "./dist/auth/email/client.esm.js",
-      "require": "./dist/auth/email/client.cjs.js"
-    },
-    "./auth/instagram/client": {
-      "types": "./dist/auth/instagram/client.d.ts",
-      "import": "./dist/auth/instagram/client.esm.js",
-      "require": "./dist/auth/instagram/client.cjs.js"
+    "./file": {
+      "types": "./dist/file/index.d.ts",
+      "import": "./dist/file/index.esm.js",
+      "require": "./dist/file/index.cjs.js"
     },
     "./file/client": {
       "types": "./dist/file/client.d.ts",
       "import": "./dist/file/client.esm.js",
       "require": "./dist/file/client.cjs.js"
     },
-    "./graphql/server": {
-      "types": "./dist/graphql/server.d.ts",
-      "import": "./dist/graphql/server.esm.js",
-      "require": "./dist/graphql/server.cjs.js"
+    "./socials": {
+      "types": "./dist/socials/index.d.ts",
+      "import": "./dist/socials/index.esm.js",
+      "require": "./dist/socials/index.cjs.js"
     },
-    "./client": {
-      "types": "./dist/client/index.d.ts",
-      "import": "./dist/client/index.esm.js",
-      "require": "./dist/client/index.cjs.js"
-    },
-    "./file": {
-      "types": "./dist/file/index.d.ts",
-      "import": "./dist/file/index.esm.js",
-      "require": "./dist/file/index.cjs.js"
+    "./utils/client": {
+      "types": "./dist/utils/client/index.d.ts",
+      "import": "./dist/utils/client/index.esm.js",
+      "require": "./dist/utils/client/index.cjs.js"
     },
     "./env": {
       "types": "./dist/env.d.ts",

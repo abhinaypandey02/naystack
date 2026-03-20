@@ -1,12 +1,13 @@
-import { AuthApply } from "naystack/auth/email/client";
+import { AuthApply, AuthWrapper as AuthWrapperClient } from "naystack/auth/email/client";
 import { cookies } from "next/headers";
 import React from "react";
 
 import { REFRESH_COOKIE_NAME } from "@/src/auth/constants";
 import { EnvVariable, getEnv } from "@/src/env";
 import { Injector } from "@/src/graphql/server";
+import { AuthWrapperProps } from "./client";
 
-export default function AuthFetch() {
+export function AuthFetch() {
   return (
     <Injector
       fetch={async () => {
@@ -26,4 +27,13 @@ export default function AuthFetch() {
       Component={AuthApply}
     />
   );
+}
+
+export function AuthWrapper({children, getRefreshToken, onTokenUpdate, skipInitialFetch}:AuthWrapperProps) {
+  return <>
+  <AuthWrapperClient skipInitialFetch getRefreshToken={getRefreshToken} onTokenUpdate={onTokenUpdate}>
+    {!skipInitialFetch&&<AuthFetch/>}
+    {children}
+  </AuthWrapperClient>
+  </>
 }

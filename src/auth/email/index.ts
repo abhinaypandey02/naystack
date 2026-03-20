@@ -8,7 +8,7 @@ import { getGetRoute } from "./routes/get";
 import { getPostRoute } from "./routes/post";
 import { getPutRoute } from "./routes/put";
 import { SetupEmailAuthOptions } from "./types";
-export { default as AuthFetch } from "./server";
+export { AuthFetch, AuthWrapper } from "./next";
 export { checkAuthStatus } from "./token";
 export { getContext } from "./utils";
 

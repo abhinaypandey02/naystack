@@ -3,6 +3,7 @@
 import React, {
   createContext,
   Dispatch,
+  PropsWithChildren,
   SetStateAction,
   useCallback,
   useContext,
@@ -24,6 +25,12 @@ export const TokenContext = createContext<{
   token: undefined,
   setToken: () => null,
 });
+
+export type AuthWrapperProps = PropsWithChildren<{
+  onTokenUpdate?: (token: string | null) => void;
+  getRefreshToken?: () => Promise<string | null>;
+  skipInitialFetch?: boolean;
+}>
 
 /**
  * Provider that fetches the current access token from your auth endpoint and exposes it via TokenContext.
@@ -60,12 +67,11 @@ export const TokenContext = createContext<{
 export const AuthWrapper = ({
   children,
   onTokenUpdate,
-}: {
-  children: React.ReactNode;
-  onTokenUpdate?: (token: string | null) => void;
-}) => {
+  getRefreshToken,
+  skipInitialFetch
+}:AuthWrapperProps) => {
   const [token, setToken] = useState<string | null | undefined>();
-
+  useAuthFetch({getRefreshToken, skip: skipInitialFetch});
   useEffect(() => {
     if (onTokenUpdate && token !== undefined) {
       onTokenUpdate(token);
@@ -87,10 +93,11 @@ export const AuthWrapper = ({
  *
  * @category Auth
  */
-export function useAuthFetch(getRefreshToken?: () => Promise<string | null>) {
+export function useAuthFetch({getRefreshToken, skip}:{getRefreshToken?: () => Promise<string | null>, skip?:boolean}) {
   const setToken = useSetToken();
 
   const fetchToken = async () => {
+
     const token = getRefreshToken ? await getRefreshToken() : null;
     fetch(getEnv(EnvVariable.NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT), {
       credentials: "include",
@@ -105,6 +112,7 @@ export function useAuthFetch(getRefreshToken?: () => Promise<string | null>) {
   };
 
   useEffect(() => {
+    if (skip) return;
     fetchToken();
   }, []);
 }
