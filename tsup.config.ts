@@ -18,7 +18,7 @@ export default defineConfig({
     "@aws-sdk/client-s3",
     "@aws-sdk/s3-request-presigner",
     "googleapis",
-    "naystack/auth/email/client",
+    "naystack/auth/client",
   ],
   outExtension({ format }) {
     return {

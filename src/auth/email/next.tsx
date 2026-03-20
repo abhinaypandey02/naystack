@@ -1,4 +1,4 @@
-import { AuthApply, AuthWrapper as AuthWrapperClient } from "naystack/auth/email/client";
+import { AuthApply, AuthWrapper as AuthWrapperClient } from "naystack/auth/client";
 import { cookies } from "next/headers";
 import React from "react";
 
@@ -29,11 +29,11 @@ export function AuthFetch() {
   );
 }
 
-export function AuthWrapper({children, getRefreshToken, onTokenUpdate, skipInitialFetch}:AuthWrapperProps) {
+export function AuthWrapper({ children, getRefreshToken, onTokenUpdate, skipInitialFetch }: AuthWrapperProps) {
   return <>
-  <AuthWrapperClient skipInitialFetch getRefreshToken={getRefreshToken} onTokenUpdate={onTokenUpdate}>
-    {!skipInitialFetch&&<AuthFetch/>}
-    {children}
-  </AuthWrapperClient>
+    <AuthWrapperClient skipInitialFetch getRefreshToken={getRefreshToken} onTokenUpdate={onTokenUpdate}>
+      {!skipInitialFetch && <AuthFetch />}
+      {children}
+    </AuthWrapperClient>
   </>
 }

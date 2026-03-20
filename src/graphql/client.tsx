@@ -12,7 +12,7 @@ import {
   useMutation,
 } from "@apollo/client";
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
-import { useToken } from "naystack/auth/email/client";
+import { useToken } from "naystack/auth/client";
 import React, {
   PropsWithChildren,
   useCallback,
@@ -36,7 +36,7 @@ import { EnvVariable, getEnv } from "@/src/env";
  * @example
  * ```tsx
  * // app/layout.tsx
- * import { AuthWrapper } from "naystack/auth/email/client";
+ * import { AuthWrapper } from "naystack/auth/client";
  * import { ApolloWrapper } from "naystack/graphql/client";
  *
  * export default function RootLayout({ children }: { children: React.ReactNode }) {

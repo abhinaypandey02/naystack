@@ -1,4 +1,4 @@
-import { useToken } from "naystack/auth/email/client";
+import { useToken } from "naystack/auth/client";
 
 import { EnvVariable, getEnv } from "@/src/env";
 

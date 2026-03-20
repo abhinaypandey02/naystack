@@ -46,7 +46,7 @@ export type AuthWrapperProps = PropsWithChildren<{
  * @example
  * ```tsx
  * // app/layout.tsx
- * import { AuthWrapper } from "naystack/auth/email/client";
+ * import { AuthWrapper } from "naystack/auth/client";
  * import { ApolloWrapper } from "naystack/graphql/client";
  *
  * export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -69,9 +69,9 @@ export const AuthWrapper = ({
   onTokenUpdate,
   getRefreshToken,
   skipInitialFetch
-}:AuthWrapperProps) => {
+}: AuthWrapperProps) => {
   const [token, setToken] = useState<string | null | undefined>();
-  useAuthFetch({getRefreshToken, skip: skipInitialFetch});
+  useAuthFetch({ getRefreshToken, skip: skipInitialFetch });
   useEffect(() => {
     if (onTokenUpdate && token !== undefined) {
       onTokenUpdate(token);
@@ -93,7 +93,7 @@ export const AuthWrapper = ({
  *
  * @category Auth
  */
-export function useAuthFetch({getRefreshToken, skip}:{getRefreshToken?: () => Promise<string | null>, skip?:boolean}) {
+export function useAuthFetch({ getRefreshToken, skip }: { getRefreshToken?: () => Promise<string | null>, skip?: boolean }) {
   const setToken = useSetToken();
 
   const fetchToken = async () => {
@@ -103,8 +103,8 @@ export function useAuthFetch({getRefreshToken, skip}:{getRefreshToken?: () => Pr
       credentials: "include",
       headers: token
         ? {
-            [REFRESH_HEADER_NAME]: token,
-          }
+          [REFRESH_HEADER_NAME]: token,
+        }
         : undefined,
     })
       .then((res) => res.json())
@@ -143,7 +143,7 @@ export function AuthApply({ data }: { data?: string | null }) {
  *
  * @example
  * ```tsx
- * import { useToken } from "naystack/auth/email/client";
+ * import { useToken } from "naystack/auth/client";
  *
  * function Navbar() {
  *   const token = useToken();
@@ -190,7 +190,7 @@ export function useSetToken() {
  *
  * @example
  * ```tsx
- * import { useSignUp } from "naystack/auth/email/client";
+ * import { useSignUp } from "naystack/auth/client";
  *
  * function SignUpForm() {
  *   const signUp = useSignUp();
@@ -239,7 +239,7 @@ export function useSignUp() {
  *
  * @example
  * ```tsx
- * import { useLogin } from "naystack/auth/email/client";
+ * import { useLogin } from "naystack/auth/client";
  *
  * function LoginForm() {
  *   const login = useLogin();
@@ -288,7 +288,7 @@ export function useLogin() {
  *
  * @example
  * ```tsx
- * import { useLogout } from "naystack/auth/email/client";
+ * import { useLogout } from "naystack/auth/client";
  *
  * function SettingsPage() {
  *   const logout = useLogout();

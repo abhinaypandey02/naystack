@@ -70,7 +70,7 @@ Wrap your application with `AuthWrapper` in your root layout. This fetches the a
 
 ```tsx
 // app/layout.tsx
-import { AuthWrapper } from "naystack/auth/email/client";
+import { AuthWrapper } from "naystack/auth/client";
 import { ApolloWrapper } from "naystack/graphql/client";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -93,7 +93,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 Returns the current JWT access token (or `null` if not loaded / logged out). Use it for conditional rendering or passing to custom fetch calls.
 
 ```tsx
-import { useToken } from "naystack/auth/email/client";
+import { useToken } from "naystack/auth/client";
 
 export default function Home() {
   const token = useToken();
@@ -111,7 +111,7 @@ export default function Home() {
 Returns a function that registers a new user. Sends a POST to the auth endpoint. Returns `null` on success, or the error message string on failure.
 
 ```tsx
-import { useSignUp } from "naystack/auth/email/client";
+import { useSignUp } from "naystack/auth/client";
 
 function SignUpForm() {
   const signUp = useSignUp();
@@ -132,7 +132,7 @@ function SignUpForm() {
 Returns a function that logs the user in. Sends a PUT to the auth endpoint. Returns `null` on success, or the error message string on failure.
 
 ```tsx
-import { useLogin } from "naystack/auth/email/client";
+import { useLogin } from "naystack/auth/client";
 
 function LoginForm() {
   const login = useLogin();
@@ -153,7 +153,7 @@ function LoginForm() {
 Returns a function that logs the user out. Clears the token immediately and sends DELETE to the auth endpoint.
 
 ```tsx
-import { useLogout } from "naystack/auth/email/client";
+import { useLogout } from "naystack/auth/client";
 
 function LogoutButton() {
   const logout = useLogout();
@@ -467,7 +467,7 @@ Wrap your app with `ApolloWrapper` (inside `AuthWrapper`) so client components c
 
 ```tsx
 // app/layout.tsx
-import { AuthWrapper } from "naystack/auth/email/client";
+import { AuthWrapper } from "naystack/auth/client";
 import { ApolloWrapper } from "naystack/graphql/client";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

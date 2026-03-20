@@ -3,7 +3,7 @@
  *
  * Use subpath imports for the specific module you need:
  * - `naystack/auth` — Email/Google/Instagram authentication
- * - `naystack/auth/email/client` — Client-side auth hooks (useLogin, useSignUp, etc.)
+ * - `naystack/auth/client` — Client-side auth hooks (useLogin, useSignUp, etc.)
  * - `naystack/graphql` — GraphQL server: resolver, field, QueryLibrary, FieldLibrary, setupGraphQL
  * - `naystack/graphql/client` — Client-side GraphQL hooks (useAuthQuery, useAuthMutation, ApolloWrapper)
  * - `naystack/graphql/server` — Server-side GraphQL utilities (Injector, query)

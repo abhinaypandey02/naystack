@@ -24,7 +24,7 @@ import { EnvVariable, getEnv } from "@/src/env";
  * @example
  * ```tsx
  * // app/layout.tsx
- * import { AuthWrapper } from "naystack/auth/email/client";
+ * import { AuthWrapper } from "naystack/auth/client";
  * import { ApolloWrapper } from "naystack/graphql/client";
  *
  * export default function RootLayout({ children }: { children: React.ReactNode }) {
