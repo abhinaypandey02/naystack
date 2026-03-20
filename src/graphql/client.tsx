@@ -21,7 +21,7 @@ import React, {
 } from "react";
 
 import { EnvVariable, getEnv } from "@/src/env";
-
+export {ApolloWrapper as ApolloWrapperNext} from './next'
 /**
  * Apollo Client provider for Next.js. Wrap your app (or a subtree) so client components can run GraphQL queries and mutations.
  * The GraphQL endpoint is read from `NEXT_PUBLIC_GRAPHQL_ENDPOINT` env var.
@@ -64,7 +64,7 @@ function makeClient(cacheConfig?: InMemoryCacheConfig) {
   });
 }
 
-export const ApolloWrapper = ({
+export const ApolloWrapperClient = ({
   children,
   cacheConfig,
 }: PropsWithChildren<{ cacheConfig?: InMemoryCacheConfig }>) => {

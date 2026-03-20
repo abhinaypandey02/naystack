@@ -71,7 +71,7 @@ export const AuthWrapper = ({
   skipInitialFetch
 }: AuthWrapperProps) => {
   const [token, setToken] = useState<string | null | undefined>();
-  useAuthFetch({ getRefreshToken, skip: skipInitialFetch });
+  
   useEffect(() => {
     if (onTokenUpdate && token !== undefined) {
       onTokenUpdate(token);
@@ -80,10 +80,16 @@ export const AuthWrapper = ({
 
   return (
     <TokenContext.Provider value={{ token, setToken }}>
+      {!skipInitialFetch && <AuthChildComponent getRefreshToken={getRefreshToken} />}
       {children}
     </TokenContext.Provider>
   );
 };
+
+function AuthChildComponent({getRefreshToken}:{getRefreshToken:AuthWrapperProps['getRefreshToken']}) {
+  useAuthFetch({ getRefreshToken });
+  return null;
+}
 
 /**
  * Fetches the access token on mount by calling the auth endpoint. Stores the result in TokenContext.

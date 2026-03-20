@@ -15,15 +15,7 @@
  *
  * @module
  */
-export {
-  AuthFetch,
-  checkAuthStatus,
-  getContext,
-  setupEmailAuth,
-} from "./email";
-export { setupGoogleAuth } from "./google";
-export {
-  getRefreshedInstagramAccessToken,
-  setupInstagramAuth,
-} from "./instagram";
+export * from "./email";
+export * from "./google";
+export * from "./instagram";
 export { getRefreshToken } from "./utils/token";
