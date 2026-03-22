@@ -55,14 +55,14 @@ export function getTokenizedResponse(
   });
   if (!accessToken) {
     response.cookies.set(REFRESH_COOKIE_NAME, "", {
-      secure: false,
+      secure: true,
       httpOnly: true,
       expires: 0,
     });
   }
   if (refreshToken !== undefined) {
     response.cookies.set(REFRESH_COOKIE_NAME, refreshToken, {
-      secure: false,
+      secure: true,
       httpOnly: true,
       expires:
         refreshToken === ""
