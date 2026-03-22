@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { REFRESH_HEADER_NAME } from "@/src/auth/constants";
+import { REFRESH_COOKIE_NAME, REFRESH_HEADER_NAME } from "@/src/auth/constants";
 
 /**
  * Returns CORS headers for the given origin if it is in the allowed list.
@@ -61,6 +61,17 @@ export function withCors<
     Object.entries(corsHeaders).forEach(([key, value]) => {
       response.headers.set(key, value);
     });
+    // Cross-origin requests need SameSite=None so browsers accept and send the refresh cookie
+    if (response instanceof NextResponse) {
+      const refreshCookie = response.cookies.get(REFRESH_COOKIE_NAME);
+      if (refreshCookie) {
+        response.cookies.set(refreshCookie.name, refreshCookie.value, {
+          ...refreshCookie,
+          sameSite: "none",
+          secure: true,
+        });
+      }
+    }
     return response;
   }) as T;
 }

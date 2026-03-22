@@ -17,5 +17,5 @@ export const getDeleteRoute =
       const body = await req.json();
       await options.onLogout?.(ctx.userId, body);
     }
-    return getTokenizedResponse(undefined, "", !!options.allowedOrigins?.length);
+    return getTokenizedResponse(undefined, "");
   };

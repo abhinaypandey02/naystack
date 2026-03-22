@@ -32,7 +32,6 @@ export const getPostRoute =
             existingUser.id,
             getEnv(EnvVariable.REFRESH_KEY),
           ),
-          !!options.allowedOrigins?.length,
         );
       }
       return handleError(400, "A user already exists", options.onError);
@@ -50,8 +49,7 @@ export const getPostRoute =
       return getTokenizedResponse(
         generateAccessToken(newUser.id, getEnv(EnvVariable.SIGNING_KEY)),
         generateRefreshToken(newUser.id, getEnv(EnvVariable.REFRESH_KEY)),
-        !!options.allowedOrigins?.length,
       );
     }
-    return getTokenizedResponse(undefined, undefined, !!options.allowedOrigins?.length);
+    return getTokenizedResponse();
   };
