@@ -33,6 +33,7 @@ export const getPutRoute =
       return getTokenizedResponse(
         generateAccessToken(user.id, getEnv(EnvVariable.SIGNING_KEY)),
         generateRefreshToken(user.id, getEnv(EnvVariable.REFRESH_KEY)),
+        !!options.allowedOrigins?.length,
       );
     }
     return handleError(403, "Invalid password", options.onError);

@@ -31,8 +31,10 @@ export const getGetRoute =
       }
       return getTokenizedResponse(
         generateAccessToken(userID, getEnv(EnvVariable.SIGNING_KEY)),
+        undefined,
+        !!options.allowedOrigins?.length,
       );
     }
 
-    return getTokenizedResponse();
+    return getTokenizedResponse(undefined, undefined, !!options.allowedOrigins?.length);
   };

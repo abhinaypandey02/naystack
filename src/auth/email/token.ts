@@ -48,22 +48,24 @@ export function generateRefreshToken(id: number, refreshKey: string) {
 export function getTokenizedResponse(
   accessToken?: string,
   refreshToken?: string,
+  crossDomain?: boolean,
 ) {
   const body = { accessToken, refreshToken };
   const response = NextResponse.json(body, {
     status: 200,
   });
+  const cookieOptions = crossDomain
+    ? { secure: true, httpOnly: true, sameSite: "none" as const }
+    : { secure: false, httpOnly: true };
   if (!accessToken) {
     response.cookies.set(REFRESH_COOKIE_NAME, "", {
-      secure: false,
-      httpOnly: true,
+      ...cookieOptions,
       expires: 0,
     });
   }
   if (refreshToken !== undefined) {
     response.cookies.set(REFRESH_COOKIE_NAME, refreshToken, {
-      secure: false,
-      httpOnly: true,
+      ...cookieOptions,
       expires:
         refreshToken === ""
           ? 0
