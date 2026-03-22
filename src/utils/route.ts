@@ -62,15 +62,12 @@ export function withCors<
       response.headers.set(key, value);
     });
     // Cross-origin requests need SameSite=None so browsers accept and send the refresh cookie
-    if (response instanceof NextResponse) {
-      const refreshCookie = response.cookies.get(REFRESH_COOKIE_NAME);
-      if (refreshCookie) {
-        response.cookies.set(refreshCookie.name, refreshCookie.value, {
-          ...refreshCookie,
-          sameSite: "none",
-          secure: true,
-        });
-      }
+    const refreshCookie = response.cookies.get(REFRESH_COOKIE_NAME);
+    if (refreshCookie) {
+      response.cookies.set(refreshCookie.name, refreshCookie.value, {
+        ...refreshCookie,
+        sameSite: "none",
+      });
     }
     return response;
   }) as T;
