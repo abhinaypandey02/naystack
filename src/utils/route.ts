@@ -39,9 +39,8 @@ export function withCors<
   T extends (
     req: NextRequest,
   ) =>
-    | Promise<NextResponse | Response | undefined>
+    | Promise<NextResponse | undefined>
     | NextResponse
-    | Response
     | undefined,
 >(handler: T, allowedOrigins?: string[]): T {
   if (!allowedOrigins?.length) return handler;
