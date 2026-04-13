@@ -39,8 +39,9 @@ export function withCors<
   T extends (
     req: NextRequest,
   ) =>
-    | Promise<NextResponse | undefined>
+    | Promise<NextResponse | Response | undefined>
     | NextResponse
+    | Response
     | undefined,
 >(handler: T, allowedOrigins?: string[]): T {
   if (!allowedOrigins?.length) return handler;
@@ -61,12 +62,14 @@ export function withCors<
       response.headers.set(key, value);
     });
     // Cross-origin requests need SameSite=None so browsers accept and send the refresh cookie
-    const refreshCookie = response.cookies.get(REFRESH_COOKIE_NAME);
-    if (refreshCookie) {
-      response.cookies.set(refreshCookie.name, refreshCookie.value, {
-        ...refreshCookie,
-        sameSite: "none",
-      });
+    if ("cookies" in response) {
+      const refreshCookie = response.cookies.get(REFRESH_COOKIE_NAME);
+      if (refreshCookie) {
+        response.cookies.set(refreshCookie.name, refreshCookie.value, {
+          ...refreshCookie,
+          sameSite: "none",
+        });
+      }
     }
     return response;
   }) as T;
