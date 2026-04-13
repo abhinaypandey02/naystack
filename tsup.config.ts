@@ -19,6 +19,7 @@ export default defineConfig({
     "@aws-sdk/s3-request-presigner",
     "googleapis",
     "naystack/auth/client",
+    "@apollo/client-integration-nextjs",
   ],
   outExtension({ format }) {
     return {
