@@ -3,7 +3,10 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { v4 } from "uuid";
 
-import { generateRefreshToken } from "@/src/auth/email/token";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+} from "@/src/auth/email/token";
 import { SetupGoogleAuthOptions } from "@/src/auth/google/index";
 import { EnvVariable, getEnv } from "@/src/env";
 
@@ -31,8 +34,17 @@ export const getGoogleGetRoute = ({
 
     if (!code && !error) {
       const data = req.nextUrl.searchParams.get("data");
+      const requestRedirectURL =
+        req.nextUrl.searchParams.get("redirectURL") || undefined;
+      const requestErrorRedirectURL =
+        req.nextUrl.searchParams.get("errorRedirectURL") || undefined;
 
-      const stateData = { data, id: v4() };
+      const stateData = {
+        data,
+        id: v4(),
+        redirectURL: requestRedirectURL,
+        errorRedirectURL: requestErrorRedirectURL,
+      };
       const state = JSON.stringify(stateData);
       const authorizationUrl = oauth2Client.generateAuthUrl({
         scope: [
@@ -51,14 +63,30 @@ export const getGoogleGetRoute = ({
       });
       return res;
     }
-    const errorURL = errorRedirectURL || redirectURL;
+    // Parse state from cookie to extract custom redirect URLs
+    const localState = req.cookies.get("state")?.value;
+    let stateRedirectURL: string | undefined;
+    let stateErrorRedirectURL: string | undefined;
+    if (localState) {
+      try {
+        const parsed = JSON.parse(localState);
+        stateRedirectURL = parsed.redirectURL || undefined;
+        stateErrorRedirectURL = parsed.errorRedirectURL || undefined;
+      } catch {
+        // ignore parse errors
+      }
+    }
+
+    const finalRedirectURL = stateRedirectURL || redirectURL;
+    const finalErrorURL =
+      stateErrorRedirectURL || errorRedirectURL || finalRedirectURL;
+
     if (error) {
-      return NextResponse.redirect(errorURL);
+      return NextResponse.redirect(finalErrorURL);
     }
     const state = req.nextUrl.searchParams.get("state") || undefined;
     if (code && state) {
-      const localState = req.cookies.get("state")?.value;
-      if (localState !== state) return NextResponse.redirect(errorURL);
+      if (localState !== state) return NextResponse.redirect(finalErrorURL);
       const { tokens } = await oauth2Client.getToken(code);
       oauth2Client.setCredentials(tokens);
 
@@ -74,7 +102,13 @@ export const getGoogleGetRoute = ({
         const { data } = JSON.parse(localState) as { id: string; data: string };
         const id = await getUserIdFromEmail(user, data);
         if (id) {
-          const res = NextResponse.redirect(redirectURL);
+          const accessToken = generateAccessToken(
+            id,
+            getEnv(EnvVariable.SIGNING_KEY),
+          );
+          const targetUrl = new URL(finalRedirectURL, req.nextUrl.origin);
+          targetUrl.searchParams.set("accessToken", accessToken);
+          const res = NextResponse.redirect(targetUrl);
           res.cookies.set(
             REFRESH_COOKIE_NAME,
             generateRefreshToken(id, getEnv(EnvVariable.REFRESH_KEY)),
@@ -92,6 +126,6 @@ export const getGoogleGetRoute = ({
         }
       }
     }
-    return NextResponse.redirect(errorURL);
+    return NextResponse.redirect(finalErrorURL);
   };
 };
