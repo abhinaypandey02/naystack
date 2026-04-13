@@ -99,7 +99,7 @@ function AuthChildComponent({getRefreshToken}:{getRefreshToken:AuthWrapperProps[
  *
  * @category Auth
  */
-export function useAuthFetch({ getRefreshToken, skip }: { getRefreshToken?: () => Promise<string | null>, skip?: boolean }) {
+export function useAuthFetch({ getRefreshToken, skip }: { getRefreshToken?: () => Promise<string | null>, skip?: boolean } = {}) {
   const setToken = useSetToken();
 
   const fetchToken = async () => {
