@@ -63,7 +63,7 @@ function makeClient(cacheConfig?: InMemoryCacheConfig) {
   });
 }
 
-export const ApolloWrapperClient = ({
+export const ApolloWrapper = ({
   children,
   cacheConfig,
 }: PropsWithChildren<{ cacheConfig?: InMemoryCacheConfig }>) => {
