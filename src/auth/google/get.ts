@@ -106,12 +106,14 @@ export const getGoogleGetRoute = ({
             id,
             getEnv(EnvVariable.SIGNING_KEY),
           );
+          const refreshToken = generateRefreshToken(id, getEnv(EnvVariable.REFRESH_KEY));
           const targetUrl = new URL(finalRedirectURL, req.nextUrl.origin);
           targetUrl.searchParams.set("accessToken", accessToken);
+          targetUrl.searchParams.set("refreshToken", refreshToken);
           const res = NextResponse.redirect(targetUrl);
           res.cookies.set(
             REFRESH_COOKIE_NAME,
-            generateRefreshToken(id, getEnv(EnvVariable.REFRESH_KEY)),
+            refreshToken,
             {
               httpOnly: true,
               secure: true,
