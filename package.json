@@ -84,7 +84,6 @@
   "author": "Abhinay Pandey <abhinaypandey02@gmail.com>",
   "license": "ISC",
   "dependencies": {
-    "@apollo/client": "^3.13.6",
     "@apollo/client-integration-nextjs": "^0.12.1",
     "@apollo/server": "^4.12.0",
     "@as-integrations/next": "^3.2.0",
@@ -96,6 +95,7 @@
     "googleapis": "^160.0.0",
     "jsonwebtoken": "^9.0.2",
     "reflect-metadata": "^0.2.2",
+    "tslib": "^2.8.1",
     "type-graphql": "2.0.0-rc.2",
     "uuid": "^13.0.0",
     "v4": "^0.0.1"
@@ -132,8 +132,9 @@
     "url": "https://github.com/abhinaypandey02/naystack.git"
   },
   "peerDependencies": {
+    "next": ">=13",
     "react": "^18 || ^19",
     "react-dom": "^18 || ^19",
-    "next": ">=13"
+    "@apollo/client": "^3.13.6"
   }
 }
