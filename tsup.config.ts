@@ -12,7 +12,6 @@ export default defineConfig({
     "react",
     "react-dom",
     "@apollo/server",
-    "@apollo/client",
     "@as-integrations/next",
     "@vercel/functions",
     "bcryptjs",
