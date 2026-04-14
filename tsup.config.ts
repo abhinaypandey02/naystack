@@ -11,7 +11,6 @@ export default defineConfig({
     "next",
     "react",
     "react-dom",
-    "@apollo/client",
     "@apollo/server",
     "@as-integrations/next",
     "@vercel/functions",
