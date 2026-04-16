@@ -47,7 +47,7 @@ export function getTokenizedResponse(
 ) {
   const accessToken = id ? generateAccessToken(id) : undefined;
   const refreshToken = id ? generateRefreshToken(id) : undefined;
-  const response = NextResponse.json(accessToken, {
+  const response = new NextResponse(accessToken, {
     status: 200,
   });
   if (!accessToken) {
