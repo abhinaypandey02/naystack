@@ -30,9 +30,7 @@ export const getPutRoute =
       if (options.onLogin) {
         await options.onLogin?.(user.id, data);
       }
-      return getTokenizedResponse(
-        generateAccessToken(user.id),
-        generateRefreshToken(user.id),
+      return getTokenizedResponse(user.id
       );
     }
     return handleError(403, "Invalid password", options.onError);

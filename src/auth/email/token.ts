@@ -38,17 +38,16 @@ export function generateRefreshToken(id: number) {
  * - If `refreshToken` is empty string, the cookie expires immediately (logout).
  * - If `refreshToken` is a valid string, the cookie is set for 1 year.
  *
- * @param accessToken - Optional access JWT to include in response body.
- * @param refreshToken - Optional refresh JWT to set as httpOnly cookie. Empty string clears the cookie.
+ * @param id - Optional user id.
  * @returns NextResponse with JSON body and Set-Cookie headers.
  * @category Auth
  */
 export function getTokenizedResponse(
-  accessToken?: string,
-  refreshToken?: string,
+  id?: number
 ) {
-  const body = { accessToken, refreshToken };
-  const response = NextResponse.json(body, {
+  const accessToken = id ? generateAccessToken(id) : undefined;
+  const refreshToken = id ? generateRefreshToken(id) : undefined;
+  const response = NextResponse.json(accessToken, {
     status: 200,
   });
   if (!accessToken) {

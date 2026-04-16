@@ -9,7 +9,7 @@ import { getPostRoute } from "./routes/post";
 import { getPutRoute } from "./routes/put";
 import { SetupEmailAuthOptions } from "./types";
 export { AuthFetch, AuthWrapper } from "./next";
-export { checkAuthStatus, generateRefreshToken, generateAccessToken, getTokenizedResponse } from "./token";
+export { checkAuthStatus, getTokenizedResponse } from "./token";
 export { getContext } from "./utils";
 
 /**

@@ -17,10 +17,7 @@ import {
  */
 export const getGetRoute =
   (options: SetupEmailAuthOptions) => async (req: NextRequest) => {
-    const refresh =
-      req.cookies.get(REFRESH_COOKIE_NAME)?.value ||
-      req.headers.get(REFRESH_HEADER_NAME) ||
-      undefined;
+    const refresh = req.cookies.get(REFRESH_COOKIE_NAME)?.value || undefined
 
     const userID = getUserIdFromRefreshToken(refresh);
 
@@ -29,8 +26,7 @@ export const getGetRoute =
         const body = await req.json().catch(() => null);
         await options.onRefresh?.(userID, body);
       }
-      return getTokenizedResponse(
-        generateAccessToken(userID),
+      return getTokenizedResponse(userID
       );
     }
 

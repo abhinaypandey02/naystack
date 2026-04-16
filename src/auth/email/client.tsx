@@ -28,7 +28,6 @@ export const TokenContext = createContext<{
 
 export type AuthWrapperProps = PropsWithChildren<{
   onTokenUpdate?: (token: string | null) => void;
-  getRefreshToken?: () => Promise<string | null>;
   skipInitialFetch?: boolean;
 }>
 
@@ -66,28 +65,20 @@ export type AuthWrapperProps = PropsWithChildren<{
  */
 export const AuthWrapper = ({
   children,
-  onTokenUpdate,
-  getRefreshToken,
   skipInitialFetch
 }: AuthWrapperProps) => {
   const [token, setToken] = useState<string | null | undefined>();
-  
-  useEffect(() => {
-    if (onTokenUpdate && token !== undefined) {
-      onTokenUpdate(token);
-    }
-  }, [token]);
 
   return (
     <TokenContext.Provider value={{ token, setToken }}>
-      {!skipInitialFetch && <AuthChildComponent getRefreshToken={getRefreshToken} />}
+      {!skipInitialFetch && <AuthChildComponent />}
       {children}
     </TokenContext.Provider>
   );
 };
 
-function AuthChildComponent({getRefreshToken}:{getRefreshToken:AuthWrapperProps['getRefreshToken']}) {
-  useAuthFetch({ getRefreshToken });
+function AuthChildComponent() {
+  useAuthFetch();
   return null;
 }
 
@@ -99,22 +90,16 @@ function AuthChildComponent({getRefreshToken}:{getRefreshToken:AuthWrapperProps[
  *
  * @category Auth
  */
-export function useAuthFetch({ getRefreshToken, skip }: { getRefreshToken?: () => Promise<string | null>, skip?: boolean } = {}) {
+export function useAuthFetch({ skip }: { skip?: boolean } = {}) {
   const setToken = useSetToken();
 
   const fetchToken = async () => {
 
-    const token = getRefreshToken ? await getRefreshToken() : null;
     fetch(getEnv(EnvVariable.NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT), {
       credentials: "include",
-      headers: token
-        ? {
-          [REFRESH_HEADER_NAME]: token,
-        }
-        : undefined,
     })
-      .then((res) => res.json())
-      .then((data) => setToken(data.accessToken || null));
+      .then((res) => res.text())
+      .then((accessToken) => setToken(accessToken || null));
   };
 
   useEffect(() => {
@@ -227,8 +212,8 @@ export function useSignUp() {
         },
       );
       if (res.ok) {
-        const data = await res.json();
-        setToken(data.accessToken);
+        const accessToken = await res.text();
+        setToken(accessToken);
         return null;
       }
       return res.text();
@@ -276,8 +261,8 @@ export function useLogin() {
         },
       );
       if (res.ok) {
-        const data = await res.json();
-        setToken(data.accessToken);
+        const accessToken = await res.text();
+        setToken(accessToken);
         return null;
       }
       return res.text();
