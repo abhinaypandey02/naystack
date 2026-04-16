@@ -132,7 +132,6 @@ export function useAuthQuery<T, V extends OperationVariables>(
   query: TypedDocumentNode<T, V>,
   variables?: V["input"],
 ) {
-  const token = useToken();
   const [fetch, result] = useLazyQuery(query, {
     fetchPolicy: "no-cache",
   });
@@ -140,27 +139,31 @@ export function useAuthQuery<T, V extends OperationVariables>(
 
   useEffect(() => {
     const serialized = JSON.stringify(variables);
-    if (token && variables && prevVarsRef.current !== serialized) {
+    if (variables && prevVarsRef.current !== serialized) {
       prevVarsRef.current = serialized;
       void fetch({
         // @ts-expect-error -- to allow dynamic props
         variables: { input: variables },
-        context: tokenContext(token),
+        context: {
+    credentials: `include`,
+  },
       });
     }
-  }, [fetch, token, variables]);
+  }, [fetch, variables]);
 
   const reFetch = useCallback(
     (input?: V["input"]) =>
       fetch({
         // @ts-expect-error -- to allow dynamic props
         variables: { input },
-        context: tokenContext(token),
+        context: {
+    credentials: `include`,
+  },
       }),
-    [fetch, token],
+    [fetch],
   );
 
-  return [reFetch, { ...result, hasAuth: !!token }] as const;
+  return [reFetch, result] as const;
 }
 
 /**
