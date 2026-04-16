@@ -31,8 +31,8 @@ export const getPutRoute =
         await options.onLogin?.(user.id, data);
       }
       return getTokenizedResponse(
-        generateAccessToken(user.id, getEnv(EnvVariable.SIGNING_KEY)),
-        generateRefreshToken(user.id, getEnv(EnvVariable.REFRESH_KEY)),
+        generateAccessToken(user.id),
+        generateRefreshToken(user.id),
       );
     }
     return handleError(403, "Invalid password", options.onError);

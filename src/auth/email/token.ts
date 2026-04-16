@@ -12,12 +12,11 @@ import { REFRESH_COOKIE_NAME } from "../constants";
 /**
  * Generates a JWT access token for the user (2-hour expiry).
  * @param id - User id to encode in the JWT payload.
- * @param signingKey - Secret used to sign the token (typically `SIGNING_KEY` env var).
  * @returns Signed JWT string.
  * @category Auth
  */
-export function generateAccessToken(id: number, signingKey: string) {
-  return sign({ id }, signingKey, {
+export function generateAccessToken(id: number) {
+  return sign({ id }, getEnv(EnvVariable.SIGNING_KEY), {
     expiresIn: "2h",
   });
 }
@@ -25,12 +24,11 @@ export function generateAccessToken(id: number, signingKey: string) {
 /**
  * Generates a JWT refresh token for the user (no expiry — persisted in httpOnly cookie).
  * @param id - User id to encode in the JWT payload.
- * @param refreshKey - Secret used to sign the token (typically `REFRESH_KEY` env var).
  * @returns Signed JWT string.
  * @category Auth
  */
-export function generateRefreshToken(id: number, refreshKey: string) {
-  return sign({ id }, refreshKey);
+export function generateRefreshToken(id: number) {
+  return sign({ id }, getEnv(EnvVariable.REFRESH_KEY));
 }
 
 /**

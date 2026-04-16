@@ -103,15 +103,14 @@ export const getGoogleGetRoute = ({
         const id = await getUserIdFromEmail(user, data);
         if (id) {
           const accessToken = generateAccessToken(
-            id,
-            getEnv(EnvVariable.SIGNING_KEY),
+            id
           );
           const targetUrl = new URL(finalRedirectURL, req.nextUrl.origin);
           targetUrl.searchParams.set("accessToken", accessToken);
           const res = NextResponse.redirect(targetUrl);
           res.cookies.set(
             REFRESH_COOKIE_NAME,
-            generateRefreshToken(id, getEnv(EnvVariable.REFRESH_KEY)),
+            generateRefreshToken(id),
             {
               httpOnly: true,
               secure: true,

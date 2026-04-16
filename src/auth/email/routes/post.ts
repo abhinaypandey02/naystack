@@ -27,10 +27,9 @@ export const getPostRoute =
     if (existingUser) {
       if (await verifyUser(existingUser, data.password)) {
         return getTokenizedResponse(
-          generateAccessToken(existingUser.id, getEnv(EnvVariable.SIGNING_KEY)),
+          generateAccessToken(existingUser.id),
           generateRefreshToken(
-            existingUser.id,
-            getEnv(EnvVariable.REFRESH_KEY),
+            existingUser.id
           ),
         );
       }
@@ -47,8 +46,8 @@ export const getPostRoute =
         await options.onSignUp?.(newUser.id, data);
       }
       return getTokenizedResponse(
-        generateAccessToken(newUser.id, getEnv(EnvVariable.SIGNING_KEY)),
-        generateRefreshToken(newUser.id, getEnv(EnvVariable.REFRESH_KEY)),
+        generateAccessToken(newUser.id),
+        generateRefreshToken(newUser.id),
       );
     }
     return getTokenizedResponse();

@@ -30,7 +30,7 @@ export const getGetRoute =
         await options.onRefresh?.(userID, body);
       }
       return getTokenizedResponse(
-        generateAccessToken(userID, getEnv(EnvVariable.SIGNING_KEY)),
+        generateAccessToken(userID),
       );
     }
 
