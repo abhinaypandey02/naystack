@@ -29,9 +29,9 @@ export function AuthFetch() {
   );
 }
 
-export function AuthWrapper({ children, getRefreshToken, onTokenUpdate, skipInitialFetch }: AuthWrapperProps) {
+export function AuthWrapper({ children, onTokenUpdate, skipInitialFetch }: AuthWrapperProps) {
   return <>
-    <AuthWrapperClient skipInitialFetch getRefreshToken={getRefreshToken} onTokenUpdate={onTokenUpdate}>
+    <AuthWrapperClient skipInitialFetch onTokenUpdate={onTokenUpdate}>
       {!skipInitialFetch && <AuthFetch />}
       {children}
     </AuthWrapperClient>
