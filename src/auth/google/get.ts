@@ -105,12 +105,14 @@ export const getGoogleGetRoute = ({
           const accessToken = generateAccessToken(
             id
           );
+          const refreshToken = generateRefreshToken(id);
           const targetUrl = new URL(finalRedirectURL, req.nextUrl.origin);
           targetUrl.searchParams.set("accessToken", accessToken);
+          targetUrl.searchParams.set("refreshToken", refreshToken);
           const res = NextResponse.redirect(targetUrl);
           res.cookies.set(
             REFRESH_COOKIE_NAME,
-            generateRefreshToken(id),
+            refreshToken,
             {
               httpOnly: true,
               secure: true,
