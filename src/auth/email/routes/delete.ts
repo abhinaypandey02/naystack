@@ -13,9 +13,13 @@ import { getContext } from "../utils";
 export const getDeleteRoute =
   (options: SetupEmailAuthOptions) => async (req: NextRequest) => {
     if (options.onLogout) {
-      const ctx = await getContext(req);
-      const body = await req.json();
-      await options.onLogout?.(ctx.userId, body);
+      try {
+        const ctx = await getContext(req);
+        const body = await req.json();
+        await options.onLogout?.(ctx.userId, body);
+      } catch (e) {
+        console.error(e);
+      }
     }
     return getTokenizedResponse();
   };

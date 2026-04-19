@@ -23,8 +23,12 @@ export const getGetRoute =
 
     if (userID) {
       if (options.onRefresh) {
-        const body = await req.json().catch(() => null);
-        await options.onRefresh?.(userID, body);
+        try {
+          const body = await req.json().catch(() => null);
+          await options.onRefresh?.(userID, body);
+        } catch (e) {
+          console.error(e);
+        }
       }
       return getTokenizedResponse(userID
       );

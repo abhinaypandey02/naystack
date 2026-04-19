@@ -28,7 +28,11 @@ export const getPutRoute =
 
     if (await verifyUser(user, data.password)) {
       if (options.onLogin) {
-        await options.onLogin?.(user.id, data);
+        try {
+          await options.onLogin?.(user.id, data);
+        } catch (e) {
+          console.error(e);
+        }
       }
       return getTokenizedResponse(user.id
       );
