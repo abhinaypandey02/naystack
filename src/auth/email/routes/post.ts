@@ -40,7 +40,11 @@ export const getPostRoute =
     });
     if (newUser) {
       if (options.onSignUp) {
-        await options.onSignUp?.(newUser.id, data);
+        try {
+          await options.onSignUp?.(newUser.id, data);
+        } catch (e) {
+          console.error(e);
+        }
       }
       return getTokenizedResponse(newUser.id
       );
