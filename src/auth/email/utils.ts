@@ -51,7 +51,6 @@ export async function massageRequest(
   }
   return {
     data: {
-      email: data.email!,
       password: data.password!,
       ...data,
     },
