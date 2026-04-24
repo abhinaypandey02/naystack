@@ -20,8 +20,7 @@ export function AuthFetch() {
             Cookie: cookie.toString(),
           },
         })
-          .then((res) => res.json())
-          .then((data) => data.accessToken)
+          .then((res) => res.text())
           .catch(() => null);
       }}
       Component={AuthApply}

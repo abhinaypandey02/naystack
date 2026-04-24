@@ -27,9 +27,9 @@ export type SetupEmailAuthOptions = {
   getUser: (data: any) => Promise<UserOutput | undefined>;
   createUser: (user: any) => Promise<UserOutput | undefined>;
   onError?: ErrorHandler;
-  onSignUp?: (userId: number | null, body: any) => Promise<void>;
-  onLogin?: (userId: number | null, body: any) => Promise<void>;
-  onRefresh?: (userId: number | null, body: any) => Promise<void>;
-  onLogout?: (userId: number | null, body: any) => Promise<void>;
+  onSignUp?: (userId: number | null, body: object) => Promise<void>;
+  onLogin?: (userId: number | null, body: object) => Promise<void>;
+  onRefresh?: (userId: number | null, body: object) => Promise<void>;
+  onLogout?: (userId: number | null, body: object) => Promise<void>;
   allowedOrigins?: string[];
 };

@@ -15,7 +15,7 @@ export const getDeleteRoute =
     if (options.onLogout) {
       try {
         const ctx = await getContext(req);
-        const body = await req.json();
+        const body = await req.json().catch(()=>null);
         await options.onLogout?.(ctx.userId, body);
       } catch (e) {
         console.error(e);
