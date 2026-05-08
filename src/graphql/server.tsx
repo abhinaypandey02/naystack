@@ -7,6 +7,7 @@ import {
 import { registerApolloClient } from "@apollo/client-integration-nextjs";
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import type { FC } from "react";
 import React from "react";
 import { Suspense } from "react";
@@ -31,10 +32,18 @@ type ComponentProps<Y> =
  * This is the primary way to inject server-side data into client components in naystack.
  * Use `.authCall()` or `.call()` from your query definitions inside the `fetch` function.
  *
+ * By default, `Injector` calls `connection()` from `next/server` before
+ * running `fetch`, marking the surrounding route segment as dynamic. This
+ * is what consumers almost always want: data fetched at request time
+ * should not be statically prerendered. Pass `isStatic` when you
+ * are intentionally rendering inside a cached/static segment (e.g. the
+ * `fetch` is wrapped in `"use cache"`).
+ *
  * @param injectorProps - Configuration object.
  * @param injectorProps.fetch - Async function that returns the data to pass to the component. Runs on the server.
  * @param injectorProps.Component - React component that receives `{ data?: T; loading: boolean }` plus any extra props.
  * @param injectorProps.props - Optional. Any additional props to pass to `Component`. Required if the Component has props other than `data` and `loading`.
+ * @param injectorProps.isStatic - Optional. When true, suppresses the implicit `connection()` call. Default: false.
  * @returns A React element that suspends until `fetch()` completes, then renders `Component` with the data.
  *
  * @example Simple usage:
@@ -79,14 +88,21 @@ export function Injector<T, Y>({
   fetch,
   Component,
   props,
+  isStatic,
 }: {
   fetch: () => Promise<T>;
   Component: FC<{ data?: T; loading: boolean } & Y>;
+  isStatic?: boolean;
 } & ComponentProps<Y>) {
   return (
     <Suspense fallback={<Component {...((props || {}) as Y)} loading />}>
       {/*@ts-expect-error -- to allow dynamic props*/}
-      <InjectorSuspensed Component={Component} fetch={fetch} props={props} />
+      <InjectorSuspensed
+        Component={Component}
+        fetch={fetch}
+        props={props}
+        isStatic={isStatic}
+      />
     </Suspense>
   );
 }
@@ -96,10 +112,15 @@ async function InjectorSuspensed<T, Y>({
   fetch,
   Component,
   props,
+  isStatic,
 }: {
   fetch: () => Promise<T>;
   Component: FC<{ data?: T; loading: boolean } & Y>;
+  isStatic?: boolean;
 } & ComponentProps<Y>) {
+  if (!isStatic) {
+    await connection();
+  }
   const data = await fetch();
   return <Component loading={false} {...((props || {}) as Y)} data={data} />;
 }
