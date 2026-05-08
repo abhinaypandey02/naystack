@@ -84,31 +84,7 @@ type ComponentProps<Y> =
  *
  * @category GraphQL
  */
-export function Injector<T, Y>({
-  fetch,
-  Component,
-  props,
-  isStatic,
-}: {
-  fetch: () => Promise<T>;
-  Component: FC<{ data?: T; loading: boolean } & Y>;
-  isStatic?: boolean;
-} & ComponentProps<Y>) {
-  return (
-    <Suspense fallback={<Component {...((props || {}) as Y)} loading />}>
-      {/*@ts-expect-error -- to allow dynamic props*/}
-      <InjectorSuspensed
-        Component={Component}
-        fetch={fetch}
-        props={props}
-        isStatic={isStatic}
-      />
-    </Suspense>
-  );
-}
-
-/** Internal: fetches data and renders Component with data and loading=false. */
-async function InjectorSuspensed<T, Y>({
+export async function Injector<T, Y>({
   fetch,
   Component,
   props,
@@ -121,6 +97,23 @@ async function InjectorSuspensed<T, Y>({
   if (!isStatic) {
     await connection();
   }
+  return (
+    <Suspense fallback={<Component {...((props || {}) as Y)} loading />}>
+      {/*@ts-expect-error -- to allow dynamic props*/}
+      <InjectorSuspensed Component={Component} fetch={fetch} props={props} />
+    </Suspense>
+  );
+}
+
+/** Internal: fetches data and renders Component with data and loading=false. */
+async function InjectorSuspensed<T, Y>({
+  fetch,
+  Component,
+  props,
+}: {
+  fetch: () => Promise<T>;
+  Component: FC<{ data?: T; loading: boolean } & Y>;
+} & ComponentProps<Y>) {
   const data = await fetch();
   return <Component loading={false} {...((props || {}) as Y)} data={data} />;
 }
