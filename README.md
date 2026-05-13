@@ -773,7 +773,7 @@ NEXT_PUBLIC_GOOGLE_AUTH_ENDPOINT=/api/google
 ### Instagram OAuth
 
 ```bash
-INSTAGRAM_CLIENT_ID=your-instagram-client-id
+NEXT_PUBLIC_INSTAGRAM_CLIENT_ID=your-instagram-client-id
 INSTAGRAM_CLIENT_SECRET=your-instagram-client-secret
 NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT=/api/instagram
 ```

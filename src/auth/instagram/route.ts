@@ -28,7 +28,7 @@ export const getInstagramRoute = ({
     const instagramData = await getLongLivedToken(
       accessCode,
       getEnv(EnvVariable.NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT),
-      getEnv(EnvVariable.INSTAGRAM_CLIENT_ID),
+      getEnv(EnvVariable.NEXT_PUBLIC_INSTAGRAM_CLIENT_ID),
       getEnv(EnvVariable.INSTAGRAM_CLIENT_SECRET),
     );
     if (!instagramData?.accessToken)

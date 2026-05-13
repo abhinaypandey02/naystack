@@ -26,7 +26,7 @@ export interface SetupInstagramAuthOptions {
  *
  * Mount the GET handler on your Instagram auth route (e.g. `app/api/(auth)/instagram/route.ts`).
  *
- * Requires env vars: `INSTAGRAM_CLIENT_ID`, `INSTAGRAM_CLIENT_SECRET`, `NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT`.
+ * Requires env vars: `NEXT_PUBLIC_INSTAGRAM_CLIENT_ID`, `INSTAGRAM_CLIENT_SECRET`, `NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT`.
  *
  * @param props - Options. See {@link SetupInstagramAuthOptions}.
  * @returns Object with `GET` (route handler) and `getRefreshedAccessToken` (refreshes a long-lived token).
