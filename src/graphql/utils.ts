@@ -560,7 +560,7 @@ export function QueryLibrary<
       );
     }
     if (def.authorized) {
-      Authorized()(GeneratedResolver, key);
+      Authorized()(GeneratedResolver.prototype, key);
     }
     Ctx()(GeneratedResolver.prototype, key, 0);
 
@@ -638,7 +638,7 @@ export function FieldLibrary<
       key,
     )!;
     if (def.authorized) {
-      Authorized()(GeneratedResolver, key);
+      Authorized()(GeneratedResolver.prototype, key);
     }
     Root()(GeneratedResolver.prototype, key, 0);
     FieldResolver(() => def.output, def.outputOptions)(
