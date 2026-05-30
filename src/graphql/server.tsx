@@ -79,12 +79,17 @@ export function Injector<T, Y>({
   fetch,
   Component,
   props,
+                                 suspendedFallback
 }: {
   fetch: () => Promise<T>;
   Component: FC<{ data?: T; loading: boolean } & Y>;
+  suspendedFallback?: boolean
 } & ComponentProps<Y>) {
+  const fallback = <Component {...((props || {}) as Y)} loading />
   return (
-    <Suspense fallback={<Component {...((props || {}) as Y)} loading />}>
+    <Suspense fallback={
+
+        suspendedFallback?<Suspense>{fallback}</Suspense>:fallback}>
       {/*@ts-expect-error -- to allow dynamic props*/}
       <InjectorSuspensed Component={Component} fetch={fetch} props={props} />
     </Suspense>
