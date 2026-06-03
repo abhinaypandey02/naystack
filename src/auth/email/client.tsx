@@ -119,7 +119,7 @@ export function useAuthFetch({ skip }: { skip?: boolean } = {}) {
 export function AuthApply({ data }: { data?: string | null }) {
   const setToken = useSetToken();
   useEffect(() => {
-    if (data) {
+    if (data!==undefined) {
       setToken(data);
     }
   }, [data]);
