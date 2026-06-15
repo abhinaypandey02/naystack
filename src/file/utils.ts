@@ -13,6 +13,7 @@ import { EnvVariable, getEnv } from "@/src/env";
  */
 const client = new S3Client({
   region: getEnv(EnvVariable.S3_REGION),
+  endpoint: process.env.S3_ENDPOINT,
   credentials: {
     accessKeyId: getEnv(EnvVariable.S3_ACCESS_KEY_ID),
     secretAccessKey: getEnv(EnvVariable.S3_ACCESS_KEY_SECRET),
