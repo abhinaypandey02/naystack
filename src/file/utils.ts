@@ -19,7 +19,7 @@ const client = new S3Client({
   },
 });
 
-const URL_PREFIX = `https://${getEnv(EnvVariable.NEXT_PUBLIC_S3_DOMAIN)}`;
+const URL_PREFIX = `https://${getEnv(EnvVariable.NEXT_PUBLIC_S3_DOMAIN)}/`;
 
 /** Normalizes key(s) to a single string (array elements joined by `/`). */
 function getKey(keys: string | string[]) {
