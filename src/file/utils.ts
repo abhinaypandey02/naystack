@@ -8,20 +8,18 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { EnvVariable, getEnv } from "@/src/env";
 
 /**
- * S3 client initialised at module load using `AWS_ACCESS_KEY_ID`, `AWS_ACCESS_KEY_SECRET`, and `AWS_REGION`.
+ * S3 client initialised at module load using `S3_ACCESS_KEY_ID`, `S3_ACCESS_KEY_SECRET`, and `S3_REGION`.
  * @category File
  */
 const client = new S3Client({
-  region: getEnv(EnvVariable.AWS_REGION),
+  region: getEnv(EnvVariable.S3_REGION),
   credentials: {
-    accessKeyId: getEnv(EnvVariable.AWS_ACCESS_KEY_ID),
-    secretAccessKey: getEnv(EnvVariable.AWS_ACCESS_KEY_SECRET),
+    accessKeyId: getEnv(EnvVariable.S3_ACCESS_KEY_ID),
+    secretAccessKey: getEnv(EnvVariable.S3_ACCESS_KEY_SECRET),
   },
 });
 
-const URL_PREFIX = `https://${getEnv(EnvVariable.AWS_BUCKET)}.s3.${getEnv(
-  EnvVariable.AWS_REGION,
-)}.amazonaws.com/`;
+const URL_PREFIX = `https://${getEnv(EnvVariable.NEXT_PUBLIC_S3_DOMAIN)}`;
 
 /** Normalizes key(s) to a single string (array elements joined by `/`). */
 function getKey(keys: string | string[]) {
@@ -40,7 +38,7 @@ export const getUploadURL = (keys: string | string[]) => {
   if (!checkClient(client)) return;
 
   const command = new PutObjectCommand({
-    Bucket: getEnv(EnvVariable.AWS_BUCKET),
+    Bucket: getEnv(EnvVariable.S3_BUCKET),
     Key: getKey(keys),
     ACL: "public-read",
   });
@@ -104,7 +102,7 @@ export const deleteFile = async (url: string) => {
     try {
       await client.send(
         new DeleteObjectCommand({
-          Bucket: getEnv(EnvVariable.AWS_BUCKET),
+          Bucket: getEnv(EnvVariable.S3_BUCKET),
           Key: key,
         }),
       );
@@ -134,7 +132,7 @@ export const uploadBlob = async (file: File | Blob, key: string) => {
   const fileBuffer = await file.arrayBuffer();
   return client.send(
     new PutObjectCommand({
-      Bucket: getEnv(EnvVariable.AWS_BUCKET),
+      Bucket: getEnv(EnvVariable.S3_BUCKET),
       Key: key,
       ACL: "public-read",
       Body: Buffer.from(fileBuffer),

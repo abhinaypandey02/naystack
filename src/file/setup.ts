@@ -29,7 +29,7 @@ export interface SetupFileUploadOptions {
  * Mount the `PUT` handler on your file upload API route (e.g. `app/api/(rest)/file/route.ts`).
  * The client can then use `useFileUpload()` from `naystack/file/client` to upload files with the auth token.
  *
- * AWS credentials are read from env vars: `AWS_ACCESS_KEY_ID`, `AWS_ACCESS_KEY_SECRET`, `AWS_REGION`, `AWS_BUCKET`.
+ * AWS credentials are read from env vars: `S3_ACCESS_KEY_ID`, `S3_ACCESS_KEY_SECRET`, `S3_REGION`, `S3_BUCKET`.
  *
  * @param options - Configuration. See {@link SetupFileUploadOptions}.
  * @returns Object with:

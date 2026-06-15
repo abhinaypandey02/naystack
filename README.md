@@ -781,10 +781,10 @@ NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT=/api/instagram
 ### AWS S3 (File Upload)
 
 ```bash
-AWS_REGION=us-east-1
-AWS_BUCKET=your-bucket-name
-AWS_ACCESS_KEY_ID=your-access-key-id
-AWS_ACCESS_KEY_SECRET=your-secret-access-key
+S3_REGION=us-east-1
+S3_BUCKET=your-bucket-name
+S3_ACCESS_KEY_ID=your-access-key-id
+S3_ACCESS_KEY_SECRET=your-secret-access-key
 ```
 
 ### Optional

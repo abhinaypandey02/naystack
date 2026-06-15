@@ -32,13 +32,15 @@ export enum EnvVariable {
   /** Cloudflare Turnstile secret key (optional — enables captcha on auth routes). */
   TURNSTILE_KEY = "TURNSTILE_KEY",
   /** AWS access key id for S3. */
-  AWS_ACCESS_KEY_ID = "AWS_ACCESS_KEY_ID",
+  S3_ACCESS_KEY_ID = "S3_ACCESS_KEY_ID",
   /** AWS secret access key for S3. */
-  AWS_ACCESS_KEY_SECRET = "AWS_ACCESS_KEY_SECRET",
+  S3_ACCESS_KEY_SECRET = "S3_ACCESS_KEY_SECRET",
   /** AWS region for S3 (e.g. `us-east-1`). */
-  AWS_REGION = "AWS_REGION",
+  S3_REGION = "S3_REGION",
   /** AWS S3 bucket name. */
-  AWS_BUCKET = "AWS_BUCKET",
+  S3_BUCKET = "S3_BUCKET",
+  /** AWS S3 URL. */
+  NEXT_PUBLIC_S3_DOMAIN = "NEXT_PUBLIC_S3_DOMAIN",
   /** Node environment (`development`, `production`, etc.). Used for Apollo landing page and introspection. */
   NODE_ENV = "NODE_ENV",
 }
@@ -61,7 +63,7 @@ export function addEnv(key: string, value: string) {
  * ```ts
  * import { getEnvValue, EnvVariable } from "naystack/env";
  *
- * const region = getEnvValue(EnvVariable.AWS_REGION); // "us-east-1" or undefined
+ * const region = getEnvValue(EnvVariable.S3_REGION); // "us-east-1" or undefined
  * ```
  *
  * @category Environment
@@ -105,14 +107,14 @@ export const getEnvValue = (key: EnvVariable): string | undefined => {
       return process.env.GOOGLE_CLIENT_ID;
     case EnvVariable.TURNSTILE_KEY:
       return process.env.TURNSTILE_KEY;
-    case EnvVariable.AWS_ACCESS_KEY_ID:
-      return process.env.AWS_ACCESS_KEY_ID;
-    case EnvVariable.AWS_ACCESS_KEY_SECRET:
-      return process.env.AWS_ACCESS_KEY_SECRET;
-    case EnvVariable.AWS_REGION:
-      return process.env.AWS_REGION;
-    case EnvVariable.AWS_BUCKET:
-      return process.env.AWS_BUCKET;
+    case EnvVariable.S3_ACCESS_KEY_ID:
+      return process.env.S3_ACCESS_KEY_ID;
+    case EnvVariable.S3_ACCESS_KEY_SECRET:
+      return process.env.S3_ACCESS_KEY_SECRET;
+    case EnvVariable.S3_REGION:
+      return process.env.S3_REGION;
+    case EnvVariable.S3_BUCKET:
+      return process.env.S3_BUCKET;
     case EnvVariable.NODE_ENV:
       return process.env.NODE_ENV;
     default:
