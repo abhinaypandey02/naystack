@@ -1,5 +1,5 @@
 import { getInstagramRoute } from "@/src/auth/instagram/route";
-export { getRefreshedInstagramAccessToken } from "@/src/auth/instagram/utils";
+export { getRefreshedInstagramAccessToken, getInstagramAuthorizationURL } from "@/src/auth/instagram/utils";
 import { InstagramUser } from "@/src/socials/instagram/types";
 
 /**
