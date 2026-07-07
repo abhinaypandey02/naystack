@@ -3,6 +3,14 @@ import { useToken } from "naystack/auth/client";
 import { EnvVariable, getEnv } from "@/src/env";
 
 /**
+ * A React Native file descriptor. On native there is no `File`/`Blob` for a file
+ * on disk — you append `{ uri, name, type }` to `FormData` and RN's networking
+ * streams it straight from disk (no in-memory copy). `FormData.append` accepts it
+ * as-is, so `useFileUpload` handles it identically to a web `File`/`Blob`.
+ */
+export type NativeFile = { uri: string; name: string; type: string };
+
+/**
  * Returns a function that uploads a file to your file upload endpoint with the current auth token.
  * Must be used inside a tree that provides the token (i.e. inside `AuthWrapper`).
  *
@@ -10,7 +18,8 @@ import { EnvVariable, getEnv } from "@/src/env";
  * along with a `type` string and optional JSON `data` for metadata.
  *
  * @returns A function `(file, type, config?) => Promise<FileUploadResponseType | null>`.
- *   - `file` — `File` or `Blob` to upload.
+ *   - `file` — `File` or `Blob` (web) or a `{ uri, name, type }` {@link NativeFile}
+ *     descriptor (React Native) to upload.
  *   - `type` — String category (e.g. `"avatar"`, `"DealDocument"`); sent as form field `type`.
  *   - `config` — Optional object with:
  *     - `data` — JSON-serializable metadata object; sent as form field `data`.
@@ -49,13 +58,15 @@ import { EnvVariable, getEnv } from "@/src/env";
 export const useFileUpload = () => {
   const token = useToken();
   return (
-    file: File | Blob,
+    file: File | Blob | NativeFile,
     type: string,
     config?: { data?: object; async?: boolean },
   ) => {
     const formData = new FormData();
     formData.append("type", type);
-    formData.append("file", file);
+    // RN accepts a `{ uri, name, type }` descriptor here and streams from disk;
+    // the DOM `FormData` type only models `Blob | string`, hence the cast.
+    formData.append("file", file as Blob);
     if (config?.async) formData.append("async", "true");
     if (config?.data) formData.append("data", JSON.stringify(config.data));
     return fetch(getEnv(EnvVariable.NEXT_PUBLIC_FILE_ENDPOINT), {
