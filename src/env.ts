@@ -23,8 +23,9 @@ export enum EnvVariable {
   SIGNING_KEY = "SIGNING_KEY",
   /** Instagram app client secret (from Meta Developer Portal). */
   INSTAGRAM_CLIENT_SECRET = "INSTAGRAM_CLIENT_SECRET",
-  /** Instagram app client id (from Meta Developer Portal). */
-  NEXT_PUBLIC_INSTAGRAM_CLIENT_ID = "NEXT_PUBLIC_INSTAGRAM_CLIENT_ID",
+  /** Instagram app client id (from Meta Developer Portal). Server-only — the
+   * authorization URL is built server-side, so it is not exposed to the client. */
+  INSTAGRAM_CLIENT_ID = "INSTAGRAM_CLIENT_ID",
   /** Google OAuth client secret (from Google Cloud Console). */
   GOOGLE_CLIENT_SECRET = "GOOGLE_CLIENT_SECRET",
   /** Google OAuth client id (from Google Cloud Console). */
@@ -99,8 +100,8 @@ export const getEnvValue = (key: EnvVariable): string | undefined => {
       return process.env.SIGNING_KEY;
     case EnvVariable.INSTAGRAM_CLIENT_SECRET:
       return process.env.INSTAGRAM_CLIENT_SECRET;
-    case EnvVariable.NEXT_PUBLIC_INSTAGRAM_CLIENT_ID:
-      return process.env.NEXT_PUBLIC_INSTAGRAM_CLIENT_ID;
+    case EnvVariable.INSTAGRAM_CLIENT_ID:
+      return process.env.INSTAGRAM_CLIENT_ID;
     case EnvVariable.GOOGLE_CLIENT_SECRET:
       return process.env.GOOGLE_CLIENT_SECRET;
     case EnvVariable.GOOGLE_CLIENT_ID:

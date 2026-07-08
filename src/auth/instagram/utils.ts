@@ -68,23 +68,27 @@ export async function getLongLivedToken(
  * The state token is passed back by Instagram after authorization and is used to link
  * the Instagram account to the logged-in user.
  *
- * Reads `NEXT_PUBLIC_INSTAGRAM_CLIENT_ID` and `NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT` from the environment.
+ * Reads `INSTAGRAM_CLIENT_ID` and `NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT` from the environment.
+ *
+ * **Server-only** — reads the non-public `INSTAGRAM_CLIENT_ID`, so it must be
+ * called from server code (e.g. the Instagram auth route), not the client. The
+ * OAuth `client_id` still ends up in the redirect URL the browser follows; it is
+ * simply built on the server instead of shipped in the client bundle.
  *
  * @param token - The state token to embed in the authorization URL (typically the user's session or access token).
  * @returns The full Instagram OAuth authorization URL.
  *
  * @example
  * ```ts
- * import { getInstagramAuthorizationURL } from "naystack/auth/instagram/client";
+ * // In a server route handler:
+ * import { getInstagramAuthorizationURL } from "naystack/auth";
  *
- * const url = getInstagramAuthorizationURL(userAccessToken);
- * // => "https://www.instagram.com/oauth/authorize?client_id=...&state=...&redirect_uri=..."
- * window.location.href = url;
+ * return NextResponse.redirect(getInstagramAuthorizationURL(state), 302);
  * ```
  *
  * @category Auth
  */
 export const getInstagramAuthorizationURL = (token: string) =>
     `https://www.instagram.com/oauth/authorize?client_id=${getEnv(
-        EnvVariable.NEXT_PUBLIC_INSTAGRAM_CLIENT_ID,
+        EnvVariable.INSTAGRAM_CLIENT_ID,
     )}&response_type=code&enable_fb_login=0&force_authentication=1&scope=instagram_business_basic&state=${token}&redirect_uri=${getEnv(EnvVariable.NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT)}`;

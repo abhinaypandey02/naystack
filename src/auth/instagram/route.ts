@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getUserIdFromAccessToken } from "@/src/auth/email/token";
 import { SetupInstagramAuthOptions } from "@/src/auth/instagram/index";
-import { getLongLivedToken } from "@/src/auth/instagram/utils";
+import {
+  getInstagramAuthorizationURL,
+  getLongLivedToken,
+} from "@/src/auth/instagram/utils";
 import { EnvVariable, getEnv } from "@/src/env";
 import { getInstagramUser } from "@/src/socials";
 
@@ -24,11 +27,20 @@ export const getInstagramRoute = ({
     const error = req.nextUrl.searchParams.get("error");
     const stateToken = req.nextUrl.searchParams.get("state");
     if (error) return handleError(error);
-    if (!stateToken || !accessCode) return handleError("Invalid request");
+    // Start of OAuth: no code yet → this is the "connect" entry point, so 302 to
+    // Instagram's authorize URL. It must be a *server* 302 (not a client-side
+    // navigation onto instagram.com) — otherwise mobile browsers (notably Arc)
+    // universal-link-match the URL and open the Instagram app, which expects a
+    // profile rather than an OAuth flow and breaks it. Server 302s aren't matched.
+    if (!accessCode) {
+      if (!stateToken) return handleError("Invalid request");
+      return NextResponse.redirect(getInstagramAuthorizationURL(stateToken), 302);
+    }
+    if (!stateToken) return handleError("Invalid request");
     const instagramData = await getLongLivedToken(
       accessCode,
       getEnv(EnvVariable.NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT),
-      getEnv(EnvVariable.NEXT_PUBLIC_INSTAGRAM_CLIENT_ID),
+      getEnv(EnvVariable.INSTAGRAM_CLIENT_ID),
       getEnv(EnvVariable.INSTAGRAM_CLIENT_SECRET),
     );
     if (!instagramData?.accessToken)
