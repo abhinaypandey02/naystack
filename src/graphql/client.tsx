@@ -22,6 +22,7 @@ import React, {
 } from "react";
 
 import { EnvVariable, getEnv } from "@/src/env";
+import { ClearStoreOnLogout } from "./clear-store";
 /**
  * Apollo Client provider for Next.js. Wrap your app (or a subtree) so client components can run GraphQL queries and mutations.
  * The GraphQL endpoint is read from `NEXT_PUBLIC_GRAPHQL_ENDPOINT` env var.
@@ -68,8 +69,15 @@ export const ApolloWrapper = ({
   children,
   cacheConfig,
 }: PropsWithChildren<{ cacheConfig?: InMemoryCacheConfig }>) => {
+  // Create the client once — recreating it per render would drop the cache
+  // (harmless under `no-cache`, but it defeats any cache-reading `fetchPolicy`).
+  const clientRef = useRef<ReturnType<typeof makeClient> | null>(null);
+  if (!clientRef.current) clientRef.current = makeClient(cacheConfig);
   return (
-    <ApolloProvider client={makeClient(cacheConfig)}>{children}</ApolloProvider>
+    <ApolloProvider client={clientRef.current}>
+      <ClearStoreOnLogout />
+      {children}
+    </ApolloProvider>
   );
 };
 
@@ -96,10 +104,10 @@ export const tokenContext = (token?: string | null) => {
  * Hook to run a GraphQL query with the current user's token. The query auto-fires when both the token
  * and variables are available. Returns a refetch function and the Apollo query result.
  *
- * Uses Apollo's default `fetchPolicy` (`cache-first`) unless you override it via
- * `options`. Pass `{ fetchPolicy: "no-cache" }` for always-fresh, viewer-keyed data
- * (e.g. the current user), or `{ fetchPolicy: "cache-and-network" }` to show cached
- * data instantly while refetching.
+ * Defaults to `fetchPolicy: "no-cache"` (always fresh, safe for viewer-keyed data).
+ * Override per-query via `options` — e.g. `{ fetchPolicy: "cache-first" }` for static
+ * reference data, or `{ fetchPolicy: "cache-and-network" }` to show cached data
+ * instantly while refetching.
  *
  * @param query - A `TypedDocumentNode` for the query (e.g. from codegen or a `gql` template).
  * @param variables - Optional initial variables (the `input` value). Automatically wrapped as `{ input: variables }` before sending. Query fires automatically when this and token are set; change to refetch.

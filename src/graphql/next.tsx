@@ -9,6 +9,7 @@ import {
 import React, { PropsWithChildren } from "react";
 
 import { EnvVariable, getEnv } from "@/src/env";
+import { ClearStoreOnLogout } from "./clear-store";
 
 /**
  * Apollo Client provider for Next.js. Wrap your app (or a subtree) so client components can run GraphQL queries and mutations.
@@ -58,6 +59,7 @@ export const ApolloWrapper = ({
 }: PropsWithChildren<{ cacheConfig?: InMemoryCacheConfig }>) => {
   return (
     <ApolloNextAppProvider makeClient={() => makeClient(cacheConfig)}>
+      <ClearStoreOnLogout />
       {children}
     </ApolloNextAppProvider>
   );
