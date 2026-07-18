@@ -6,6 +6,7 @@ import {
   HttpLink,
   InMemoryCache,
   type InMemoryCacheConfig,
+  type LazyQueryHookOptions,
   MutationHookOptions,
   type OperationVariables,
   useLazyQuery,
@@ -95,10 +96,14 @@ export const tokenContext = (token?: string | null) => {
  * Hook to run a GraphQL query with the current user's token. The query auto-fires when both the token
  * and variables are available. Returns a refetch function and the Apollo query result.
  *
- * Uses `fetchPolicy: "no-cache"` by default to always get fresh data.
+ * Uses Apollo's default `fetchPolicy` (`cache-first`) unless you override it via
+ * `options`. Pass `{ fetchPolicy: "no-cache" }` for always-fresh, viewer-keyed data
+ * (e.g. the current user), or `{ fetchPolicy: "cache-and-network" }` to show cached
+ * data instantly while refetching.
  *
  * @param query - A `TypedDocumentNode` for the query (e.g. from codegen or a `gql` template).
  * @param variables - Optional initial variables (the `input` value). Automatically wrapped as `{ input: variables }` before sending. Query fires automatically when this and token are set; change to refetch.
+ * @param options - Optional Apollo `LazyQueryHookOptions` (e.g. `fetchPolicy`, `notifyOnNetworkStatusChange`). Merged into the underlying `useLazyQuery`.
  * @returns Tuple: `[refetch, result]`.
  *   - `refetch(input)` — runs the query again with the given input (wrapped as `variables.input`).
  *   - `result` — `{ data, loading, error, hasAuth }` from Apollo. `hasAuth` is `true` when an auth token is available.
@@ -131,9 +136,13 @@ export const tokenContext = (token?: string | null) => {
 export function useAuthQuery<T, V extends OperationVariables>(
   query: TypedDocumentNode<T, V>,
   variables?: V["input"],
+  options?: LazyQueryHookOptions<T, V>,
 ) {
+  // Default to `no-cache` (always fresh, viewer-keyed safe). Callers opt into
+  // caching per-query by passing `{ fetchPolicy: "cache-first" | "cache-and-network" }`.
   const [fetch, result] = useLazyQuery(query, {
     fetchPolicy: "no-cache",
+    ...options,
   });
   const prevVarsRef = useRef<string>(null);
 

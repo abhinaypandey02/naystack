@@ -93,8 +93,15 @@ type Promisify<T> = T | Promise<T>;
  * there's no refresh cookie the only way to keep that promise is to not call the
  * resolver at all — hence the added `null`, which surfaces the logged-out case in
  * the types instead of passing a null `userId` through the cast.
+ *
+ * `[IsAuth] extends [true]` (not `IsAuth extends true`) is deliberate: `field()`
+ * has no `= false` default and can't reverse-infer `IsAuth` from a `ctx: Context`
+ * signature, so a non-authorized field infers `IsAuth = boolean`. A naked
+ * conditional would distribute over `true | false` and union `null` into every
+ * public field's return. The tuple wrapper stops the distribution, so only a
+ * literal `true` adds `null`.
  */
-type AuthCallReturn<IsAuth extends boolean, R> = IsAuth extends true
+type AuthCallReturn<IsAuth extends boolean, R> = [IsAuth] extends [true]
   ? Awaited<R> | null
   : Awaited<R>;
 
