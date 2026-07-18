@@ -85,6 +85,19 @@ type ParsedGQLTypeWithNullability<
 /** Allows resolver to return T or Promise<T>. */
 type Promisify<T> = T | Promise<T>;
 
+/**
+ * Return type of `.authCall()` / `.call()` for a definition.
+ *
+ * `authorized: true` promises the resolver an `AuthorizedContext` (non-null
+ * `userId`). Server-side callers can't be forced to hold a session, so when
+ * there's no refresh cookie the only way to keep that promise is to not call the
+ * resolver at all — hence the added `null`, which surfaces the logged-out case in
+ * the types instead of passing a null `userId` through the cast.
+ */
+type AuthCallReturn<IsAuth extends boolean, R> = IsAuth extends true
+  ? Awaited<R> | null
+  : Awaited<R>;
+
 /** Base for query/field definition (output, input, options). */
 interface BaseDefinition<
   T,
@@ -120,14 +133,20 @@ export interface QueryDefinition<
     ctx: IsAuth extends true ? AuthorizedContext : Context,
     data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
   ) => R;
-  /** Calls the resolver server-side. For authorized queries, reads the refresh cookie; for non-authorized, passes null userId. */
+  /**
+   * Calls the resolver server-side. For authorized queries, reads the refresh cookie; for non-authorized, passes null userId.
+   * Resolves to `null` when `authorized: true` and there is no session.
+   */
   call: (
     data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
-  ) => Promise<Awaited<R>>;
-  /** Calls the resolver server-side with authentication (always reads the refresh cookie). Use in Server Components. */
+  ) => Promise<AuthCallReturn<IsAuth, R>>;
+  /**
+   * Calls the resolver server-side with authentication (always reads the refresh cookie). Use in Server Components.
+   * Resolves to `null` when `authorized: true` and there is no session — guard it, or gate the page ahead of it.
+   */
   authCall: (
     data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
-  ) => Promise<Awaited<R>>;
+  ) => Promise<AuthCallReturn<IsAuth, R>>;
   mutation?: boolean;
 }
 
@@ -205,10 +224,25 @@ export function resolver<
   return {
     ...options,
     fn,
-    authCall: getAuthCaller<T, U, IsAuth, OutputNullable, InputNullable, R>(fn),
+    authCall: getAuthCaller<T, U, IsAuth, OutputNullable, InputNullable, R>(
+      fn,
+      options.authorized,
+    ),
     call: options.authorized
-      ? getAuthCaller<T, U, IsAuth, OutputNullable, InputNullable, R>(fn)
-      : getCaller<T, U, IsAuth, OutputNullable, InputNullable, R>(fn),
+      ? getAuthCaller<T, U, IsAuth, OutputNullable, InputNullable, R>(
+          fn,
+          options.authorized,
+        )
+      : (getCaller<T, U, IsAuth, OutputNullable, InputNullable, R>(
+          fn,
+        ) as QueryDefinition<
+          T,
+          U,
+          IsAuth,
+          OutputNullable,
+          InputNullable,
+          R
+        >["call"]),
   };
 }
 
@@ -219,7 +253,14 @@ const getUserId = async () => {
   return refresh ? getUserIdFromRefreshToken(refresh) : null;
 };
 
-/** Returns a cached caller that injects authenticated context. */
+/**
+ * Returns a cached caller that injects authenticated context.
+ *
+ * `@Authorized()` only guards the GraphQL request path, so without the
+ * `authorized` gate below a server-side call would run the resolver with a null
+ * `userId` cast to `AuthorizedContext` — the resolver reads `ctx.userId` as
+ * non-null and silently queries as "no user".
+ */
 function getAuthCaller<
   T,
   U,
@@ -234,16 +275,19 @@ function getAuthCaller<
     ctx: IsAuth extends true ? AuthorizedContext : Context,
     data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
   ) => R,
+  authorized?: IsAuth,
 ) {
   return cache(
     async (
       data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
-    ): Promise<Awaited<R>> => {
+    ): Promise<AuthCallReturn<IsAuth, R>> => {
+      const userId = await getUserId();
+      if (authorized && !userId) return null as AuthCallReturn<IsAuth, R>;
       const ctx = {
-        userId: await getUserId(),
+        userId,
         isRefreshID: true,
       } as IsAuth extends true ? AuthorizedContext : Context;
-      return await fn(ctx, data);
+      return (await fn(ctx, data)) as AuthCallReturn<IsAuth, R>;
     },
   );
 }
@@ -299,19 +343,35 @@ export interface FieldResolverDefinition<
     ctx: IsAuth extends true ? AuthorizedContext : Context,
     data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
   ) => R;
-  /** Calls the field resolver server-side. For authorized fields, reads the refresh cookie. */
+  /**
+   * Calls the field resolver server-side. For authorized fields, reads the refresh cookie.
+   * Resolves to `null` when `authorized: true` and there is no session.
+   */
   call: (
     root: Root,
     data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
-  ) => Promise<Awaited<R>>;
-  /** Calls the field resolver server-side with authentication (always reads the refresh cookie). */
+  ) => Promise<AuthCallReturn<IsAuth, R>>;
+  /**
+   * Calls the field resolver server-side with authentication (always reads the refresh cookie).
+   * Resolves to `null` when `authorized: true` and there is no session.
+   */
   authCall: (
     root: Root,
     data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
-  ) => Promise<Awaited<R>>;
+  ) => Promise<AuthCallReturn<IsAuth, R>>;
+  /**
+   * Skip `FieldLibrary`'s short-circuit, which returns a pre-hydrated `root[key]`
+   * without ever calling this resolver.
+   *
+   * Set this on any field that gates on `ctx` — an auth check inside the resolver
+   * is silently bypassed the moment a parent query selects the field's value into
+   * its own columns. The resolver stays responsible for reusing `root[key]` when
+   * present, so hydration still avoids the N+1.
+   */
+  alwaysResolve?: boolean;
 }
 
-/** Returns a cached field caller that injects authenticated context. */
+/** Returns a cached field caller that injects authenticated context. See {@link getAuthCaller} for why `authorized` gates the call. */
 function getFieldAuthCaller<
   T,
   U,
@@ -328,17 +388,20 @@ function getFieldAuthCaller<
     ctx: IsAuth extends true ? AuthorizedContext : Context,
     data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
   ) => R,
+  authorized?: IsAuth,
 ) {
   return cache(
     async (
       root: Root,
       data: ParsedGQLTypeWithNullability<U, InputNullable, false>,
-    ): Promise<Awaited<R>> => {
+    ): Promise<AuthCallReturn<IsAuth, R>> => {
+      const userId = await getUserId();
+      if (authorized && !userId) return null as AuthCallReturn<IsAuth, R>;
       const ctx = {
-        userId: await getUserId(),
+        userId,
         isRefreshID: true,
       } as IsAuth extends true ? AuthorizedContext : Context;
-      return await fn(root, ctx, data);
+      return (await fn(root, ctx, data)) as AuthCallReturn<IsAuth, R>;
     },
   );
 }
@@ -466,7 +529,7 @@ export function field<
       OutputNullable,
       InputNullable,
       R
-    >(fn),
+    >(fn, options.authorized),
     call: (options.authorized
       ? getFieldAuthCaller<
           T,
@@ -476,7 +539,7 @@ export function field<
           OutputNullable,
           InputNullable,
           R
-        >(fn)
+        >(fn, options.authorized)
       : getFieldCaller<T, U, Root, IsAuth, OutputNullable, InputNullable, R>(
           fn,
         )) as any,
@@ -626,8 +689,12 @@ export function FieldLibrary<
     if (!def) continue;
 
     Object.defineProperty(GeneratedResolver.prototype, key, {
+      // `alwaysResolve` fields must run `fn` even when the parent pre-hydrated
+      // `root[key]`: they gate on `ctx`, and the short-circuit would return the
+      // pre-hydrated value without ever applying that check. Such a resolver is
+      // responsible for reusing `root[key]` itself, so the N+1 win is preserved.
       value: async function (root: any, ctx: Context, input?: any) {
-        if (root[key]) return root[key];
+        if (!def.alwaysResolve && root[key]) return root[key];
         return def.fn(root, ctx, input);
       },
       writable: false,
