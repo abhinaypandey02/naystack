@@ -21,11 +21,13 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           registry-url: "https://registry.npmjs.org"
           cache: "pnpm"
 
-      # Ensure npm 11.5.1 or later is installed for trusted publishing
+      # Trusted publishing needs npm >= 11.5.1; Node 22's bundled npm is older.
+      # npm@latest (12+) requires Node >= 22.22, which is why the runner is on 22
+      # rather than 20 (also now past EOL).
       - name: Update npm
         run: npm install -g npm@latest
 
