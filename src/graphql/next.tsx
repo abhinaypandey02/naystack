@@ -1,6 +1,6 @@
 "use client";
 
-import { HttpLink, type InMemoryCacheConfig } from "@apollo/client";
+import { type InMemoryCacheConfig } from "@apollo/client";
 import {
   ApolloClient,
   ApolloNextAppProvider,
@@ -8,8 +8,8 @@ import {
 } from "@apollo/client-integration-nextjs";
 import React, { PropsWithChildren } from "react";
 
-import { EnvVariable, getEnv } from "@/src/env";
 import { ClearStoreOnLogout } from "./clear-store";
+import { makeAuthLink } from "./links";
 
 /**
  * Apollo Client provider for Next.js. Wrap your app (or a subtree) so client components can run GraphQL queries and mutations.
@@ -47,9 +47,7 @@ import { ClearStoreOnLogout } from "./clear-store";
 function makeClient(cacheConfig?: InMemoryCacheConfig) {
   return new ApolloClient({
     cache: new InMemoryCache(cacheConfig),
-    link: new HttpLink({
-      uri: getEnv(EnvVariable.NEXT_PUBLIC_GRAPHQL_ENDPOINT),
-    }),
+    link: makeAuthLink(),
   });
 }
 

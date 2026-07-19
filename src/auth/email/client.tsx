@@ -12,7 +12,19 @@ import React, {
 } from "react";
 
 import { REFRESH_HEADER_NAME } from "@/src/auth/constants";
+import {
+  getAccessToken,
+  refreshAccessToken,
+  setAccessToken,
+  subscribeToAccessToken,
+} from "@/src/auth/token-store";
 import { EnvVariable, getEnv } from "@/src/env";
+
+export {
+  getAccessToken,
+  refreshAccessToken,
+  setAccessToken,
+} from "@/src/auth/token-store";
 
 /**
  * React context holding the current access token and setter; used by useToken/useSetToken and auth hooks.
@@ -67,7 +79,21 @@ export const AuthWrapper = ({
   children,
   skipInitialFetch
 }: AuthWrapperProps) => {
-  const [token, setToken] = useState<string | null | undefined>();
+  // The module store is the source of truth (see `auth/token-store`); this state
+  // is a mirror of it, so a refresh triggered by the Apollo link re-renders here.
+  const [token, setTokenState] = useState<string | null | undefined>(
+    getAccessToken,
+  );
+
+  useEffect(() => subscribeToAccessToken(setTokenState), []);
+
+  const setToken = useCallback<
+    Dispatch<SetStateAction<string | null | undefined>>
+  >((action) => {
+    setAccessToken(
+      typeof action === "function" ? action(getAccessToken()) : action,
+    );
+  }, []);
 
   return (
     <TokenContext.Provider value={{ token, setToken }}>
@@ -91,20 +117,11 @@ function AuthChildComponent() {
  * @category Auth
  */
 export function useAuthFetch({ skip }: { skip?: boolean } = {}) {
-  const setToken = useSetToken();
-
-  const fetchToken = async () => {
-
-    fetch(getEnv(EnvVariable.NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT), {
-      credentials: "include",
-    })
-      .then((res) => res.text())
-      .then((accessToken) => setToken(accessToken || null));
-  };
-
   useEffect(() => {
     if (skip) return;
-    fetchToken();
+    // Shares the in-flight promise with link-triggered refreshes, and writes
+    // straight to the store — no `setToken` needed, the provider is subscribed.
+    void refreshAccessToken().catch(() => null);
   }, []);
 }
 

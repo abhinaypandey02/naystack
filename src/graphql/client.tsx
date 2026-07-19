@@ -3,7 +3,6 @@
 import {
   ApolloClient,
   ApolloProvider,
-  HttpLink,
   InMemoryCache,
   type InMemoryCacheConfig,
   type LazyQueryHookOptions,
@@ -21,8 +20,8 @@ import React, {
   useRef,
 } from "react";
 
-import { EnvVariable, getEnv } from "@/src/env";
 import { ClearStoreOnLogout } from "./clear-store";
+import { makeAuthLink } from "./links";
 /**
  * Apollo Client provider for Next.js. Wrap your app (or a subtree) so client components can run GraphQL queries and mutations.
  * The GraphQL endpoint is read from `NEXT_PUBLIC_GRAPHQL_ENDPOINT` env var.
@@ -59,9 +58,7 @@ import { ClearStoreOnLogout } from "./clear-store";
 function makeClient(cacheConfig?: InMemoryCacheConfig) {
   return new ApolloClient({
     cache: new InMemoryCache(cacheConfig),
-    link: new HttpLink({
-      uri: getEnv(EnvVariable.NEXT_PUBLIC_GRAPHQL_ENDPOINT),
-    }),
+    link: makeAuthLink(),
   });
 }
 
@@ -224,14 +221,16 @@ export function useAuthMutation<T, V extends OperationVariables>(
 ) {
   const token = useToken();
   const [mutate, result] = useMutation(mutation, options);
+  // The auth header comes from the link chain, not from here: this callback
+  // would close over the token as of its last render, so a refresh-and-retry
+  // would replay the expired one and fail a second time.
   const method = useCallback(
     (input?: V["input"]) =>
       mutate({
         // @ts-expect-error -- to allow dynamic props
         variables: { input },
-        context: tokenContext(token),
       }),
-    [token],
+    [mutate],
   );
   return [method, { ...result, hasAuth: !!token }] as const;
 }

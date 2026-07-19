@@ -10,25 +10,27 @@ import { EnvVariable, getEnv } from "@/src/env";
 import { REFRESH_COOKIE_NAME } from "../constants";
 
 /**
- * Generates a JWT access token for the user (2-hour expiry).
+ * Generates a JWT access token for the user (24-hour expiry).
  * @param id - User id to encode in the JWT payload.
  * @returns Signed JWT string.
  * @category Auth
  */
 export function generateAccessToken(id: number) {
   return sign({ id }, getEnv(EnvVariable.SIGNING_KEY), {
-    expiresIn: "2h",
+    expiresIn: "24h",
   });
 }
 
 /**
- * Generates a JWT refresh token for the user (no expiry — persisted in httpOnly cookie).
+ * Generates a JWT refresh token for the user (1-year expiry, matching the httpOnly cookie).
  * @param id - User id to encode in the JWT payload.
  * @returns Signed JWT string.
  * @category Auth
  */
 export function generateRefreshToken(id: number) {
-  return sign({ id }, getEnv(EnvVariable.REFRESH_KEY));
+  return sign({ id }, getEnv(EnvVariable.REFRESH_KEY), {
+    expiresIn: "365d",
+  });
 }
 
 /**
