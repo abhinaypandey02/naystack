@@ -13,6 +13,15 @@ import { EnvVariable, getEnv } from "@/src/env";
  * rather than the other way around. Writes are synchronous, which means a
  * mutation fired immediately after login can't race the state commit.
  *
+ * **Single instance.** Every consumer must import this through the
+ * `naystack/auth/token-store` package specifier, never a relative path. The
+ * build runs with `splitting: false`, so a relative import is *inlined* into
+ * each entry — `auth/client` (which writes on login/logout) and `graphql/client`
+ * (whose auth link reads on every request) would each get a private copy, and a
+ * logout would clear one while the link kept signing requests with the other's
+ * stale token. The specifier is listed in tsup's `external` to keep it one
+ * module.
+ *
  * **Client-only.** Module state is shared by every request in a Node server
  * process, so writing a user's token here during SSR would leak it into the next
  * request's render. Every writer is reached only from an event handler or an

@@ -2,8 +2,8 @@ import { ApolloLink, fromPromise, HttpLink } from "@apollo/client";
 import { setContext } from "@apollo/client/link/context";
 import { onError } from "@apollo/client/link/error";
 import type { GraphQLFormattedError } from "graphql";
+import { getAccessToken, refreshAccessToken } from "naystack/auth/token-store";
 
-import { getAccessToken, refreshAccessToken } from "@/src/auth/token-store";
 import { EnvVariable, getEnv } from "@/src/env";
 
 /** Marks an operation as already retried, so a still-failing refresh can't loop. */

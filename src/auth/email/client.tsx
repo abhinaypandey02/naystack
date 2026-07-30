@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  getAccessToken,
+  refreshAccessToken,
+  setAccessToken,
+  subscribeToAccessToken,
+} from "naystack/auth/token-store";
 import React, {
   createContext,
   Dispatch,
@@ -11,20 +17,13 @@ import React, {
   useState,
 } from "react";
 
-import { REFRESH_HEADER_NAME } from "@/src/auth/constants";
-import {
-  getAccessToken,
-  refreshAccessToken,
-  setAccessToken,
-  subscribeToAccessToken,
-} from "@/src/auth/token-store";
 import { EnvVariable, getEnv } from "@/src/env";
 
 export {
   getAccessToken,
   refreshAccessToken,
   setAccessToken,
-} from "@/src/auth/token-store";
+} from "naystack/auth/token-store";
 
 /**
  * React context holding the current access token and setter; used by useToken/useSetToken and auth hooks.
@@ -41,7 +40,7 @@ export const TokenContext = createContext<{
 export type AuthWrapperProps = PropsWithChildren<{
   onTokenUpdate?: (token: string | null) => void;
   skipInitialFetch?: boolean;
-}>
+}>;
 
 /**
  * Provider that fetches the current access token from your auth endpoint and exposes it via TokenContext.
@@ -77,7 +76,7 @@ export type AuthWrapperProps = PropsWithChildren<{
  */
 export const AuthWrapper = ({
   children,
-  skipInitialFetch
+  skipInitialFetch,
 }: AuthWrapperProps) => {
   // The module store is the source of truth (see `auth/token-store`); this state
   // is a mirror of it, so a refresh triggered by the Apollo link re-renders here.
@@ -136,7 +135,7 @@ export function useAuthFetch({ skip }: { skip?: boolean } = {}) {
 export function AuthApply({ data }: { data?: string | null }) {
   const setToken = useSetToken();
   useEffect(() => {
-    if (data!==undefined) {
+    if (data !== undefined) {
       setToken(data);
     }
   }, [data]);

@@ -23,6 +23,11 @@
       "import": "./dist/auth/client.esm.js",
       "require": "./dist/auth/client.cjs.js"
     },
+    "./auth/token-store": {
+      "types": "./dist/auth/token-store.d.ts",
+      "import": "./dist/auth/token-store.esm.js",
+      "require": "./dist/auth/token-store.cjs.js"
+    },
     "./graphql": {
       "types": "./dist/graphql/index.d.ts",
       "import": "./dist/graphql/index.esm.js",
