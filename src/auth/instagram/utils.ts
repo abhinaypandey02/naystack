@@ -1,4 +1,51 @@
+import { NextResponse } from "next/server";
+
 import { EnvVariable, getEnv } from "@/src/env";
+
+/**
+ * Builds the interstitial document that carries the browser from our origin to a
+ * provider's authorization page.
+ *
+ * Mobile browsers match universal links (iOS) and app links (Android) against the
+ * final URL of a *user-initiated* navigation — following redirects — so both a
+ * tapped `<a href="https://www.instagram.com/…">` and a server 302 to the same
+ * place can be intercepted by the provider's native app, which has no idea what to
+ * do with an OAuth flow. A navigation issued from a freshly loaded document has no
+ * gesture token behind it and is never intercepted, so this page loads and
+ * immediately replaces itself with `authorizationURL`.
+ *
+ * `location.replace` keeps the interstitial out of session history, so Back from
+ * the provider returns to the page that started the flow. The `noscript` meta
+ * refresh is a fallback, not the primary path.
+ *
+ * @param authorizationURL - Provider authorization URL to hand the browser off to
+ * @returns HTML response that redirects client-side
+ *
+ * @category Auth
+ */
+export function getAuthorizationHandoff(authorizationURL: string) {
+  // The URL carries caller-supplied input (the state token), so escape it for both
+  // the script and the attribute context rather than interpolating it raw.
+  const scriptSafeURL = JSON.stringify(authorizationURL).replace(
+    /</g,
+    "\\u003c",
+  );
+  const attributeSafeURL = authorizationURL
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/"/g, "&quot;");
+  return new NextResponse(
+    `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Connecting…</title><script>location.replace(${scriptSafeURL})</script><noscript><meta http-equiv="refresh" content="0;url=${attributeSafeURL}"></noscript></head><body></body></html>`,
+    {
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+        "cache-control": "no-store",
+        // The token is in the URL; keep it off the provider's referer log.
+        "referrer-policy": "no-referrer",
+      },
+    },
+  );
+}
 
 /**
  * Exchanges a long-lived Instagram token for a refreshed token.
@@ -80,10 +127,12 @@ export async function getLongLivedToken(
  *
  * @example
  * ```ts
- * // In a server route handler:
- * import { getInstagramAuthorizationURL } from "naystack/auth";
+ * // In a server route handler. Hand off with `getAuthorizationHandoff` rather
+ * // than `NextResponse.redirect` — a 302 onto instagram.com is still matched as a
+ * // universal/app link and opens the Instagram app mid-flow.
+ * import { getAuthorizationHandoff, getInstagramAuthorizationURL } from "naystack/auth";
  *
- * return NextResponse.redirect(getInstagramAuthorizationURL(state), 302);
+ * return getAuthorizationHandoff(getInstagramAuthorizationURL(state));
  * ```
  *
  * @category Auth
