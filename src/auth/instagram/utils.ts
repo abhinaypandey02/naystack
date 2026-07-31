@@ -147,14 +147,21 @@ export async function getLongLivedToken(
  *
  * @category Auth
  */
-// The trailing slash on `/oauth/authorize/` is load-bearing on iOS. Instagram's
-// apple-app-site-association excludes `/oauth/authorize/*` from universal links —
-// Meta does not want the app swallowing its own OAuth dialog — but that pattern
-// means the literal `/oauth/authorize/` followed by anything, so the slashless
-// `/oauth/authorize` misses the exclusion by one character and is claimed by the
-// catch-all `/*` rule instead, opening the Instagram app mid-flow. Both spellings
-// serve the same dialog; only this one stays in the browser.
+// Two details keep mobile browsers from opening this URL in the Instagram app
+// instead of following it, which strands the user in the app and means the
+// redirect_uri is never called. Both come from Instagram's own
+// apple-app-site-association (https://www.instagram.com/.well-known/apple-app-site-association):
+//
+//   1. The `#weblink` fragment. Its first rule is
+//      `{"#":"weblink","exclude":true}` — Meta's deliberate opt-out, matched
+//      before every path rule, so any instagram.com URL carrying that fragment is
+//      excluded from universal links. Fragments are never sent to the server, so
+//      Instagram receives exactly the same request either way.
+//   2. The trailing slash on `/oauth/authorize/`. A later rule excludes
+//      `/oauth/authorize/*` — literally `/oauth/authorize/` plus anything — so the
+//      slashless spelling misses it by one character and falls through to the
+//      catch-all `/*` rule. Both spellings serve the same dialog.
 export const getInstagramAuthorizationURL = (token: string) =>
     `https://www.instagram.com/oauth/authorize/?client_id=${getEnv(
         EnvVariable.INSTAGRAM_CLIENT_ID,
-    )}&response_type=code&enable_fb_login=0&force_authentication=1&scope=instagram_business_basic&state=${token}&redirect_uri=${getEnv(EnvVariable.NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT)}`;
+    )}&response_type=code&enable_fb_login=0&force_authentication=1&scope=instagram_business_basic&state=${token}&redirect_uri=${getEnv(EnvVariable.NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT)}#weblink`;
