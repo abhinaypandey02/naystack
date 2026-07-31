@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserIdFromAccessToken } from "@/src/auth/email/token";
 import { SetupInstagramAuthOptions } from "@/src/auth/instagram/index";
 import {
-  getAuthorizationHandoff,
   getInstagramAuthorizationURL,
   getLongLivedToken,
 } from "@/src/auth/instagram/utils";
@@ -28,17 +27,13 @@ export const getInstagramRoute = ({
     const error = req.nextUrl.searchParams.get("error");
     const stateToken = req.nextUrl.searchParams.get("state");
     if (error) return handleError(error);
-    // Start of OAuth: no code yet → this is the "connect" entry point. Hand back
-    // a tiny HTML document that jumps to Instagram from its own load instead of
-    // redirecting. A 302 does not help: iOS and Chrome match universal/app links
-    // against the *final* URL of a user-initiated navigation, redirect chains
-    // included, so a tapped link that lands on www.instagram.com opens the
-    // Instagram app — which expects a profile, not an OAuth flow, and breaks it.
-    // The tap's gesture token dies when this document commits, so the hop below
-    // is script-initiated and left in the browser on both platforms.
+    // Start of OAuth: no code yet → this is the "connect" entry point, so redirect
+    // to Instagram's authorize URL. Keeping mobile browsers from opening that URL in
+    // the Instagram app is the URL's own job, not this redirect's — see
+    // getInstagramAuthorizationURL.
     if (!accessCode) {
       if (!stateToken) return handleError("Invalid request");
-      return getAuthorizationHandoff(getInstagramAuthorizationURL(stateToken));
+      return NextResponse.redirect(getInstagramAuthorizationURL(stateToken), 302);
     }
     if (!stateToken) return handleError("Invalid request");
     const instagramData = await getLongLivedToken(

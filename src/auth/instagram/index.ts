@@ -1,5 +1,5 @@
 import { getInstagramRoute } from "@/src/auth/instagram/route";
-export { getAuthorizationHandoff, getRefreshedInstagramAccessToken, getInstagramAuthorizationURL } from "@/src/auth/instagram/utils";
+export { getRefreshedInstagramAccessToken, getInstagramAuthorizationURL } from "@/src/auth/instagram/utils";
 import { InstagramUser } from "@/src/socials/instagram/types";
 
 /**
@@ -27,9 +27,8 @@ export interface SetupInstagramAuthOptions {
  * Mount the GET handler on your Instagram auth route (e.g. `app/api/(auth)/instagram/route.ts`).
  *
  * The single GET handler serves both the OAuth callback (`?code`) and the connect
- * entry point (`?state` with no code → an HTML page that jumps to Instagram's
- * authorize URL client-side, so mobile browsers don't universal-link the flow into
- * the Instagram app; see {@link getAuthorizationHandoff}).
+ * entry point (`?state` with no code → 302 to Instagram's authorize URL; see
+ * {@link getInstagramAuthorizationURL} for why that URL is spelled the way it is).
  *
  * Requires env vars: `INSTAGRAM_CLIENT_ID` (server-only), `INSTAGRAM_CLIENT_SECRET`, `NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT`.
  *

@@ -1,51 +1,4 @@
-import { NextResponse } from "next/server";
-
 import { EnvVariable, getEnv } from "@/src/env";
-
-/**
- * Builds the interstitial document that carries the browser from our origin to a
- * provider's authorization page.
- *
- * Mobile browsers match universal links (iOS) and app links (Android) against the
- * final URL of a *user-initiated* navigation — following redirects — so both a
- * tapped `<a href="https://www.instagram.com/…">` and a server 302 to the same
- * place can be intercepted by the provider's native app, which has no idea what to
- * do with an OAuth flow. A navigation issued from a freshly loaded document has no
- * gesture token behind it and is never intercepted, so this page loads and
- * immediately replaces itself with `authorizationURL`.
- *
- * `location.replace` keeps the interstitial out of session history, so Back from
- * the provider returns to the page that started the flow. The `noscript` meta
- * refresh is a fallback, not the primary path.
- *
- * @param authorizationURL - Provider authorization URL to hand the browser off to
- * @returns HTML response that redirects client-side
- *
- * @category Auth
- */
-export function getAuthorizationHandoff(authorizationURL: string) {
-  // The URL carries caller-supplied input (the state token), so escape it for both
-  // the script and the attribute context rather than interpolating it raw.
-  const scriptSafeURL = JSON.stringify(authorizationURL).replace(
-    /</g,
-    "\\u003c",
-  );
-  const attributeSafeURL = authorizationURL
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/"/g, "&quot;");
-  return new NextResponse(
-    `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Connecting…</title><script>location.replace(${scriptSafeURL})</script><noscript><meta http-equiv="refresh" content="0;url=${attributeSafeURL}"></noscript></head><body></body></html>`,
-    {
-      headers: {
-        "content-type": "text/html; charset=utf-8",
-        "cache-control": "no-store",
-        // The token is in the URL; keep it off the provider's referer log.
-        "referrer-policy": "no-referrer",
-      },
-    },
-  );
-}
 
 /**
  * Exchanges a long-lived Instagram token for a refreshed token.
@@ -127,17 +80,22 @@ export async function getLongLivedToken(
  *
  * @example
  * ```ts
- * // In a server route handler. Hand off with `getAuthorizationHandoff` rather
- * // than `NextResponse.redirect` — a 302 onto instagram.com is still matched as a
- * // universal/app link and opens the Instagram app mid-flow.
- * import { getAuthorizationHandoff, getInstagramAuthorizationURL } from "naystack/auth";
+ * // In a server route handler:
+ * import { getInstagramAuthorizationURL } from "naystack/auth";
  *
- * return getAuthorizationHandoff(getInstagramAuthorizationURL(state));
+ * return NextResponse.redirect(getInstagramAuthorizationURL(state), 302);
  * ```
  *
  * @category Auth
  */
+// The trailing slash on `/oauth/authorize/` is load-bearing on iOS. Instagram's
+// apple-app-site-association excludes `/oauth/authorize/*` from universal links —
+// Meta does not want the app swallowing its own OAuth dialog — but that pattern
+// means the literal `/oauth/authorize/` followed by anything, so the slashless
+// `/oauth/authorize` misses the exclusion by one character and is claimed by the
+// catch-all `/*` rule instead, opening the Instagram app mid-flow. Both spellings
+// serve the same dialog; only this one stays in the browser.
 export const getInstagramAuthorizationURL = (token: string) =>
-    `https://www.instagram.com/oauth/authorize?client_id=${getEnv(
+    `https://www.instagram.com/oauth/authorize/?client_id=${getEnv(
         EnvVariable.INSTAGRAM_CLIENT_ID,
     )}&response_type=code&enable_fb_login=0&force_authentication=1&scope=instagram_business_basic&state=${token}&redirect_uri=${getEnv(EnvVariable.NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT)}`;
