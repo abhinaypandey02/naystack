@@ -1,4 +1,63 @@
+import { NextResponse } from "next/server";
+
 import { EnvVariable, getEnv } from "@/src/env";
+
+/**
+ * How long the handoff page waits before navigating to the provider.
+ *
+ * The wait is the point. Mobile browsers hand a URL to a provider's native app
+ * based on how closely the navigation is tied to the tap that started it — a
+ * tapped link, a 302 from one, and a redirect fired the instant a page loads all
+ * still count as that tap, and all three were observed opening the Instagram app
+ * mid-OAuth. A timer this long is unambiguously its own navigation.
+ */
+const HANDOFF_DELAY_MS = 1500;
+
+/**
+ * Builds the interstitial document that carries the browser from our origin to a
+ * provider's authorization page: it renders, waits {@link HANDOFF_DELAY_MS}, then
+ * replaces itself with `authorizationURL`.
+ *
+ * `location.replace` keeps the interstitial out of session history, so Back from
+ * the provider returns to the page that started the flow. The `noscript` meta
+ * refresh is a fallback, not the primary path.
+ *
+ * @param authorizationURL - Provider authorization URL to hand the browser off to
+ * @param providerName - Shown to the user while waiting, e.g. `"Instagram"`
+ * @returns HTML response that redirects client-side after a delay
+ *
+ * @category Auth
+ */
+export function getAuthorizationHandoff(
+  authorizationURL: string,
+  providerName: string,
+) {
+  // The URL carries caller-supplied input (the state token), so escape it for both
+  // the script and the attribute context rather than interpolating it raw.
+  const scriptSafeURL = JSON.stringify(authorizationURL).replace(
+    /</g,
+    "\\u003c",
+  );
+  const attributeSafeURL = authorizationURL
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/"/g, "&quot;");
+  const safeProviderName = providerName
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  return new NextResponse(
+    `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Redirecting to ${safeProviderName}…</title><style>body{margin:0;min-height:100dvh;display:flex;align-items:center;justify-content:center;font:500 15px/1.5 system-ui,-apple-system,sans-serif;color:#111}</style><script>setTimeout(function(){location.replace(${scriptSafeURL})},${HANDOFF_DELAY_MS})</script><noscript><meta http-equiv="refresh" content="2;url=${attributeSafeURL}"></noscript></head><body><p>Redirecting to ${safeProviderName}…</p></body></html>`,
+    {
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+        "cache-control": "no-store",
+        // The token is in the URL; keep it off the provider's referer log.
+        "referrer-policy": "no-referrer",
+      },
+    },
+  );
+}
 
 /**
  * Exchanges a long-lived Instagram token for a refreshed token.

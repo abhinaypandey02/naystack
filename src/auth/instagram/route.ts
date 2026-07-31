@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserIdFromAccessToken } from "@/src/auth/email/token";
 import { SetupInstagramAuthOptions } from "@/src/auth/instagram/index";
 import {
+  getAuthorizationHandoff,
   getInstagramAuthorizationURL,
   getLongLivedToken,
 } from "@/src/auth/instagram/utils";
@@ -27,13 +28,16 @@ export const getInstagramRoute = ({
     const error = req.nextUrl.searchParams.get("error");
     const stateToken = req.nextUrl.searchParams.get("state");
     if (error) return handleError(error);
-    // Start of OAuth: no code yet → this is the "connect" entry point, so redirect
-    // to Instagram's authorize URL. Keeping mobile browsers from opening that URL in
-    // the Instagram app is the URL's own job, not this redirect's — see
-    // getInstagramAuthorizationURL.
+    // Start of OAuth: no code yet → this is the "connect" entry point. Serve a page
+    // on our own origin that waits before jumping to Instagram, rather than
+    // redirecting; a 302 lands in the Instagram app on mobile, which has no idea
+    // what to do with an OAuth flow. See getAuthorizationHandoff.
     if (!accessCode) {
       if (!stateToken) return handleError("Invalid request");
-      return NextResponse.redirect(getInstagramAuthorizationURL(stateToken), 302);
+      return getAuthorizationHandoff(
+        getInstagramAuthorizationURL(stateToken),
+        "Instagram",
+      );
     }
     if (!stateToken) return handleError("Invalid request");
     const instagramData = await getLongLivedToken(
