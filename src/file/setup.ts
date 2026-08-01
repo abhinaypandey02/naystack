@@ -4,6 +4,12 @@ import type { PutOverrides } from "@/src/file/utils";
 /**
  * Options for setting up file upload via {@link setupFileUpload}.
  *
+ * Every callback receives the same `{ type, userId, data }` context. **`data` is
+ * optional** — it is whatever the caller passed as `config.data` to
+ * `useFileUpload`, and the client only appends the form field when a value is
+ * given, so the route parses it to `undefined` otherwise. Narrow it before use;
+ * destructuring it unguarded throws at runtime.
+ *
  * @property getKey - Optional. Given `{ type, userId, data }`, returns the S3 object key for the upload. If omitted, a UUID is generated.
  * @property processFile - Optional. Given the uploaded `file` and `{ type, userId, data }`, returns the blob to
  *   store in its place — e.g. re-encoding an image, or stripping metadata. Runs after authentication and before the
@@ -21,26 +27,26 @@ export interface SetupFileUploadOptions {
   getKey?: (data: {
     type: string;
     userId: number;
-    data: object;
+    data?: object;
   }) => Promise<string>;
   processFile?: (
     file: File,
     data: {
       type: string;
       userId: number;
-      data: object;
+      data?: object;
     },
   ) => Promise<Blob>;
   putOptions?: (data: {
     type: string;
     userId: number;
-    data: object;
+    data?: object;
   }) => PutOverrides;
   onUpload: (data: {
     url: string | null;
     type: string;
     userId: number;
-    data: object;
+    data?: object;
   }) => Promise<object>;
 }
 
@@ -68,7 +74,9 @@ export interface SetupFileUploadOptions {
  * export const { PUT } = setupFileUpload({
  *   onUpload: async ({ url, type, userId, data }) => {
  *     if (type === "DealDocument" && url) {
- *       const payload = data as { dealId: number; fileName: string };
+ *       // `data` is absent unless the client sent one — check before reading it.
+ *       const payload = data as { dealId?: number; fileName?: string } | undefined;
+ *       if (!payload?.dealId) return {};
  *       const [row] = await db.insert(DocumentsTable).values({
  *         dealId: payload.dealId, fileURL: url, fileName: payload.fileName,
  *       }).returning();
