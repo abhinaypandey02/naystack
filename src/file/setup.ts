@@ -4,6 +4,10 @@ import { getFileUploadPutRoute } from "@/src/file/put";
  * Options for setting up file upload via {@link setupFileUpload}.
  *
  * @property getKey - Optional. Given `{ type, userId, data }`, returns the S3 object key for the upload. If omitted, a UUID is generated.
+ * @property processFile - Optional. Given the uploaded `file` and `{ type, userId, data }`, returns the blob to
+ *   store in its place — e.g. re-encoding an image, or stripping metadata. Runs after authentication and before the
+ *   S3 write, so only the returned bytes are ever stored. The blob's `type` becomes the object's `Content-Type`,
+ *   so change it when the format changes. Return the file unchanged to leave it alone. Throwing fails the upload.
  * @property onUpload - **Required.** Called after each successful upload with `{ url, type, userId, data }`.
  *   The return value is included in the API response as `onUploadResponse` (e.g. save metadata to your database and return it).
  *
@@ -15,6 +19,14 @@ export interface SetupFileUploadOptions {
     userId: number;
     data: object;
   }) => Promise<string>;
+  processFile?: (
+    file: File,
+    data: {
+      type: string;
+      userId: number;
+      data: object;
+    },
+  ) => Promise<Blob>;
   onUpload: (data: {
     url: string | null;
     type: string;

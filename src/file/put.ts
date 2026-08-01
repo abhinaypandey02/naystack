@@ -12,7 +12,7 @@ import { getDownloadURL, uploadBlob } from "@/src/file/utils";
  * Requires authentication (Bearer token, not refresh cookie).
  * Expects multipart form data with fields: `file` (File), `type` (string), and optional `data` (JSON string).
  *
- * @param options - `SetupFileUploadOptions` (getKey, onUpload).
+ * @param options - `SetupFileUploadOptions` (getKey, processFile, onUpload).
  * @returns Async Next.js route handler for PUT requests.
  * @category File
  */
@@ -38,8 +38,13 @@ export const getFileUploadPutRoute =
     const fileKey = options.getKey ? await options.getKey(inputData) : v4();
     const url = getDownloadURL(fileKey);
 
-    if (async) waitUntil(uploadBlob(file, fileKey));
-    else await uploadBlob(file, fileKey);
+    // Runs before the S3 write, so only the processed bytes are ever stored.
+    const blob = options.processFile
+      ? await options.processFile(file, inputData)
+      : file;
+
+    if (async) waitUntil(uploadBlob(blob, fileKey));
+    else await uploadBlob(blob, fileKey);
 
     const onUploadResponse = await options.onUpload({
       ...inputData,
