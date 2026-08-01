@@ -9,4 +9,5 @@
  * @module
  */
 export { setupFileUpload } from "./setup";
+export type { PutOverrides } from "./utils";
 export { deleteFile, getDownloadURL, getUploadURL, uploadFile } from "./utils";

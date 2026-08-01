@@ -43,8 +43,9 @@ export const getFileUploadPutRoute =
       ? await options.processFile(file, inputData)
       : file;
 
-    if (async) waitUntil(uploadBlob(blob, fileKey));
-    else await uploadBlob(blob, fileKey);
+    const put = options.putOptions?.(inputData);
+    if (async) waitUntil(uploadBlob(blob, fileKey, put));
+    else await uploadBlob(blob, fileKey, put);
 
     const onUploadResponse = await options.onUpload({
       ...inputData,

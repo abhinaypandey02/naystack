@@ -1,4 +1,5 @@
 import { getFileUploadPutRoute } from "@/src/file/put";
+import type { PutOverrides } from "@/src/file/utils";
 
 /**
  * Options for setting up file upload via {@link setupFileUpload}.
@@ -8,6 +9,9 @@ import { getFileUploadPutRoute } from "@/src/file/put";
  *   store in its place — e.g. re-encoding an image, or stripping metadata. Runs after authentication and before the
  *   S3 write, so only the returned bytes are ever stored. The blob's `type` becomes the object's `Content-Type`,
  *   so change it when the format changes. Return the file unchanged to leave it alone. Throwing fails the upload.
+ * @property putOptions - Optional. Given `{ type, userId, data }`, returns fields to set on the S3 put —
+ *   `CacheControl`, `ContentDisposition`, `Metadata` and so on. A function rather than a static object so
+ *   headers can differ per upload kind. See {@link PutOverrides}.
  * @property onUpload - **Required.** Called after each successful upload with `{ url, type, userId, data }`.
  *   The return value is included in the API response as `onUploadResponse` (e.g. save metadata to your database and return it).
  *
@@ -27,6 +31,11 @@ export interface SetupFileUploadOptions {
       data: object;
     },
   ) => Promise<Blob>;
+  putOptions?: (data: {
+    type: string;
+    userId: number;
+    data: object;
+  }) => PutOverrides;
   onUpload: (data: {
     url: string | null;
     type: string;

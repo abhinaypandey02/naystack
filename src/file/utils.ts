@@ -1,11 +1,28 @@
 import {
   DeleteObjectCommand,
+  type PutObjectCommandInput,
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 import { EnvVariable, getEnv } from "@/src/env";
+
+/**
+ * Fields a caller may set on the underlying S3 put — `CacheControl`,
+ * `ContentDisposition`, `Metadata`, `StorageClass`, and so on. Spread over the
+ * defaults, so anything given here wins.
+ *
+ * What identifies the upload — `Bucket`, `Key`, `Body` — is deliberately not
+ * overridable: those are naystack's to set, and replacing them would silently
+ * write the wrong bytes or the wrong object rather than fail.
+ *
+ * @category File
+ */
+export type PutOverrides = Omit<
+  PutObjectCommandInput,
+  "Bucket" | "Key" | "Body"
+>;
 
 /**
  * S3 client initialised at module load using `S3_ACCESS_KEY_ID`, `S3_ACCESS_KEY_SECRET`, and `S3_REGION`.
@@ -63,6 +80,7 @@ export const getDownloadURL = (keys: string | string[]) => {
  * @param keys - S3 key or key path segments (array joined by `/`).
  * @param options.blob - A Blob/File to upload directly.
  * @param options.url - A remote URL to fetch and upload. Ignored if `blob` is provided.
+ * @param options.put - Fields to set on the S3 put. See {@link PutOverrides}.
  * @returns The public download URL of the uploaded file, or `null` if neither `blob` nor `url` was provided.
  * @category File
  */
@@ -71,9 +89,11 @@ export const uploadFile = async (
   {
     url,
     blob,
+    put,
   }: {
     blob?: Blob;
     url?: string;
+    put?: PutOverrides;
   },
 ) => {
   if (!checkClient(client)) return;
@@ -82,7 +102,7 @@ export const uploadFile = async (
   const fileBlob = blob || (await fetch(url!).then((file) => file.blob()));
   if (fileBlob) {
     const key = getKey(keys);
-    await uploadBlob(fileBlob, key);
+    await uploadBlob(fileBlob, key, put);
     return getDownloadURL(key);
   }
   return null;
@@ -125,10 +145,15 @@ function checkClient(client: S3Client | undefined): client is S3Client {
  *
  * @param file - The Blob or File to upload.
  * @param key - The S3 object key.
+ * @param overrides - Fields to set on the put, spread over the defaults below. See {@link PutOverrides}.
  * @returns The `PutObjectCommandOutput` from S3.
  * @category File
  */
-export const uploadBlob = async (file: File | Blob, key: string) => {
+export const uploadBlob = async (
+  file: File | Blob,
+  key: string,
+  overrides?: PutOverrides,
+) => {
   if (!checkClient(client)) return;
   const fileBuffer = await file.arrayBuffer();
   return client.send(
@@ -139,6 +164,7 @@ export const uploadBlob = async (file: File | Blob, key: string) => {
       Body: Buffer.from(fileBuffer),
       ContentType: file.type,
       ContentLength: file.size,
+      ...overrides,
     }),
   );
 };
