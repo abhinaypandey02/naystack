@@ -87,12 +87,14 @@ export const createThreadsPost = async (
       token,
       media.map((item) => mediaParams(item)),
       post.wait,
+      post.retry,
     );
     if (!children) return null;
     return publisher.publish(
       token,
       { ...shared, media_type: "CAROUSEL", children: children.join(",") },
       post.wait,
+      post.retry,
     );
   }
 
@@ -104,6 +106,7 @@ export const createThreadsPost = async (
       link_attachment: post.linkAttachment,
     },
     post.wait,
+    post.retry,
   );
 };
 

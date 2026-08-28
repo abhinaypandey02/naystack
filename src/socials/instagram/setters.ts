@@ -97,6 +97,7 @@ export const createInstagramPost = async (
         alt_text: undefined,
       },
       input.wait,
+      input.retry,
     );
   }
 
@@ -105,6 +106,7 @@ export const createInstagramPost = async (
       token,
       media.map(mediaParams),
       input.wait,
+      input.retry,
     );
     if (!children) return null;
     return publisher.publish(
@@ -115,6 +117,7 @@ export const createInstagramPost = async (
         caption: input.caption,
       },
       input.wait,
+      input.retry,
     );
   }
 
@@ -133,6 +136,7 @@ export const createInstagramPost = async (
           input.collaborators && JSON.stringify(input.collaborators),
       },
       input.wait,
+      input.retry,
     );
   }
 
@@ -145,6 +149,7 @@ export const createInstagramPost = async (
       location_id: input.locationID,
     },
     input.wait,
+    input.retry,
   );
 };
 

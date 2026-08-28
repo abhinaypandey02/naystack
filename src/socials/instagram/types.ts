@@ -1,4 +1,7 @@
-import { WaitForContainerOptions } from "@/src/socials/meta/container";
+import {
+  RetryOptions,
+  WaitForContainerOptions,
+} from "@/src/socials/meta/container";
 import { MetaMediaType } from "@/src/socials/meta/types";
 
 /**
@@ -113,6 +116,7 @@ export type InstagramPostMedia = {
  * @property audioName - Reels: name for the audio track. Can only be set once.
  * @property collaborators - Reels: up to 3 public usernames to invite as collaborators.
  * @property wait - Container polling settings.
+ * @property retry - Container-creation retry settings. See {@link RetryOptions}.
  *
  * @category Socials
  */
@@ -127,4 +131,5 @@ export type InstagramPostInput = {
   audioName?: string;
   collaborators?: string[];
   wait?: WaitForContainerOptions;
+  retry?: RetryOptions;
 };

@@ -41,7 +41,7 @@ export type {
   InstagramUser,
 } from "./instagram/types";
 export { setupInstagramWebhook } from "./instagram/webhook";
-export type { WaitForContainerOptions } from "./meta/container";
+export type { RetryOptions, WaitForContainerOptions } from "./meta/container";
 export { type GraphError, MetaMediaType } from "./meta/types";
 export { getThread, getThreads, getThreadsReplies } from "./threads/getters";
 export { createThread, createThreadsPost } from "./threads/setters";

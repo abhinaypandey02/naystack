@@ -1,4 +1,7 @@
-import { WaitForContainerOptions } from "@/src/socials/meta/container";
+import {
+  RetryOptions,
+  WaitForContainerOptions,
+} from "@/src/socials/meta/container";
 import { MetaMediaType } from "@/src/socials/meta/types";
 
 /**
@@ -42,6 +45,7 @@ export type ThreadsPostMedia = {
  * @property replyToID - Parent post id, to make this post a reply.
  * @property replyControl - Who may reply.
  * @property wait - Container polling settings.
+ * @property retry - Container-creation retry settings. See {@link RetryOptions}.
  *
  * @category Socials
  */
@@ -52,4 +56,5 @@ export type ThreadsPostInput = {
   replyToID?: string;
   replyControl?: "everyone" | "accounts_you_follow" | "mentioned_only";
   wait?: WaitForContainerOptions;
+  retry?: RetryOptions;
 };

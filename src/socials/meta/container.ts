@@ -16,6 +16,25 @@ export type WaitForContainerOptions = {
 };
 
 /**
+ * Retry settings for creating a media container.
+ *
+ * Meta intermittently rejects a perfectly valid container — most visibly on
+ * carousels, where one arbitrary child fails with "Only photo or video can be
+ * accepted as media type." and the identical call succeeds moments later. The
+ * failure is transient and carries no distinguishing error code, so container
+ * creation is simply retried rather than pattern-matched against Meta's copy.
+ *
+ * @property attempts - Total tries, including the first. Default: `3`.
+ * @property backoffMS - Delay before the second try, doubled each time after. Default: `2000`.
+ *
+ * @category Socials
+ */
+export type RetryOptions = {
+  attempts?: number;
+  backoffMS?: number;
+};
+
+/**
  * Polls a media container until it stops processing.
  *
  * Resolves `null` when the platform never reported a readable status — that is
@@ -80,16 +99,56 @@ export function createPublisher(platform: {
     return true;
   };
 
+  /**
+   * Creates a container and waits for it to finish processing, retrying the
+   * pair on failure. See {@link RetryOptions} for why.
+   *
+   * A permanent failure (bad token, missing scope, unreachable media) costs the
+   * full attempt count and then gives up, which is cheap: a carousel abandons
+   * on its first unusable child rather than working through the rest.
+   */
+  const createReady = async (
+    token: string,
+    params: GraphParams,
+    label: string,
+    wait?: WaitForContainerOptions,
+    retry?: RetryOptions,
+  ) => {
+    const attempts = Math.max(1, retry?.attempts ?? 3);
+    const backoffMS = retry?.backoffMS ?? 2000;
+
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+      const id = await platform.createContainer(token, params);
+      if (id && (await isReady(token, id, label, wait))) return id;
+      if (attempt < attempts) {
+        const delay = backoffMS * 2 ** (attempt - 1);
+        console.warn(
+          `[naystack] ${platform.name} ${label} attempt ${attempt}/${attempts} failed — retrying in ${delay}ms`,
+        );
+        await sleep(delay);
+      }
+    }
+    return null;
+  };
+
   return {
     /** Creates a container, waits for it to finish processing, then publishes it. */
     publish: async (
       token: string,
       params: GraphParams,
       wait?: WaitForContainerOptions,
+      retry?: RetryOptions,
     ) => {
-      const containerID = await platform.createContainer(token, params);
+      const containerID = await createReady(
+        token,
+        params,
+        "container",
+        wait,
+        retry,
+      );
       if (!containerID) return null;
-      if (!(await isReady(token, containerID, "container", wait))) return null;
+      // Deliberately not retried: a publish whose response was lost has still
+      // published, and trying again would post twice.
       return platform.publish(token, containerID);
     },
 
@@ -98,16 +157,18 @@ export function createPublisher(platform: {
       token: string,
       items: GraphParams[],
       wait?: WaitForContainerOptions,
+      retry?: RetryOptions,
     ) => {
       const children: string[] = [];
       for (const item of items) {
-        const childID = await platform.createContainer(token, {
-          ...item,
-          is_carousel_item: true,
-        });
+        const childID = await createReady(
+          token,
+          { ...item, is_carousel_item: true },
+          "carousel item",
+          wait,
+          retry,
+        );
         if (!childID) return null;
-        if (!(await isReady(token, childID, "carousel item", wait)))
-          return null;
         children.push(childID);
       }
       return children;
