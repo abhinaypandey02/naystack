@@ -51,3 +51,8 @@ export type ContainerState = {
   status: ContainerStatus;
   error?: string;
 };
+
+export enum MetaMediaType {
+  Photo = "photo",
+  Video = "video",
+}

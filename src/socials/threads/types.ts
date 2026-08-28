@@ -1,4 +1,5 @@
 import { WaitForContainerOptions } from "@/src/socials/meta/container";
+import { MetaMediaType } from "@/src/socials/meta/types";
 
 /**
  * Threads post (single post or reply).
@@ -27,7 +28,7 @@ export type ThreadsPost = {
  */
 export type ThreadsPostMedia = {
   url: string;
-  type: "image" | "video";
+  type: MetaMediaType;
   altText?: string;
 };
 

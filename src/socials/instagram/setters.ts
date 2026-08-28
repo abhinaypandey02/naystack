@@ -5,7 +5,7 @@ import {
 } from "@/src/socials/instagram/types";
 import { createPublisher } from "@/src/socials/meta/container";
 import { readGraphID } from "@/src/socials/meta/request";
-import { GraphParams } from "@/src/socials/meta/types";
+import { GraphParams, MetaMediaType } from "@/src/socials/meta/types";
 
 import { getInstagramData } from "./utils";
 
@@ -31,11 +31,11 @@ const publisher = createPublisher({
 });
 
 const mediaParams = (media: InstagramPostMedia): GraphParams => ({
-  media_type: media.type === "video" ? "VIDEO" : undefined,
-  image_url: media.type === "image" ? media.url : undefined,
-  video_url: media.type === "video" ? media.url : undefined,
+  media_type: media.type === MetaMediaType.Video ? "VIDEO" : undefined,
+  image_url: media.type === MetaMediaType.Photo ? media.url : undefined,
+  video_url: media.type === MetaMediaType.Video ? media.url : undefined,
   // Instagram accepts alt text on images only.
-  alt_text: media.type === "image" ? media.altText : undefined,
+  alt_text: media.type === MetaMediaType.Photo ? media.altText : undefined,
 });
 
 /**
@@ -118,7 +118,7 @@ export const createInstagramPost = async (
     );
   }
 
-  if (first.type === "video") {
+  if (first.type === MetaMediaType.Video) {
     return publisher.publish(
       token,
       {

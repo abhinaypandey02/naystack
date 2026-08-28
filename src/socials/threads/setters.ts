@@ -1,6 +1,6 @@
 import { createPublisher } from "@/src/socials/meta/container";
 import { readGraphID } from "@/src/socials/meta/request";
-import { GraphParams } from "@/src/socials/meta/types";
+import { GraphParams, MetaMediaType } from "@/src/socials/meta/types";
 import { getThreadsContainerStatus } from "@/src/socials/threads/getters";
 import {
   ThreadsPostInput,
@@ -31,9 +31,13 @@ const publisher = createPublisher({
 });
 
 const mediaParams = (media?: ThreadsPostMedia): GraphParams => ({
-  media_type: media ? (media.type === "video" ? "VIDEO" : "IMAGE") : "TEXT",
-  image_url: media?.type === "image" ? media.url : undefined,
-  video_url: media?.type === "video" ? media.url : undefined,
+  media_type: media
+    ? media.type === MetaMediaType.Video
+      ? "VIDEO"
+      : "IMAGE"
+    : "TEXT",
+  image_url: media?.type === MetaMediaType.Photo ? media.url : undefined,
+  video_url: media?.type === MetaMediaType.Video ? media.url : undefined,
   alt_text: media?.altText,
 });
 

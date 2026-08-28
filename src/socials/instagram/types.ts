@@ -1,4 +1,5 @@
 import { WaitForContainerOptions } from "@/src/socials/meta/container";
+import { MetaMediaType } from "@/src/socials/meta/types";
 
 /**
  * Instagram Messaging API message shape.
@@ -88,7 +89,7 @@ export type InstagramConversation = {
  */
 export type InstagramPostMedia = {
   url: string;
-  type: "image" | "video";
+  type: MetaMediaType;
   altText?: string;
 };
 
