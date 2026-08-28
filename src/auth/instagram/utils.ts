@@ -1,6 +1,22 @@
 import { EnvVariable, getEnv } from "@/src/env";
 
 /**
+ * Permissions requestable during Instagram Login OAuth. `instagram_business_basic`
+ * is enough to read a profile; publishing needs `instagram_business_content_publish`.
+ *
+ * Widening the scopes only affects users who authorize afterwards — tokens already
+ * stored keep the permissions they were granted, so existing users must reconnect.
+ *
+ * @category Auth
+ */
+export type InstagramScope =
+  | "instagram_business_basic"
+  | "instagram_business_content_publish"
+  | "instagram_business_manage_messages"
+  | "instagram_business_manage_comments"
+  | "instagram_business_manage_insights";
+
+/**
  * Exchanges a long-lived Instagram token for a refreshed token.
  * @param token - Current long-lived access token
  * @returns New access token or undefined
@@ -76,6 +92,7 @@ export async function getLongLivedToken(
  * simply built on the server instead of shipped in the client bundle.
  *
  * @param token - The state token to embed in the authorization URL (typically the user's session or access token).
+ * @param scopes - Permissions to request. Default: `["instagram_business_basic"]`.
  * @returns The full Instagram OAuth authorization URL.
  *
  * @example
@@ -104,7 +121,10 @@ export async function getLongLivedToken(
 //      `/oauth/authorize/*` — literally `/oauth/authorize/` plus anything — so the
 //      slashless spelling misses it by one character and falls through to the
 //      catch-all `/*` rule. Both spellings serve the same dialog.
-export const getInstagramAuthorizationURL = (token: string) =>
-    `https://www.instagram.com/oauth/authorize/?client_id=${getEnv(
-        EnvVariable.INSTAGRAM_CLIENT_ID,
-    )}&response_type=code&enable_fb_login=0&force_authentication=1&scope=instagram_business_basic&state=${token}&redirect_uri=${getEnv(EnvVariable.NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT)}#weblink`;
+export const getInstagramAuthorizationURL = (
+  token: string,
+  scopes: InstagramScope[] = ["instagram_business_basic"],
+) =>
+  `https://www.instagram.com/oauth/authorize/?client_id=${getEnv(
+    EnvVariable.INSTAGRAM_CLIENT_ID,
+  )}&response_type=code&enable_fb_login=0&force_authentication=1&scope=${scopes.join(",")}&state=${token}&redirect_uri=${getEnv(EnvVariable.NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT)}#weblink`;

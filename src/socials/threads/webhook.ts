@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 
-import { verifyWebhook } from "@/src/socials/meta-webhook";
+import { verifyWebhook } from "@/src/socials/meta/webhook";
 
 /**
  * Sets up GET (verification) and POST (event handling) route handlers for the Threads webhook.
@@ -34,8 +34,8 @@ import { verifyWebhook } from "@/src/socials/meta-webhook";
  */
 export const setupThreadsWebhook = (options: {
   secret: string;
-  // eslint-disable-next-line -- flexible
-    callback: (type: string, value: any) => Promise<boolean>;
+
+  callback: (type: string, value: any) => Promise<boolean>;
 }) => {
   return {
     GET: verifyWebhook(options.secret),

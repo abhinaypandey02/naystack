@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 
-import { verifyWebhook } from "@/src/socials/meta-webhook";
+import { verifyWebhook } from "@/src/socials/meta/webhook";
 
 /**
  * Sets up GET (verification) and POST (event handling) route handlers for the Instagram webhook.
@@ -35,14 +35,13 @@ import { verifyWebhook } from "@/src/socials/meta-webhook";
  */
 export const setupInstagramWebhook = (options: {
   secret: string;
-  // eslint-disable-next-line -- flexible
+
   callback: (type: string, value: any, id: string) => Promise<void>;
 }) => {
   return {
     GET: verifyWebhook(options.secret),
     POST: async (req: NextRequest) => {
       const payload = (await req.json()) as {
-        // eslint-disable-next-line -- flexible
         entry: { id: string; time: string; [key: string]: any }[];
       };
       for (const entry of payload.entry) {

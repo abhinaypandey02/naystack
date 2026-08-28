@@ -1,3 +1,4 @@
+import { ContainerState, ContainerStatus } from "@/src/socials/meta/types";
 import { ThreadsPost } from "@/src/socials/threads/types";
 
 import { getThreadsData } from "./utils";
@@ -26,7 +27,7 @@ export const getThread = <T = ThreadsPost>(
   fields?: string[],
 ) => {
   return getThreadsData<T>(token, id, {
-    fields: fields ? fields.join(",") : "text,permalink,username",
+    params: { fields: fields ? fields.join(",") : "text,permalink,username" },
   });
 };
 
@@ -54,7 +55,7 @@ export const getThreads = <T = ThreadsPost>(
   fields?: string[],
 ) => {
   return getThreadsData<{ data: T[] }>(token, "me/threads", {
-    fields: fields ? fields.join(",") : "text,permalink,username",
+    params: { fields: fields ? fields.join(",") : "text,permalink,username" },
   }).then((res) => res?.data);
 };
 
@@ -84,6 +85,36 @@ export const getThreadsReplies = <T = ThreadsPost>(
   fields?: string[],
 ) => {
   return getThreadsData<{ data: T[] }>(token, `${id}/replies`, {
-    fields: fields ? fields.join(",") : "text,username,permalink",
+    params: { fields: fields ? fields.join(",") : "text,username,permalink" },
   }).then((res) => res?.data);
+};
+
+/**
+ * Reads a media container's processing status. Image, video and carousel
+ * containers must reach `FINISHED` before they can be published.
+ *
+ * @param token - Threads access token.
+ * @param id - Container id from `createThreadsContainer`.
+ * @returns Promise of `{ status, error? }`, or `null` if the status was unreadable.
+ *
+ * @example
+ * ```ts
+ * import { getThreadsContainerStatus } from "naystack/socials";
+ *
+ * const state = await getThreadsContainerStatus(accessToken, containerId);
+ * if (state?.status === "FINISHED") await publishThreadsContainer(accessToken, containerId);
+ * ```
+ *
+ * @category Socials
+ */
+export const getThreadsContainerStatus = async (
+  token: string,
+  id: string,
+): Promise<ContainerState | null> => {
+  const result = await getThreadsData<{
+    status?: ContainerStatus;
+    error_message?: string;
+  }>(token, id, { params: { fields: "status,error_message" } });
+  if (!result?.status) return null;
+  return { status: result.status, error: result.error_message };
 };

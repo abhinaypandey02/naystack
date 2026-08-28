@@ -1,5 +1,10 @@
 import { getInstagramRoute } from "@/src/auth/instagram/route";
-export { getRefreshedInstagramAccessToken, getInstagramAuthorizationURL } from "@/src/auth/instagram/utils";
+export {
+  getInstagramAuthorizationURL,
+  getRefreshedInstagramAccessToken,
+} from "@/src/auth/instagram/utils";
+import { InstagramScope } from "@/src/auth/instagram/utils";
+export type { InstagramScope } from "@/src/auth/instagram/utils";
 import { InstagramUser } from "@/src/socials/instagram/types";
 
 /**
@@ -8,6 +13,7 @@ import { InstagramUser } from "@/src/socials/instagram/types";
  * @property onUser - Called with `(instagramUser, appUserId, accessToken)` after successful OAuth. Return a string to show as error (redirects to `errorRedirectURL`); return `void` on success.
  * @property redirectURL - Where to redirect after successful Instagram auth.
  * @property errorRedirectURL - Where to redirect on error (with `?error=` query param).
+ * @property scopes - Permissions to request. Default: `["instagram_business_basic"]`. Add `"instagram_business_content_publish"` to publish on the user's behalf.
  *
  * @category Auth
  */
@@ -19,6 +25,7 @@ export interface SetupInstagramAuthOptions {
   ) => Promise<string | void>;
   redirectURL: string;
   errorRedirectURL: string;
+  scopes?: InstagramScope[];
 }
 
 /**

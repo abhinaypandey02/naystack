@@ -39,7 +39,11 @@ export const { GET, POST, PUT, DELETE } = setupEmailAuth({
     return user;
   },
   // Create a new user with the hashed password
-  createUser: async (data: { email: string; password: string; name: string }) => {
+  createUser: async (data: {
+    email: string;
+    password: string;
+    name: string;
+  }) => {
     const [user] = await db
       .insert(UserTable)
       .values(data)
@@ -73,7 +77,11 @@ Wrap your application with `AuthWrapper` in your root layout. This fetches the a
 import { AuthWrapper } from "naystack/auth/client";
 import { ApolloWrapper } from "naystack/graphql/client";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
       <body>
@@ -116,7 +124,11 @@ import { useSignUp } from "naystack/auth/client";
 function SignUpForm() {
   const signUp = useSignUp();
 
-  const handleSubmit = async (data: { name: string; email: string; password: string }) => {
+  const handleSubmit = async (data: {
+    name: string;
+    email: string;
+    password: string;
+  }) => {
     const error = await signUp(data);
     if (error) {
       setMessage(error);
@@ -159,7 +171,12 @@ function LogoutButton() {
   const logout = useLogout();
 
   return (
-    <button onClick={() => { logout(); router.push("/login"); }}>
+    <button
+      onClick={() => {
+        logout();
+        router.push("/login");
+      }}
+    >
       Log out
     </button>
   );
@@ -180,7 +197,10 @@ export const POST = async (req: NextRequest) => {
   if (!ctx?.userId) return new NextResponse("Unauthorized", { status: 401 });
 
   // ctx.userId is available for authenticated operations
-  const chats = await db.select().from(ChatTable).where(eq(ChatTable.userId, ctx.userId));
+  const chats = await db
+    .select()
+    .from(ChatTable)
+    .where(eq(ChatTable.userId, ctx.userId));
   return NextResponse.json(chats);
 };
 ```
@@ -237,8 +257,13 @@ export const { GET } = setupInstagramAuth({
   },
   redirectURL: "/dashboard",
   errorRedirectURL: "/login",
+  // Default: ["instagram_business_basic"]. Publishing needs the extra scope.
+  scopes: ["instagram_business_basic", "instagram_business_content_publish"],
 });
 ```
+
+Scopes apply to users who authorize afterwards — already-stored tokens keep the
+permissions they were granted, so widening `scopes` means existing users must reconnect.
 
 #### `getRefreshedInstagramAccessToken(token)`
 
@@ -274,8 +299,8 @@ export default resolver(
     return user || null;
   },
   {
-    output: User,                       // GraphQL return type (type-graphql class)
-    outputOptions: { nullable: true },  // Return type is nullable
+    output: User, // GraphQL return type (type-graphql class)
+    outputOptions: { nullable: true }, // Return type is nullable
   },
 );
 ```
@@ -289,7 +314,7 @@ import { resolver } from "naystack/graphql";
 export default resolver(
   async (ctx, input: SubmitFeedbackInput) => {
     await db.insert(FeedbackTable).values({
-      userId: ctx.userId,  // guaranteed non-null when authorized: true
+      userId: ctx.userId, // guaranteed non-null when authorized: true
       score: input.score,
       text: input.text,
     });
@@ -297,9 +322,9 @@ export default resolver(
   },
   {
     output: Boolean,
-    input: SubmitFeedbackInput,  // GraphQL input type (type-graphql @InputType class)
-    authorized: true,            // Requires authenticated user (ctx.userId non-null)
-    mutation: true,              // Registers as a Mutation (default is Query)
+    input: SubmitFeedbackInput, // GraphQL input type (type-graphql @InputType class)
+    authorized: true, // Requires authenticated user (ctx.userId non-null)
+    mutation: true, // Registers as a Mutation (default is Query)
   },
 );
 ```
@@ -364,7 +389,12 @@ import { ChatResolvers } from "./Chat/graphql";
 import { FeedbackResolvers } from "./Feedback/graphql";
 
 export const { GET, POST } = await setupGraphQL({
-  resolvers: [UserResolvers, UserFieldResolvers, ChatResolvers, FeedbackResolvers],
+  resolvers: [
+    UserResolvers,
+    UserFieldResolvers,
+    ChatResolvers,
+    FeedbackResolvers,
+  ],
 });
 ```
 
@@ -378,9 +408,9 @@ Use `GQLError()` to throw structured GraphQL errors from resolvers:
 import { GQLError } from "naystack/graphql";
 
 // In a resolver:
-if (!input.email) throw GQLError(400);                  // "Please provide all required inputs"
-if (!ctx.userId)  throw GQLError(403);                  // "You are not allowed to perform this action"
-if (!deal)        throw GQLError(404, "Deal not found"); // Custom message
+if (!input.email) throw GQLError(400); // "Please provide all required inputs"
+if (!ctx.userId) throw GQLError(403); // "You are not allowed to perform this action"
+if (!deal) throw GQLError(404, "Deal not found"); // Custom message
 ```
 
 ### Type Helpers: `QueryResponseType` / `FieldResponseType`
@@ -456,8 +486,8 @@ import { query } from "naystack/graphql/server";
 
 const data = await query(GetUserDocument, {
   variables: { id: userId },
-  revalidate: 60,       // Cache for 60s (Next.js ISR)
-  tags: ["user"],        // For on-demand revalidation
+  revalidate: 60, // Cache for 60s (Next.js ISR)
+  tags: ["user"], // For on-demand revalidation
 });
 ```
 
@@ -470,7 +500,11 @@ Wrap your app with `ApolloWrapper` (inside `AuthWrapper`) so client components c
 import { AuthWrapper } from "naystack/auth/client";
 import { ApolloWrapper } from "naystack/graphql/client";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
       <body>
@@ -503,7 +537,11 @@ function SummaryCard({ type }: { type: string }) {
     }
   };
 
-  return <button onClick={handleFetch} disabled={loading}>Get Summary</button>;
+  return (
+    <button onClick={handleFetch} disabled={loading}>
+      Get Summary
+    </button>
+  );
 }
 ```
 
@@ -548,17 +586,27 @@ export const { PUT } = setupFileUpload({
   // Called after each successful upload. Return value is sent in the response as `onUploadResponse`.
   onUpload: async ({ url, type, userId, data }) => {
     if (type === "DealDocument" && url) {
-      const payload = data as { dealId: number; fileName: string; category: string };
+      const payload = data as {
+        dealId: number;
+        fileName: string;
+        category: string;
+      };
       const [row] = await db
         .insert(DealDocumentsTable)
-        .values({ dealId: payload.dealId, fileURL: url, fileName: payload.fileName, category: payload.category })
+        .values({
+          dealId: payload.dealId,
+          fileURL: url,
+          fileName: payload.fileName,
+          category: payload.category,
+        })
         .returning();
       return row ?? {};
     }
     return {};
   },
   // Optional: customize the S3 key (defaults to UUID)
-  getKey: async ({ type, userId }) => `${type}/${userId}/${crypto.randomUUID()}`,
+  getKey: async ({ type, userId }) =>
+    `${type}/${userId}/${crypto.randomUUID()}`,
 });
 ```
 
@@ -593,7 +641,12 @@ function FileUploader({ dealId }: { dealId: number }) {
     }
   };
 
-  return <input type="file" onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])} />;
+  return (
+    <input
+      type="file"
+      onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])}
+    />
+  );
 }
 ```
 
@@ -652,9 +705,92 @@ function ResponsiveNav() {
 
 ## 5. Social APIs
 
-Simplified access to Instagram Graph API and Threads API.
+Publish to and read from Instagram and Threads.
+
+Each platform exposes **one publishing method** that picks the right media type from
+what you pass. Meta's container/upload/publish dance underneath is an implementation
+detail — you never touch it.
+
+| Path                                     | What it is                                                                                                            |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `socials/meta/`                          | Meta's Graph protocol — request client, container polling, webhook verification. Shared by Instagram and Threads only |
+| `socials/instagram/`, `socials/threads/` | One folder per platform: getters, setters, types                                                                      |
+
+A platform that isn't on Meta's Graph API (X, LinkedIn) brings its own client and
+exposes its own `create<Platform>Post`; it doesn't touch `socials/meta/`.
 
 ### Instagram
+
+`createInstagramPost(token, input)` — feed image, reel, story or carousel:
+
+| `media`                 | Result                        |
+| ----------------------- | ----------------------------- |
+| one image               | feed image                    |
+| one video               | reel                          |
+| 2–10 items              | carousel (counts as one post) |
+| any, with `story: true` | story, from the first item    |
+
+```typescript
+import { createInstagramPost } from "naystack/socials";
+
+// Feed image — JPEG only
+await createInstagramPost(accessToken, {
+  media: { url: "https://cdn.example.com/launch.jpg", type: "image" },
+  caption: "New campaign is live 🎉",
+});
+
+// Reel — 9:16, 5–90s, H.264/HEVC to reach the Reels tab
+await createInstagramPost(accessToken, {
+  media: { url: "https://cdn.example.com/promo.mp4", type: "video" },
+  caption: "Behind the scenes",
+  shareToFeed: true,
+  thumbOffset: 1500, // or coverURL
+});
+
+// Story — gone in 24h
+await createInstagramPost(accessToken, {
+  media: { url: "https://cdn.example.com/story.mp4", type: "video" },
+  story: true,
+});
+
+// Carousel
+await createInstagramPost(accessToken, {
+  caption: "Campaign recap",
+  media: [
+    { url: "https://cdn.example.com/1.jpg", type: "image" },
+    { url: "https://cdn.example.com/2.mp4", type: "video" },
+  ],
+});
+```
+
+`canPublishToInstagram(token)` answers whether a token is allowed to publish. Meta
+exposes no scope-listing endpoint for Instagram Login tokens, so it probes the
+publishing quota — a read-only endpoint needing exactly the same
+`instagram_business_content_publish` scope. Nothing is posted:
+
+```typescript
+import { canPublishToInstagram } from "naystack/socials";
+
+if (!(await canPublishToInstagram(process.env.INSTAGRAM_ACCESS_TOKEN!))) {
+  throw new Error(
+    "Instagram token cannot publish — reconnect with the publish scope",
+  );
+}
+```
+
+It rejects rather than answering `false` if the request itself fails, so a network blip
+is never reported as a missing permission. For a one-off manual check, Meta's
+[Access Token Debugger](https://developers.facebook.com/tools/debug/accesstoken/) shows
+a token's scopes in the browser.
+
+`createInstagramPost` returns the published media id, or `null` if any step failed — the
+API's own error is logged. Media URLs must be publicly reachable (Instagram downloads them server-side)
+and images must be JPEG. Publishing needs a token with the
+`instagram_business_content_publish` scope and an Instagram professional account;
+Instagram allows 100 published posts per rolling 24 hours. Tune container polling with
+`wait: { intervalMS, timeoutMS }`.
+
+Reading and messaging:
 
 ```typescript
 import {
@@ -706,6 +842,9 @@ export const { GET, POST } = setupInstagramWebhook({
 
 ### Threads
 
+`createThreadsPost(token, input)` — no media is a text post, one item is a single
+image or video, 2–20 is a carousel:
+
 ```typescript
 import {
   getThread,
@@ -716,19 +855,38 @@ import {
   setupThreadsWebhook,
 } from "naystack/socials";
 
-// Fetch user's threads
-const threads = await getThreads(accessToken);
-// => [{ text: "Hello world", permalink: "...", username: "johndoe" }]
+// Text post — a bare string works
+await createThreadsPost(accessToken, "Hello from Naystack!");
 
-// Create and publish a single post
-const postId = await createThreadsPost(accessToken, "Hello from Naystack!");
+// Media, replies, reply controls
+await createThreadsPost(accessToken, {
+  text: "Campaign is live",
+  media: { url: "https://cdn.example.com/campaign.jpg", type: "image" },
+  replyControl: "everyone",
+});
 
-// Create a thread (sequence of posts)
+// Carousel
+await createThreadsPost(accessToken, {
+  text: "Campaign recap",
+  media: [
+    { url: "https://cdn.example.com/1.jpg", type: "image" },
+    { url: "https://cdn.example.com/2.mp4", type: "video" },
+  ],
+});
+
+// A thread — each post replies to the previous one
 const firstPostId = await createThread(accessToken, [
   "First post in thread",
   "Second post (reply to first)",
-  "Third post (reply to second)",
+  {
+    text: "Third, with a picture",
+    media: { url: "https://cdn.example.com/3.jpg", type: "image" },
+  },
 ]);
+
+// Fetch user's threads
+const threads = await getThreads(accessToken);
+// => [{ text: "Hello world", permalink: "...", username: "johndoe" }]
 
 // Webhook setup (app/api/webhooks/threads/route.ts)
 export const { GET, POST } = setupThreadsWebhook({

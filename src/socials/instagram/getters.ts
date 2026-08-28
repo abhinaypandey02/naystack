@@ -4,6 +4,7 @@ import {
   InstagramMessage,
   InstagramUser,
 } from "@/src/socials/instagram/types";
+import { ContainerState, ContainerStatus } from "@/src/socials/meta/types";
 
 import { getInstagramData } from "./utils";
 
@@ -31,7 +32,11 @@ export const getInstagramUser = <T = InstagramUser>(
   fields?: string[],
 ) => {
   return getInstagramData<T>(token, id || "me", {
-    fields: fields ? fields.join(",") : "username,followers_count,media_count",
+    params: {
+      fields: fields
+        ? fields.join(",")
+        : "username,followers_count,media_count",
+    },
   });
 };
 
@@ -61,8 +66,10 @@ export const getInstagramMedia = <T = InstagramMedia>(
   limit: number = 12,
 ) => {
   return getInstagramData<{ data: T[] }>(token, "me/media", {
-    fields: fields ? fields.join(",") : "like_count,comments_count,permalink",
-    limit: limit?.toString(),
+    params: {
+      fields: fields ? fields.join(",") : "like_count,comments_count,permalink",
+      limit,
+    },
   });
 };
 
@@ -99,10 +106,12 @@ export const getInstagramConversations = async (
     data: InstagramConversation[];
     paging: { cursors?: { after?: string } };
   }>(token, "me/conversations", {
-    platform: "instagram",
-    fields: "participants,messages,updated_time",
-    limit: limit.toString(),
-    ...(cursor ? { after: cursor } : {}),
+    params: {
+      platform: "instagram",
+      fields: "participants,messages,updated_time",
+      limit,
+      after: cursor,
+    },
   });
   return {
     data: result?.data.map((item) => ({
@@ -134,8 +143,10 @@ export const getInstagramConversationsByUser = (
     token,
     "me/conversations",
     {
-      fields: "participants,messages,updated_time",
-      user_id: userID,
+      params: {
+        fields: "participants,messages,updated_time",
+        user_id: userID,
+      },
     },
   );
 };
@@ -187,9 +198,11 @@ export const getInstagramConversation = async (
   id: string,
   cursor?: string,
 ) => {
-  const result = await getInstagramData<InstagramConversation>(token, id + "", {
-    fields: "participants,messages,updated_time",
-    ...(cursor ? { after: cursor } : {}),
+  const result = await getInstagramData<InstagramConversation>(token, id, {
+    params: {
+      fields: "participants,messages,updated_time",
+      after: cursor,
+    },
   });
   return {
     messages: result?.messages?.data,
@@ -221,6 +234,86 @@ export const getInstagramMessage = <T = InstagramMessage>(
   fields?: string[],
 ) => {
   return getInstagramData<T>(token, id, {
-    fields: fields ? fields.join(",") : "id,created_time,from,to,message",
+    params: {
+      fields: fields ? fields.join(",") : "id,created_time,from,to,message",
+    },
   });
+};
+
+/**
+ * Reads a media container's processing status. Videos and reels must reach
+ * `FINISHED` before they can be published.
+ *
+ * @param token - Instagram access token.
+ * @param id - Container id from `createInstagramContainer`.
+ * @returns Promise of `{ status, error? }`, or `null` if the status was unreadable.
+ *
+ * @example
+ * ```ts
+ * import { getInstagramContainerStatus } from "naystack/socials";
+ *
+ * const state = await getInstagramContainerStatus(accessToken, containerId);
+ * if (state?.status === "FINISHED") await publishInstagramContainer(accessToken, containerId);
+ * ```
+ *
+ * @category Socials
+ */
+export const getInstagramContainerStatus = async (
+  token: string,
+  id: string,
+): Promise<ContainerState | null> => {
+  const result = await getInstagramData<{
+    status_code?: ContainerStatus;
+    status?: string;
+  }>(token, id, { params: { fields: "status_code,status" } });
+  if (!result?.status_code) return null;
+  return {
+    status: result.status_code,
+    error: result.status_code === "ERROR" ? result.status : undefined,
+  };
+};
+
+/**
+ * Checks whether an access token is allowed to publish.
+ *
+ * Meta exposes no scope-listing endpoint for Instagram Login tokens, so this probes
+ * the publishing quota — a read-only endpoint that needs exactly the same
+ * `instagram_business_content_publish` scope publishing does. Nothing is posted.
+ *
+ * Worth calling before {@link createInstagramPost} in a scheduled job: a token whose
+ * access was revoked fails here with a clear reason, instead of surfacing later as a
+ * container error.
+ *
+ * Rejects — rather than answering `false` — if the request itself fails, so a network
+ * blip is never reported as a missing permission.
+ *
+ * @param token - Instagram access token.
+ * @returns Promise of `true` if the token can publish. On `false`, the API's reason is logged.
+ *
+ * @example
+ * ```ts
+ * import { canPublishToInstagram } from "naystack/socials";
+ *
+ * if (!(await canPublishToInstagram(process.env.INSTAGRAM_ACCESS_TOKEN!))) {
+ *   throw new Error("Instagram token cannot publish — reconnect with the publish scope");
+ * }
+ * ```
+ *
+ * @category Socials
+ */
+export const canPublishToInstagram = async (token: string) => {
+  const result = await getInstagramData<{ data: unknown[] }>(
+    token,
+    "me/content_publishing_limit",
+    { params: { fields: "quota_usage" } },
+  );
+  if (!Array.isArray(result?.data)) {
+    console.error(
+      `[naystack] Instagram token cannot publish${
+        result?.error ? `: ${result.error.message}` : ""
+      }`,
+    );
+    return false;
+  }
+  return true;
 };

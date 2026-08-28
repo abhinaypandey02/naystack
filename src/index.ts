@@ -10,7 +10,7 @@
  * - `naystack/file` — S3 file upload setup
  * - `naystack/file/client` — Client-side file upload hook (useFileUpload)
  * - `naystack/client` — Client hooks (useVisibility, useBreakpoint) and SEO (setupSEO)
- * - `naystack/socials` — Instagram and Threads API helpers
+ * - `naystack/socials` — publish to and read from Instagram and Threads
  *
  * @module
  */

@@ -1,3 +1,5 @@
+import { WaitForContainerOptions } from "@/src/socials/meta/container";
+
 /**
  * Instagram Messaging API message shape.
  *
@@ -75,18 +77,53 @@ export type InstagramConversation = {
 };
 
 /**
- * Instagram Graph API error response shape.
+ * One image or video to publish. The URL must be publicly reachable — Instagram
+ * downloads it server-side.
  *
- * @property error - Error details from the API (message, type, code, subcode, trace id).
+ * @property url - Public URL. Images must be **JPEG**.
+ * @property type - `"image"` or `"video"`.
+ * @property altText - Accessibility description, up to 1000 characters. Images only.
  *
  * @category Socials
  */
-export type InstagramError = {
-  error?: {
-    message: string;
-    type: string;
-    code: number;
-    error_subcode: number;
-    fbtrace_id: string;
-  };
+export type InstagramPostMedia = {
+  url: string;
+  type: "image" | "video";
+  altText?: string;
+};
+
+/**
+ * Input for {@link createInstagramPost}. What gets published follows from `media`:
+ *
+ * | `media` | Result |
+ * | --- | --- |
+ * | one image | feed image |
+ * | one video | reel |
+ * | 2–10 items | carousel (counts as one post) |
+ * | any, with `story: true` | story, from the first item |
+ *
+ * @property media - One item or an array. Images are cropped to the first item's aspect ratio in a carousel.
+ * @property caption - Post caption.
+ * @property story - Publish as a 24-hour story instead of to the feed. Uses the first media item only.
+ * @property locationID - Facebook Page id to tag as the location. Single images only.
+ * @property coverURL - Reels: public URL of a cover image. Takes precedence over `thumbOffset`.
+ * @property thumbOffset - Reels: frame to use as the thumbnail, in milliseconds.
+ * @property shareToFeed - Reels: also show the reel in the feed, not only the Reels tab.
+ * @property audioName - Reels: name for the audio track. Can only be set once.
+ * @property collaborators - Reels: up to 3 public usernames to invite as collaborators.
+ * @property wait - Container polling settings.
+ *
+ * @category Socials
+ */
+export type InstagramPostInput = {
+  media: InstagramPostMedia | InstagramPostMedia[];
+  caption?: string;
+  story?: boolean;
+  locationID?: string;
+  coverURL?: string;
+  thumbOffset?: number;
+  shareToFeed?: boolean;
+  audioName?: string;
+  collaborators?: string[];
+  wait?: WaitForContainerOptions;
 };

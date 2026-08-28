@@ -18,6 +18,7 @@ export const getInstagramRoute = ({
   redirectURL,
   errorRedirectURL,
   onUser,
+  scopes,
 }: SetupInstagramAuthOptions) => {
   /** Redirects to error URL with message query param. */
   const handleError = (message: string) =>
@@ -32,7 +33,10 @@ export const getInstagramRoute = ({
     // the Instagram app is the URL's own job — see getInstagramAuthorizationURL.
     if (!accessCode) {
       if (!stateToken) return handleError("Invalid request");
-      return NextResponse.redirect(getInstagramAuthorizationURL(stateToken), 302);
+      return NextResponse.redirect(
+        getInstagramAuthorizationURL(stateToken, scopes),
+        302,
+      );
     }
     if (!stateToken) return handleError("Invalid request");
     const instagramData = await getLongLivedToken(
