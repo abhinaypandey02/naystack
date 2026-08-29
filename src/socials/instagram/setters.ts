@@ -154,6 +154,40 @@ export const createInstagramPost = async (
 };
 
 /**
+ * Replies to a comment on one of your Instagram posts, as your account.
+ *
+ * Needs the `instagram_business_manage_comments` scope. The reply lands in the
+ * comment's own thread — Instagram nests one level, so replying to a reply
+ * attaches to the same top-level comment.
+ *
+ * @param token - Instagram access token.
+ * @param commentID - The comment being replied to.
+ * @param text - Reply text.
+ * @returns Promise of the new comment's id, or `null` if the call failed (the API's error is logged).
+ *
+ * @example
+ * ```ts
+ * import { replyToInstagramComment } from "naystack/socials";
+ *
+ * await replyToInstagramComment(accessToken, commentId, "Applications are open in our bio!");
+ * ```
+ *
+ * @category Socials
+ */
+export const replyToInstagramComment = async (
+  token: string,
+  commentID: string,
+  text: string,
+) =>
+  readGraphID(
+    "Instagram comment reply",
+    await getInstagramData<{ id: string }>(token, `${commentID}/replies`, {
+      params: { message: text },
+      method: "POST",
+    }),
+  );
+
+/**
  * Sends a text message to an Instagram user via the Instagram Messaging API.
  *
  * @param token - Instagram access token.
