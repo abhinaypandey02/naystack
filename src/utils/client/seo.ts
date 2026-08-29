@@ -14,7 +14,7 @@ import { EnvVariable, getEnv } from "@/src/env";
  * @param SEO.description - Default meta description.
  * @param SEO.siteName - Application/site name (used in openGraph, twitter, and as the separator in titles).
  * @param SEO.themeColor - Theme color for mobile browsers (e.g. `"#000000"`).
- * @returns A function `(title?, description?, image?) => Metadata`. Pass page-specific overrides; they fill in or replace the defaults.
+ * @returns A function `(title?, description?, image?, options?) => Metadata`. Pass page-specific overrides; they fill in or replace the defaults.
  *
  * @example Setup in a utility file:
  * ```ts
@@ -46,6 +46,11 @@ import { EnvVariable, getEnv } from "@/src/env";
  * }
  * ```
  *
+ * @example Thumbnail-sized preview (avatars, icons — anything not a hero image):
+ * ```ts
+ * return getSEO(post.title, post.body, post.author.photo, { imageSize: "small" });
+ * ```
+ *
  * @category Client
  */
 export const setupSEO =
@@ -55,26 +60,59 @@ export const setupSEO =
     siteName: string;
     themeColor: string;
   }) =>
-  (title?: string, description?: string, image?: string | null): Metadata => ({
-    title: title ? `${title} • ${SEO.siteName}` : SEO.title,
-    description: description || SEO.description,
-    openGraph: {
-      type: "website",
-      siteName: SEO.siteName,
-      ...(image ? { images: [image] } : {}),
-    },
+  (
+    title?: string,
+    description?: string,
+    image?: string | null,
+    options?: SEOOptions,
+  ): Metadata => {
+    const isSmallImage = options?.imageSize === "small";
+    return {
+      title: title ? `${title} • ${SEO.siteName}` : SEO.title,
+      description: description || SEO.description,
+      openGraph: {
+        type: "website",
+        siteName: SEO.siteName,
+        // WhatsApp/Slack pick the thumbnail layout off the declared dimensions,
+        // so a small image needs them stated explicitly to avoid a full-bleed preview.
+        ...(image
+          ? {
+              images: [
+                isSmallImage
+                  ? {
+                      url: image,
+                      width: SMALL_IMAGE_SIZE,
+                      height: SMALL_IMAGE_SIZE,
+                    }
+                  : image,
+              ],
+            }
+          : {}),
+      },
 
-    twitter: {
-      card: "summary_large_image",
-      ...(image ? { images: [image] } : {}),
-    },
-    appleWebApp: {
-      title: title ? title : SEO.title,
-      capable: true,
-      startupImage: `${getEnv(EnvVariable.NEXT_PUBLIC_BASE_URL)}/apple-icon.png`,
-    },
-    applicationName: SEO.siteName,
-    creator: SEO.siteName,
-    robots: "index, follow",
-    publisher: SEO.siteName,
-  });
+      twitter: {
+        card: isSmallImage ? "summary" : "summary_large_image",
+        ...(image ? { images: [image] } : {}),
+      },
+      appleWebApp: {
+        title: title ? title : SEO.title,
+        capable: true,
+        startupImage: `${getEnv(EnvVariable.NEXT_PUBLIC_BASE_URL)}/apple-icon.png`,
+      },
+      applicationName: SEO.siteName,
+      creator: SEO.siteName,
+      robots: "index, follow",
+      publisher: SEO.siteName,
+    };
+  };
+
+/** Below WhatsApp's ~300x200 threshold for promoting a preview to the large layout. */
+const SMALL_IMAGE_SIZE = 200;
+
+export interface SEOOptions {
+  /**
+   * `"large"` (default) renders a full-width hero preview; `"small"` renders a
+   * square thumbnail next to the text — right for avatars and icons.
+   */
+  imageSize?: "large" | "small";
+}
