@@ -152,26 +152,38 @@ export function createPublisher(platform: {
       return platform.publish(token, containerID);
     },
 
-    /** Creates and awaits every carousel child, resolving to their ids — or `null` if any failed. */
+    /**
+     * Creates and awaits every carousel child **in parallel**, resolving to
+     * their ids in input order — or `null` if any failed.
+     *
+     * Parallel because each child is an independent create-then-poll and Meta
+     * spends ~5s accepting a single container, so ten sequential children cost
+     * ~50s of mostly waiting — past what a serverless caller can fit in its
+     * timeout. `Promise.all` preserves input order, which the carousel's slide
+     * order depends on.
+     */
     createChildren: async (
       token: string,
       items: GraphParams[],
       wait?: WaitForContainerOptions,
       retry?: RetryOptions,
     ) => {
-      const children: string[] = [];
-      for (const item of items) {
-        const childID = await createReady(
-          token,
-          { ...item, is_carousel_item: true },
-          "carousel item",
-          wait,
-          retry,
-        );
-        if (!childID) return null;
-        children.push(childID);
-      }
-      return children;
+      const children = await Promise.all(
+        items.map((item) =>
+          createReady(
+            token,
+            { ...item, is_carousel_item: true },
+            "carousel item",
+            wait,
+            retry,
+          ),
+        ),
+      );
+      // Every child must land: a missing one silently reorders the carousel
+      // against its caption. Unlike the sequential version this no longer
+      // short-circuits on the first failure — the rest are already in flight.
+      const created = children.filter((childID) => childID !== null);
+      return created.length === children.length ? created : null;
     },
   };
 }
