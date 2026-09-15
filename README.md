@@ -17,7 +17,7 @@ pnpm add naystack
 
 ## 1. Authentication
 
-Naystack provides a seamless email-based authentication system with optional support for Google and Instagram OAuth.
+Naystack provides a seamless email-based authentication system with optional Google OAuth.
 
 ### Server Setup
 
@@ -246,34 +246,10 @@ export const { GET } = setupGoogleAuth({
 });
 ```
 
-### Instagram OAuth
+### Connecting social accounts
 
-```typescript
-import { setupInstagramAuth } from "naystack/auth";
-
-export const { GET } = setupInstagramAuth({
-  onUser: async (igUser, appUserId, accessToken) => {
-    await saveInstagramUser(appUserId, igUser, accessToken);
-  },
-  redirectURL: "/dashboard",
-  errorRedirectURL: "/login",
-  // Default: ["instagram_business_basic"]. Publishing needs the extra scope.
-  scopes: ["instagram_business_basic", "instagram_business_content_publish"],
-});
-```
-
-Scopes apply to users who authorize afterwards — already-stored tokens keep the
-permissions they were granted, so widening `scopes` means existing users must reconnect.
-
-#### `getRefreshedInstagramAccessToken(token)`
-
-Refreshes a long-lived Instagram access token. Exported separately from `naystack/auth`.
-
-```typescript
-import { getRefreshedInstagramAccessToken } from "naystack/auth";
-
-const newToken = await getRefreshedInstagramAccessToken(existingToken);
-```
+Linking an Instagram (or any other platform) account to an already logged-in user
+is not login — it lives in [§5 Social APIs](#5-social-apis) as `setupSocialAuth`.
 
 ---
 
@@ -705,7 +681,8 @@ function ResponsiveNav() {
 
 ## 5. Social APIs
 
-Publish to and read from Instagram and Threads.
+Publish to and read from Instagram and Threads, and read any connected account
+through one normalized provider interface.
 
 Each platform exposes **one publishing method** that picks the right media type from
 what you pass. Meta's container/upload/publish dance underneath is an implementation
@@ -713,11 +690,90 @@ detail — you never touch it.
 
 | Path                                     | What it is                                                                                                            |
 | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `socials/types.ts`                       | Platform-neutral shapes: `SocialProfile`, `SocialPost`, `SocialTokens`, `SocialPlatform`                              |
+| `socials/provider.ts`                    | The `SocialProvider` interface                                                                                        |
+| `socials/poll.ts`                        | `pollUntilReady` / `withRetry` — waiting and retrying, with no platform in them                                        |
 | `socials/meta/`                          | Meta's Graph protocol — request client, container polling, webhook verification. Shared by Instagram and Threads only |
-| `socials/instagram/`, `socials/threads/` | One folder per platform: getters, setters, types                                                                      |
+| `socials/instagram/`, `socials/threads/` | One folder per platform: getters, setters, types, and an `adapter.ts` for platforms that implement `SocialProvider`   |
+
+**Reading is normalized; publishing is not.** OAuth, profile and content endpoints
+collapse cleanly onto one shape, so a consumer stores one row per connected account
+whatever the platform. Publish inputs don't: Threads takes text-only posts,
+Instagram requires media and adds stories, reels, carousels and collaborators. A
+shared publish signature could only describe the intersection, so each platform
+keeps its own `create<Platform>Post`.
 
 A platform that isn't on Meta's Graph API (X, LinkedIn) brings its own client and
-exposes its own `create<Platform>Post`; it doesn't touch `socials/meta/`.
+exposes its own `create<Platform>Post`; it doesn't touch `socials/meta/`. If it also
+supports OAuth + profile reads, it adds an `adapter.ts` exporting a `SocialProvider`
+constant so the generalized pieces pick it up for free.
+
+### Providers
+
+A provider is a plain object with no per-instance state — import the constant, no
+construction. Capability is method presence: a platform that can't refresh tokens
+omits `refresh`, one with no content-listing API omits `fetchMedia`, and callers
+narrow with a plain `if`.
+
+```typescript
+import { InstagramProvider } from "naystack/socials";
+
+const profile = await InstagramProvider.fetchProfile(accessToken);
+// { platform: "instagram", username: "…", followers: 12043, contentCount: 87, … }
+
+const posts = await InstagramProvider.fetchMedia?.(accessToken, { limit: 6 });
+// [{ kind: "video", permalink: "…", likes: 812, comments: null, … }]
+```
+
+Every metric on a `SocialPost` is `number | null`, and `null` always means *the
+platform didn't give us this* — hidden, unrequested, or nonexistent on that
+platform. Adapters never substitute `0`, because "nobody liked it" and "likes are
+hidden" are different facts and only you know which your averages should skip.
+
+A list of providers is all a job needs to stay platform-agnostic:
+
+```typescript
+const providers = [InstagramProvider];
+
+for (const account of expiringAccounts) {
+  const provider = providers.find((p) => p.platform === account.platform);
+  const next = await provider?.auth.refresh?.({ accessToken: account.accessToken });
+}
+```
+
+### Connecting accounts
+
+`setupSocialAuth` mounts every registered provider's OAuth flow behind one route.
+Mount it on a dynamic segment and `/api/social/instagram`, `/api/social/youtube`
+and the rest are all the same handler. The single GET serves both the connect entry
+point (`?state`, no code → 302 to the platform's authorize URL) and the callback.
+
+```typescript
+// app/api/social/[platform]/route.ts
+import { InstagramProvider, setupSocialAuth } from "naystack/socials";
+
+export const { GET } = setupSocialAuth({
+  providers: [InstagramProvider],
+  endpoint: "https://yourapp.com/api/social",
+  redirectURL: "/dashboard",
+  errorRedirectURL: "/login",
+  onConnect: async ({ platform, profile, tokens, userId }) => {
+    if (!userId) return "You are not logged in";
+    await saveSocialAccount(userId, platform, profile, tokens);
+  },
+  // Optional, per platform. Each provider has its own default.
+  scopes: { instagram: ["instagram_business_basic"] },
+});
+```
+
+`onConnect` receives a normalized `SocialProfile`, so one callback stores every
+platform. Each provider's redirect URI is `<endpoint>/<platform>`; platforms match
+it exactly, so register every one of them.
+
+The Instagram OAuth primitives underneath — `getInstagramAuthorizationURL`,
+`getLongLivedInstagramToken`, `refreshInstagramAccessToken` — are exported for
+anything the route doesn't cover. Requires `INSTAGRAM_CLIENT_ID` and
+`INSTAGRAM_CLIENT_SECRET`.
 
 ### Instagram
 
@@ -928,12 +984,16 @@ GOOGLE_CLIENT_SECRET=your-google-client-secret
 NEXT_PUBLIC_GOOGLE_AUTH_ENDPOINT=/api/google
 ```
 
-### Instagram OAuth
+### Social accounts
+
+`NEXT_PUBLIC_SOCIAL_AUTH_ENDPOINT` is the base URL of the `setupSocialAuth` route;
+each provider's redirect URI is `<base>/<platform>`. Client ids are server-only —
+the authorization URL is built on the server, so they never ship in the client bundle.
 
 ```bash
-NEXT_PUBLIC_INSTAGRAM_CLIENT_ID=your-instagram-client-id
+NEXT_PUBLIC_SOCIAL_AUTH_ENDPOINT=/api/social
+INSTAGRAM_CLIENT_ID=your-instagram-client-id
 INSTAGRAM_CLIENT_SECRET=your-instagram-client-secret
-NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT=/api/instagram
 ```
 
 ### AWS S3 (File Upload)

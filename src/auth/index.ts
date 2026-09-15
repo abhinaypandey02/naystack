@@ -1,5 +1,7 @@
 /**
- * Auth module: email routes, Google/Instagram OAuth, and token helpers.
+ * Auth module: how your users log in — email routes, Google OAuth, and token
+ * helpers. Connecting a third-party social account to an already logged-in user
+ * is a different concern and lives in `naystack/socials`.
  *
  * @example
  * ```ts
@@ -8,14 +10,10 @@
  *
  * // Google OAuth
  * import { setupGoogleAuth } from "naystack/auth";
- *
- * // Instagram OAuth
- * import { setupInstagramAuth } from "naystack/auth";
  * ```
  *
  * @module
  */
 export * from "./email";
 export * from "./google";
-export * from "./instagram";
 export { getRefreshToken } from "./utils/token";

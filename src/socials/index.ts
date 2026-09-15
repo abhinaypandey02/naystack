@@ -9,6 +9,13 @@
  * each platform gets its own folder. A platform on a different API brings its own
  * client and exposes its own `create<Platform>Post`.
  *
+ * Reading is normalized where publishing is not. Every platform's OAuth, profile
+ * and content endpoints collapse onto one {@link SocialProvider} shape — see
+ * {@link InstagramProvider} — so a consumer stores one row shape per connected
+ * account whatever the platform. Publishing stays per-platform on purpose: the
+ * inputs diverge too far (text-only posts, stories, carousels, reply controls)
+ * for a shared signature to describe honestly.
+ *
  * Anything this module doesn't wrap is still reachable: {@link getInstagramData}
  * and {@link getThreadsData} call the Graph API directly with the base URL and
  * version already pinned, so a one-off endpoint needs no new helper here.
@@ -25,6 +32,18 @@
  *
  * @module
  */
+export {
+  setupSocialAuth,
+  type SetupSocialAuthOptions,
+  type SocialConnection,
+} from "./connect";
+export { InstagramProvider } from "./instagram/adapter";
+export {
+  getInstagramAuthorizationURL,
+  getLongLivedInstagramToken,
+  type InstagramScope,
+  refreshInstagramAccessToken,
+} from "./instagram/auth";
 export {
   canPublishToInstagram,
   getInstagramConversation,
@@ -51,15 +70,25 @@ export type {
 export { getInstagramData } from "./instagram/utils";
 export { setupInstagramWebhook } from "./instagram/webhook";
 export type { RetryOptions, WaitForContainerOptions } from "./meta/container";
-export { readGraphID } from "./meta/request";
 export type { GraphClient, GraphRequestOptions } from "./meta/request";
+export { readGraphID } from "./meta/request";
 export { type GraphError, type GraphParams, MetaMediaType } from "./meta/types";
+export type { SocialProvider } from "./provider";
 export { getThread, getThreads, getThreadsReplies } from "./threads/getters";
 export { createThread, createThreadsPost } from "./threads/setters";
-export { getThreadsData } from "./threads/utils";
 export type {
   ThreadsPost,
   ThreadsPostInput,
   ThreadsPostMedia,
 } from "./threads/types";
+export { getThreadsData } from "./threads/utils";
 export { setupThreadsWebhook } from "./threads/webhook";
+export {
+  SocialMediaKind,
+  SocialPlatform,
+  type SocialPost,
+  type SocialProfile,
+  type SocialTokens,
+} from "./types";
+export type { PollOptions } from "./utils/poll";
+export { pollUntilReady, withRetry } from "./utils/poll";

@@ -11,8 +11,9 @@ export enum EnvVariable {
   NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT = "NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT",
   /** Google OAuth endpoint URL (client-side, e.g. `/api/google`). */
   NEXT_PUBLIC_GOOGLE_AUTH_ENDPOINT = "NEXT_PUBLIC_GOOGLE_AUTH_ENDPOINT",
-  /** Instagram OAuth endpoint URL (client-side, e.g. `/api/instagram`). */
-  NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT = "NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT",
+  /** Base URL of the multi-platform social OAuth route (client-side, e.g.
+   * `/api/social`). Each provider's redirect URI is `<base>/<platform>`. */
+  NEXT_PUBLIC_SOCIAL_AUTH_ENDPOINT = "NEXT_PUBLIC_SOCIAL_AUTH_ENDPOINT",
   /** File upload endpoint URL (client-side, e.g. `/api/file`). */
   NEXT_PUBLIC_FILE_ENDPOINT = "NEXT_PUBLIC_FILE_ENDPOINT",
   /** Base URL of the app (e.g. `https://yourapp.com`). Used for SEO and Apple Web App metadata. */
@@ -85,10 +86,10 @@ export const getEnvValue = (key: EnvVariable): string | undefined => {
         process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENDPOINT ||
         EXTRA_ENV.GOOGLE_AUTH_ENDPOINT
       );
-    case EnvVariable.NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT:
+    case EnvVariable.NEXT_PUBLIC_SOCIAL_AUTH_ENDPOINT:
       return (
-        process.env.NEXT_PUBLIC_INSTAGRAM_AUTH_ENDPOINT ||
-        EXTRA_ENV.INSTAGRAM_AUTH_ENDPOINT
+        process.env.NEXT_PUBLIC_SOCIAL_AUTH_ENDPOINT ||
+        EXTRA_ENV.SOCIAL_AUTH_ENDPOINT
       );
     case EnvVariable.NEXT_PUBLIC_FILE_ENDPOINT:
       return process.env.NEXT_PUBLIC_FILE_ENDPOINT || EXTRA_ENV.FILE_ENDPOINT;
