@@ -713,7 +713,8 @@ constant so the generalized pieces pick it up for free.
 A provider is a plain object with no per-instance state — import the constant, no
 construction. Capability is method presence: a platform that can't refresh tokens
 omits `refresh`, one with no content-listing API omits `fetchMedia`, and callers
-narrow with a plain `if`.
+narrow with a plain `if`. Platform *knowledge* is not a capability, so it is
+always there: `platform` and `profileURL(username)` are required of every adapter.
 
 ```typescript
 import { InstagramProvider } from "naystack/socials";
@@ -723,6 +724,10 @@ const profile = await InstagramProvider.fetchProfile(accessToken);
 
 const posts = await InstagramProvider.fetchMedia?.(accessToken, { limit: 6 });
 // [{ kind: "video", permalink: "…", likes: 812, comments: null, … }]
+
+InstagramProvider.profileURL(profile.username);
+// "https://instagram.com/…" — so a stored account row links out without the
+// consumer keeping its own per-platform URL table
 ```
 
 Every metric on a `SocialPost` is `number | null`, and `null` always means *the

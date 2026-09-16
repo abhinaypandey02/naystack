@@ -21,6 +21,7 @@ import {
  * @property auth.exchangeCode - Trades the callback `code` for tokens. `platformUserId` is `null` on platforms whose token response carries no id (Google); the route then takes it from `fetchProfile`.
  * @property auth.refresh - Omitted by platforms whose tokens don't expire or can't be refreshed.
  * @property fetchMedia - Omitted by platforms with no content-listing API.
+ * @property profileURL - Public profile link for a handle. Platform knowledge, not a capability, so every adapter has one.
  *
  * @example
  * ```ts
@@ -47,6 +48,7 @@ export type SocialProvider = {
     refresh?: (tokens: SocialTokens) => Promise<SocialTokens | null>;
   };
   fetchProfile: (accessToken: string) => Promise<SocialProfile | null>;
+  profileURL: (username: string) => string;
   fetchMedia?: (
     accessToken: string,
     options?: { limit?: number },

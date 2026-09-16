@@ -152,6 +152,8 @@ export const InstagramProvider: SocialProvider = {
     },
   },
 
+  profileURL: (username) => `https://instagram.com/${username}`,
+
   fetchProfile: async (accessToken) => {
     const user = await getInstagramUser<RawProfile>(
       accessToken,
