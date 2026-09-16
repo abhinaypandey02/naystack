@@ -83,12 +83,5 @@ export type {
 } from "./threads/types";
 export { getThreadsData } from "./threads/utils";
 export { setupThreadsWebhook } from "./threads/webhook";
-export {
-  SocialMediaKind,
-  SocialPlatform,
-  type SocialPost,
-  type SocialProfile,
-  type SocialTokens,
-} from "./types";
 export type { PollOptions } from "./utils/poll";
 export { pollUntilReady, withRetry } from "./utils/poll";

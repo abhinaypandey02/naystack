@@ -3,6 +3,14 @@
  * connected account, one for a piece of its content. Raw per-platform payloads
  * (`InstagramUser`, `ThreadsPost`, …) stay available for anything these flatten.
  *
+ * **Import these from `naystack/socials/types`, never from `naystack/socials`** —
+ * which is why that barrel doesn't re-export them. The build runs with
+ * `splitting: false`, so the barrel inlines a private copy of this module: its
+ * `SocialPlatform` would be a second enum object with the same values, and
+ * anything identity-keyed rejects it (type-graphql's enum registry answers
+ * "Cannot determine GraphQL input type"). This entry pulls in no server code, so
+ * client bundles can import it too.
+ *
  * @module
  */
 
@@ -19,6 +27,23 @@ export enum SocialPlatform {
   YouTube = "YouTube",
   TikTok = "TikTok",
 }
+
+/** Where a handle's public profile lives, per platform. */
+const PROFILE_URL: Record<SocialPlatform, (username: string) => string> = {
+  [SocialPlatform.Instagram]: (username) => `https://instagram.com/${username}`,
+  [SocialPlatform.YouTube]: (username) => `https://youtube.com/@${username}`,
+  [SocialPlatform.TikTok]: (username) => `https://tiktok.com/@${username}`,
+};
+
+/**
+ * The public profile link for a handle. `SocialProvider.profileURL` is the same
+ * thing reached through an adapter; this is for code that holds a stored account
+ * row rather than a provider — a client bundle, or a query result.
+ *
+ * @category Socials
+ */
+export const socialProfileURL = (platform: SocialPlatform, username: string) =>
+  PROFILE_URL[platform](username);
 
 /**
  * What a piece of content is. Each adapter maps its platform's own vocabulary

@@ -3,6 +3,7 @@ import {
   SocialMediaKind,
   SocialPlatform,
   SocialPost,
+  socialProfileURL,
 } from "@/src/socials/types";
 
 import {
@@ -152,7 +153,7 @@ export const InstagramProvider: SocialProvider = {
     },
   },
 
-  profileURL: (username) => `https://instagram.com/${username}`,
+  profileURL: (username) => socialProfileURL(SocialPlatform.Instagram, username),
 
   fetchProfile: async (accessToken) => {
     const user = await getInstagramUser<RawProfile>(

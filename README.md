@@ -690,7 +690,7 @@ detail — you never touch it.
 
 | Path                                     | What it is                                                                                                            |
 | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `socials/types.ts`                       | Platform-neutral shapes: `SocialProfile`, `SocialPost`, `SocialTokens`, `SocialPlatform` — also exported on their own as `naystack/socials/types`, importable from client code |
+| `socials/types.ts`                       | Platform-neutral shapes: `SocialProfile`, `SocialPost`, `SocialTokens`, `SocialPlatform`, `SocialMediaKind`. Imported from **`naystack/socials/types`** — their own entry, deliberately not re-exported by the barrel (see below), and free of server code so client bundles can use it |
 | `socials/provider.ts`                    | The `SocialProvider` interface                                                                                        |
 | `socials/poll.ts`                        | `pollUntilReady` / `withRetry` — waiting and retrying, with no platform in them                                        |
 | `socials/meta/`                          | Meta's Graph protocol — request client, container polling, webhook verification. Shared by Instagram and Threads only |
@@ -716,6 +716,20 @@ omits `refresh`, one with no content-listing API omits `fetchMedia`, and callers
 narrow with a plain `if`. Platform *knowledge* is not a capability, so it is
 always there: `platform` and `profileURL(username)` are required of every adapter.
 
+The shapes come from `naystack/socials/types`, never from `naystack/socials`:
+
+```typescript
+import { InstagramProvider } from "naystack/socials";
+import { SocialPlatform } from "naystack/socials/types";
+```
+
+The build runs with `splitting: false`, so the barrel inlines its own copy of
+that module. Were it to re-export the enums, a consumer mixing the two paths
+would hold two enum objects with identical values — fine for `===`, fatal for
+anything identity-keyed (type-graphql's enum registry answers "Cannot determine
+GraphQL input type" and names neither module). One path, one instance. Same
+reasoning as `auth/token-store`.
+
 ```typescript
 import { InstagramProvider } from "naystack/socials";
 
@@ -729,7 +743,9 @@ const posts = await InstagramProvider.fetchMedia?.(accessToken, { limit: 6 });
 
 InstagramProvider.profileURL(profile.username);
 // "https://instagram.com/…" — so a stored account row links out without the
-// consumer keeping its own per-platform URL table
+// consumer keeping its own per-platform URL table. Code holding a row rather
+// than a provider — a client bundle, a query result — calls the same table
+// directly: `socialProfileURL(platform, username)` from `naystack/socials/types`.
 ```
 
 Every metric on a `SocialPost` is `number | null`, and `null` always means *the
