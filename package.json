@@ -10,6 +10,7 @@
   ],
   "scripts": {
     "build": "NODE_OPTIONS='--max-old-space-size=16384' tsup",
+    "build:fast": "NAYSTACK_FAST_DTS=1 tsup && tsc -p tsconfig.dts.json",
     "docs": "typedoc"
   },
   "exports": {

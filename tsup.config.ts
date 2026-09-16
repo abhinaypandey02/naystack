@@ -3,7 +3,10 @@ import { defineConfig } from "tsup";
 export default defineConfig({
   entry: ["src"],
   format: ["esm", "cjs"],
-  dts: true,
+  // rollup-plugin-dts over ~60 entries needs >16GB heap and OOMs on a laptop.
+  // NAYSTACK_FAST_DTS swaps it for `tsc --emitDeclarationOnly` (see build:fast);
+  // the published build still goes through the bundled path.
+  dts: !process.env.NAYSTACK_FAST_DTS,
   clean: true,
   outDir: "dist",
   splitting: false,
