@@ -724,6 +724,8 @@ const profile = await InstagramProvider.fetchProfile(accessToken);
 
 const posts = await InstagramProvider.fetchMedia?.(accessToken, { limit: 6 });
 // [{ kind: "video", permalink: "…", likes: 812, comments: null, … }]
+// null instead means the request failed — an account with nothing posted
+// returns []. Cache the empty, retry the null.
 
 InstagramProvider.profileURL(profile.username);
 // "https://instagram.com/…" — so a stored account row links out without the

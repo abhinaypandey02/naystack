@@ -20,7 +20,7 @@ import {
  * @property auth.authorizationURL - `state` comes back on the callback; `redirectURI` must match what the platform has registered.
  * @property auth.exchangeCode - Trades the callback `code` for tokens. `platformUserId` is `null` on platforms whose token response carries no id (Google); the route then takes it from `fetchProfile`.
  * @property auth.refresh - Omitted by platforms whose tokens don't expire or can't be refreshed.
- * @property fetchMedia - Omitted by platforms with no content-listing API.
+ * @property fetchMedia - Omitted by platforms with no content-listing API. Resolves to `null` when the request failed and `[]` when the account genuinely has no content — a caller that caches results must not treat an outage as an empty grid.
  * @property profileURL - Public profile link for a handle. Platform knowledge, not a capability, so every adapter has one.
  *
  * @example
@@ -52,5 +52,5 @@ export type SocialProvider = {
   fetchMedia?: (
     accessToken: string,
     options?: { limit?: number },
-  ) => Promise<SocialPost[]>;
+  ) => Promise<SocialPost[] | null>;
 };

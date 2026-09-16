@@ -181,7 +181,14 @@ export const InstagramProvider: SocialProvider = {
       MEDIA_FIELDS,
       options?.limit,
     );
-    if (!result?.data) return [];
+    // An account with nothing posted answers `{ data: [] }`; a revoked token
+    // answers `{ error }`. Both used to flatten to `[]`, which reads as "we
+    // looked and there is nothing there".
+    if (!Array.isArray(result?.data)) {
+      if (result?.error)
+        console.error("[naystack] Instagram media:", result.error.message);
+      return null;
+    }
     return result.data.map(toPost);
   },
 };
