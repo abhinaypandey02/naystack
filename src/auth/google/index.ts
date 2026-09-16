@@ -1,4 +1,4 @@
-import type { oauth2_v2 } from "googleapis";
+import type { oauth2_v2 } from "googleapis/build/src/apis/oauth2";
 
 import { getGoogleGetRoute } from "@/src/auth/google/get";
 

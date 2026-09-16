@@ -1,4 +1,6 @@
-import { google } from "googleapis";
+// Deep import, not `from "googleapis"`: the root barrel loads all 317 API
+// clients (536ms / 170MB at require time) for the two used here.
+import { auth as googleAuth, oauth2 } from "googleapis/build/src/apis/oauth2";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { v4 } from "uuid";
@@ -23,7 +25,7 @@ export const getGoogleGetRoute = ({
   errorRedirectURL,
 }: SetupGoogleAuthOptions) => {
   const url = getEnv(EnvVariable.NEXT_PUBLIC_GOOGLE_AUTH_ENDPOINT);
-  const oauth2Client = new google.auth.OAuth2(
+  const oauth2Client = new googleAuth.OAuth2(
     getEnv(EnvVariable.GOOGLE_CLIENT_ID),
     getEnv(EnvVariable.GOOGLE_CLIENT_SECRET),
     url,
@@ -90,12 +92,10 @@ export const getGoogleGetRoute = ({
       const { tokens } = await oauth2Client.getToken(code);
       oauth2Client.setCredentials(tokens);
 
-      const userInfoRequest = await google
-        .oauth2({
-          auth: oauth2Client,
-          version: "v2",
-        })
-        .userinfo.get();
+      const userInfoRequest = await oauth2({
+        auth: oauth2Client,
+        version: "v2",
+      }).userinfo.get();
 
       const user = userInfoRequest.data;
       if (user.email) {
