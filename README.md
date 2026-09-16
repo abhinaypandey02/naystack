@@ -690,7 +690,7 @@ detail — you never touch it.
 
 | Path                                     | What it is                                                                                                            |
 | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `socials/types.ts`                       | Platform-neutral shapes: `SocialProfile`, `SocialPost`, `SocialTokens`, `SocialPlatform`                              |
+| `socials/types.ts`                       | Platform-neutral shapes: `SocialProfile`, `SocialPost`, `SocialTokens`, `SocialPlatform` — also exported on their own as `naystack/socials/types`, importable from client code |
 | `socials/provider.ts`                    | The `SocialProvider` interface                                                                                        |
 | `socials/poll.ts`                        | `pollUntilReady` / `withRetry` — waiting and retrying, with no platform in them                                        |
 | `socials/meta/`                          | Meta's Graph protocol — request client, container polling, webhook verification. Shared by Instagram and Threads only |

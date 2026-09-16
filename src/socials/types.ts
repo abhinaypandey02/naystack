@@ -7,15 +7,17 @@
  */
 
 /**
- * A platform a user can connect an account on. Values double as URL path
- * segments, so a route mounted at `/api/social/[platform]` matches them verbatim.
+ * A platform a user can connect an account on. The value is the platform's name
+ * as it is written, so it reads the same in a database column, a GraphQL enum
+ * and a UI label; `setupSocialAuth` matches the `[platform]` route segment
+ * case-insensitively, so URLs stay lowercase.
  *
  * @category Socials
  */
 export enum SocialPlatform {
-  Instagram = "instagram",
-  YouTube = "youtube",
-  TikTok = "tiktok",
+  Instagram = "Instagram",
+  YouTube = "YouTube",
+  TikTok = "TikTok",
 }
 
 /**
@@ -26,9 +28,9 @@ export enum SocialPlatform {
  * @category Socials
  */
 export enum SocialMediaKind {
-  Image = "image",
-  Video = "video",
-  Carousel = "carousel",
+  Image = "Image",
+  Video = "Video",
+  Carousel = "Carousel",
 }
 
 /**

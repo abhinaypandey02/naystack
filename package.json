@@ -28,6 +28,21 @@
       "import": "./dist/auth/token-store.esm.js",
       "require": "./dist/auth/token-store.cjs.js"
     },
+    "./env": {
+      "types": "./dist/env.d.ts",
+      "import": "./dist/env.esm.js",
+      "require": "./dist/env.cjs.js"
+    },
+    "./file": {
+      "types": "./dist/file/index.d.ts",
+      "import": "./dist/file/index.esm.js",
+      "require": "./dist/file/index.cjs.js"
+    },
+    "./file/client": {
+      "types": "./dist/file/client.d.ts",
+      "import": "./dist/file/client.esm.js",
+      "require": "./dist/file/client.cjs.js"
+    },
     "./graphql": {
       "types": "./dist/graphql/index.d.ts",
       "import": "./dist/graphql/index.esm.js",
@@ -43,30 +58,20 @@
       "import": "./dist/graphql/next.esm.js",
       "require": "./dist/graphql/next.cjs.js"
     },
-    "./file": {
-      "types": "./dist/file/index.d.ts",
-      "import": "./dist/file/index.esm.js",
-      "require": "./dist/file/index.cjs.js"
-    },
-    "./file/client": {
-      "types": "./dist/file/client.d.ts",
-      "import": "./dist/file/client.esm.js",
-      "require": "./dist/file/client.cjs.js"
-    },
     "./socials": {
       "types": "./dist/socials/index.d.ts",
       "import": "./dist/socials/index.esm.js",
       "require": "./dist/socials/index.cjs.js"
     },
+    "./socials/types": {
+      "types": "./dist/socials/types.d.ts",
+      "import": "./dist/socials/types.esm.js",
+      "require": "./dist/socials/types.cjs.js"
+    },
     "./utils/client": {
       "types": "./dist/utils/client/index.d.ts",
       "import": "./dist/utils/client/index.esm.js",
       "require": "./dist/utils/client/index.cjs.js"
-    },
-    "./env": {
-      "types": "./dist/env.d.ts",
-      "import": "./dist/env.esm.js",
-      "require": "./dist/env.cjs.js"
     }
   },
   "keywords": [

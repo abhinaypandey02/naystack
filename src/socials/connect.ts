@@ -25,7 +25,7 @@ export interface SocialConnection {
 /**
  * Options for {@link setupSocialAuth}.
  *
- * @property endpoint - Base URL this route is mounted at, e.g. `"https://yourapp.com/api/social"`. Each provider's redirect URI is `<endpoint>/<platform>` and must be registered with that platform verbatim.
+ * @property endpoint - Base URL this route is mounted at, e.g. `"https://yourapp.com/api/social"`. Each provider's redirect URI is `<endpoint>/<platform lowercased>` and must be registered with that platform verbatim.
  * @property onConnect - Return a string to show as an error (redirects to `errorRedirectURL`); return `void` on success.
  * @property scopes - Per-platform permissions; each provider has its own default.
  *
@@ -83,7 +83,10 @@ export function setupSocialAuth({
     ctx: { params: Promise<{ platform: string }> },
   ) => {
     const { platform } = await ctx.params;
-    const provider = providers.find((p) => p.platform === platform);
+    // URLs are lowercase; the enum's values are the platform's own spelling.
+    const provider = providers.find(
+      (p) => p.platform.toLowerCase() === platform.toLowerCase(),
+    );
     if (!provider) return handleError("Unsupported platform");
 
     const code = req.nextUrl.searchParams.get("code");
@@ -92,7 +95,7 @@ export function setupSocialAuth({
     if (error) return handleError(error);
     if (!state) return handleError("Invalid request");
 
-    const redirectURI = `${endpoint}/${provider.platform}`;
+    const redirectURI = `${endpoint}/${provider.platform.toLowerCase()}`;
     if (!code) {
       return NextResponse.redirect(
         provider.auth.authorizationURL({
