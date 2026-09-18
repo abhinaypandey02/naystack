@@ -153,7 +153,8 @@ export const InstagramProvider: SocialProvider = {
     },
   },
 
-  profileURL: (username) => socialProfileURL(SocialPlatform.Instagram, username),
+  profileURL: (username) =>
+    socialProfileURL(SocialPlatform.Instagram, username),
 
   fetchProfile: async (accessToken) => {
     const user = await getInstagramUser<RawProfile>(
@@ -170,7 +171,7 @@ export const InstagramProvider: SocialProvider = {
       username: user.username,
       displayName: user.name ?? null,
       avatar: user.profile_picture_url ?? null,
-      followers: user.followers_count ?? 0,
+      followers: user.followers_count ?? null,
       contentCount: user.media_count ?? 0,
       metadata: {},
     };

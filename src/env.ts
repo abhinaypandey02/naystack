@@ -31,6 +31,11 @@ export enum EnvVariable {
   GOOGLE_CLIENT_SECRET = "GOOGLE_CLIENT_SECRET",
   /** Google OAuth client id (from Google Cloud Console). */
   GOOGLE_CLIENT_ID = "GOOGLE_CLIENT_ID",
+  /** Google Cloud OAuth client secret for YouTube connections. Separate from
+   * `GOOGLE_CLIENT_SECRET` (login-with-Google) — they may hold the same value. */
+  YOUTUBE_CLIENT_SECRET = "YOUTUBE_CLIENT_SECRET",
+  /** Google Cloud OAuth client id for YouTube connections. Server-only. */
+  YOUTUBE_CLIENT_ID = "YOUTUBE_CLIENT_ID",
   /** Cloudflare Turnstile secret key (optional — enables captcha on auth routes). */
   TURNSTILE_KEY = "TURNSTILE_KEY",
   /** AWS access key id for S3. */
@@ -107,6 +112,10 @@ export const getEnvValue = (key: EnvVariable): string | undefined => {
       return process.env.GOOGLE_CLIENT_SECRET;
     case EnvVariable.GOOGLE_CLIENT_ID:
       return process.env.GOOGLE_CLIENT_ID;
+    case EnvVariable.YOUTUBE_CLIENT_SECRET:
+      return process.env.YOUTUBE_CLIENT_SECRET;
+    case EnvVariable.YOUTUBE_CLIENT_ID:
+      return process.env.YOUTUBE_CLIENT_ID;
     case EnvVariable.TURNSTILE_KEY:
       return process.env.TURNSTILE_KEY;
     case EnvVariable.S3_ACCESS_KEY_ID:

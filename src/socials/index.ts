@@ -1,5 +1,5 @@
 /**
- * Socials module: publish to and read from Instagram and Threads.
+ * Socials module: publish to and read from Instagram and Threads; read from YouTube.
  *
  * Each platform exposes one publishing method — {@link createInstagramPost},
  * {@link createThreadsPost} — that picks the right media type from what you pass.
@@ -11,7 +11,7 @@
  *
  * Reading is normalized where publishing is not. Every platform's OAuth, profile
  * and content endpoints collapse onto one {@link SocialProvider} shape — see
- * {@link InstagramProvider} — so a consumer stores one row shape per connected
+ * {@link InstagramProvider}, {@link YouTubeProvider} — so a consumer stores one row shape per connected
  * account whatever the platform. Publishing stays per-platform on purpose: the
  * inputs diverge too far (text-only posts, stories, carousels, reply controls)
  * for a shared signature to describe honestly.
@@ -85,3 +85,11 @@ export { getThreadsData } from "./threads/utils";
 export { setupThreadsWebhook } from "./threads/webhook";
 export type { PollOptions } from "./utils/poll";
 export { pollUntilReady, withRetry } from "./utils/poll";
+export { YouTubeProvider } from "./youtube/adapter";
+export {
+  exchangeYouTubeCode,
+  getYouTubeAuthorizationURL,
+  refreshYouTubeToken,
+  type YouTubeScope,
+} from "./youtube/auth";
+export { getYouTubeChannel, getYouTubeUploads } from "./youtube/getters";

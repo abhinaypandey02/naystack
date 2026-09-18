@@ -31,7 +31,11 @@ export enum SocialPlatform {
 /** Where a handle's public profile lives, per platform. */
 const PROFILE_URL: Record<SocialPlatform, (username: string) => string> = {
   [SocialPlatform.Instagram]: (username) => `https://instagram.com/${username}`,
-  [SocialPlatform.YouTube]: (username) => `https://youtube.com/@${username}`,
+  // A channel with no handle is stored under its `UC…` id instead.
+  [SocialPlatform.YouTube]: (username) =>
+    username.startsWith("UC") && username.length === 24
+      ? `https://youtube.com/channel/${username}`
+      : `https://youtube.com/@${username}`,
   [SocialPlatform.TikTok]: (username) => `https://tiktok.com/@${username}`,
 };
 
@@ -64,7 +68,7 @@ export enum SocialMediaKind {
  * @property platformUserId - The platform's own id. Stable across renames — key on it, not `username`. `null` when the platform doesn't return one.
  * @property username - Public handle. Mutable, and a freed handle can be taken by someone else.
  * @property avatar - Usually a signed CDN URL that expires; copy it to your own storage.
- * @property followers - Subscribers on YouTube, followers elsewhere.
+ * @property followers - Subscribers on YouTube, followers elsewhere. `null` when the platform hides the count (a YouTube channel can); never `0` in that case, so a follower gate can tell "unknown" from "none".
  * @property metadata - Platform extras, display-only: keys differ per platform, so never filter or sort on them.
  *
  * @category Socials
@@ -75,7 +79,7 @@ export type SocialProfile = {
   username: string;
   displayName: string | null;
   avatar: string | null;
-  followers: number;
+  followers: number | null;
   contentCount: number;
   metadata: Record<string, unknown>;
 };
