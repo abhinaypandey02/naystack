@@ -69,7 +69,8 @@ function toPost(video: Video): SocialPost {
  *
  * `followers` is `null` when the channel hides its subscriber count.
  *
- * Requires env vars for `auth` only: `YOUTUBE_CLIENT_ID`, `YOUTUBE_CLIENT_SECRET`.
+ * Requires env vars for `auth` only: `YOUTUBE_CLIENT_ID`, `YOUTUBE_CLIENT_SECRET`
+ * — or `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`, which they fall back to.
  *
  * @example
  * ```ts
