@@ -24,7 +24,7 @@
  */
 export enum SocialPlatform {
   Instagram = "Instagram",
-  YouTube = "YouTube",
+  Youtube = "Youtube",
   TikTok = "TikTok",
 }
 
@@ -32,7 +32,7 @@ export enum SocialPlatform {
 const PROFILE_URL: Record<SocialPlatform, (username: string) => string> = {
   [SocialPlatform.Instagram]: (username) => `https://instagram.com/${username}`,
   // A channel with no handle is stored under its `UC…` id instead.
-  [SocialPlatform.YouTube]: (username) =>
+  [SocialPlatform.Youtube]: (username) =>
     username.startsWith("UC") && username.length === 24
       ? `https://youtube.com/channel/${username}`
       : `https://youtube.com/@${username}`,

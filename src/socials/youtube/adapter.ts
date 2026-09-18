@@ -32,7 +32,7 @@ type Video = youtube_v3.Schema$Video & {
 function toPost(video: Video): SocialPost {
   const thumbnails = video.snippet.thumbnails;
   return {
-    platform: SocialPlatform.YouTube,
+    platform: SocialPlatform.Youtube,
     platformMediaId: video.id,
     permalink: `https://www.youtube.com/watch?v=${video.id}`,
     thumbnail:
@@ -83,7 +83,7 @@ function toPost(video: Video): SocialPost {
  * @category Socials
  */
 export const YouTubeProvider: SocialProvider = {
-  platform: SocialPlatform.YouTube,
+  platform: SocialPlatform.Youtube,
 
   auth: {
     authorizationURL: ({ state, redirectURI, scopes }) =>
@@ -118,7 +118,7 @@ export const YouTubeProvider: SocialProvider = {
       refreshToken ? refreshYouTubeToken(refreshToken) : Promise.resolve(null),
   },
 
-  profileURL: (username) => socialProfileURL(SocialPlatform.YouTube, username),
+  profileURL: (username) => socialProfileURL(SocialPlatform.Youtube, username),
 
   fetchProfile: async (accessToken) => {
     // `null` is "this token can't read a profile" — a caller may count it
@@ -136,7 +136,7 @@ export const YouTubeProvider: SocialProvider = {
     // Also `null` for a Google account that has no channel at all.
     if (!channel?.id) return null;
     return {
-      platform: SocialPlatform.YouTube,
+      platform: SocialPlatform.Youtube,
       platformUserId: channel.id,
       // `customUrl` is `@handle`; some channels still have none, and the
       // channel id is the one identifier every channel has.
