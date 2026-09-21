@@ -22,11 +22,11 @@
  *
  * @example
  * ```ts
- * import { createInstagramPost } from "naystack/socials";
+ * import { createInstagramPost, MetaMediaType } from "naystack/socials";
  *
  * await createInstagramPost(token, {
  *   caption: "New campaign is live 🎉",
- *   media: { url: "https://cdn.example.com/promo.mp4", type: "video" },
+ *   media: { url: "https://cdn.example.com/promo.mp4", type: MetaMediaType.Video },
  * });
  * ```
  *

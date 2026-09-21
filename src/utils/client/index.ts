@@ -3,7 +3,7 @@
  *
  * @example
  * ```ts
- * import { useVisibility, useBreakpoint, setupSEO } from "naystack/client";
+ * import { useVisibility, useBreakpoint, setupSEO } from "naystack/utils/client";
  * ```
  *
  * @module

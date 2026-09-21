@@ -34,14 +34,26 @@ export function generateRefreshToken(id: number) {
 }
 
 /**
- * Builds a NextResponse with access/refresh tokens in the JSON body and sets the refresh cookie.
+ * Builds the response every auth route ends with: the access token as the
+ * plain-text body, and the refresh token in an httpOnly cookie (1-year expiry).
+ * With no `id`, the body is empty and the cookie is cleared — a logout.
  *
- * - If `accessToken` is omitted, the refresh cookie is cleared (logout).
- * - If `refreshToken` is empty string, the cookie expires immediately (logout).
- * - If `refreshToken` is a valid string, the cookie is set for 1 year.
+ * Exported so a custom login route (magic link, passkey, admin impersonation)
+ * can end the same way the built-in ones do.
  *
- * @param id - Optional user id.
- * @returns NextResponse with JSON body and Set-Cookie headers.
+ * @param id - The user to start a session for; omit to end one.
+ * @returns NextResponse with the token body and Set-Cookie header.
+ *
+ * @example
+ * ```ts
+ * import { getTokenizedResponse } from "naystack/auth";
+ *
+ * export const POST = async (req: NextRequest) => {
+ *   const userId = await verifyMagicLink(await req.json());
+ *   if (!userId) return new NextResponse("Invalid link", { status: 400 });
+ *   return getTokenizedResponse(userId);
+ * };
+ * ```
  * @category Auth
  */
 export function getTokenizedResponse(

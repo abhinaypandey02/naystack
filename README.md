@@ -1,36 +1,80 @@
-# Naystack
+# naystack
 
-A minimal, powerful stack for Next.js app development. Provides end-to-end **Auth + GraphQL + File Upload + Other utilities**. With bring-your-own database.
+**The backend layer for Next.js App Router apps — auth, GraphQL, file uploads and social-media APIs in one typed package. Bring your own database.**
 
 [![npm version](https://img.shields.io/npm/v/naystack.svg)](https://www.npmjs.com/package/naystack)
+[![npm downloads](https://img.shields.io/npm/dm/naystack.svg)](https://www.npmjs.com/package/naystack)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6.svg)](https://www.typescriptlang.org/)
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
 
-**[API Reference](https://abhinaypandey02.github.io/naystack/)**
+**[API Reference](https://abhinaypandey02.github.io/naystack/)** · [npm](https://www.npmjs.com/package/naystack) · [GitHub](https://github.com/abhinaypandey02/naystack)
+
+naystack is a set of Next.js route handlers, React hooks and server helpers that
+cover the parts every app needs and nobody enjoys re-writing:
+
+- **Authentication** — email + password and Google login as JWT access tokens
+  with an httpOnly refresh cookie. Cloudflare Turnstile captcha, CORS for a
+  separate frontend or a mobile app, and hooks that keep the token in sync.
+- **GraphQL** — resolvers as plain typed functions on top of `type-graphql` and
+  Apollo Server. Every resolver can also be called directly from a Server
+  Component. Client hooks refresh an expired token and retry for you.
+- **File uploads** — one route handler that authenticates, optionally transforms
+  the file, writes it to S3 (or any S3-compatible store) and calls you back with
+  the URL. A matching upload hook for the browser and React Native.
+- **Social APIs** — connect Instagram, Threads and YouTube accounts with one
+  OAuth route, read profiles and posts through one normalized shape, and publish
+  to Instagram and Threads without touching Meta's container/publish dance.
+- **Utilities** — Next.js metadata factory for SEO, `useBreakpoint`,
+  `useVisibility`, typed env access.
+
+Everything is a subpath import (`naystack/auth`, `naystack/graphql`, …) so you
+only bundle what you use. Database access is yours: examples use
+[Drizzle](https://orm.drizzle.team), but any query layer works.
+
+## Table of contents
+
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [Modules at a glance](#modules-at-a-glance)
+- [Authentication](#authentication)
+- [GraphQL](#graphql)
+- [File uploads](#file-uploads)
+- [Social APIs](#social-apis)
+- [Client utilities](#client-utilities)
+- [Environment variables](#environment-variables)
+- [React Native / Expo](#react-native--expo)
+- [Requirements](#requirements)
 
 ## Installation
 
 ```bash
 pnpm add naystack
+# or
+npm install naystack
 ```
 
----
+Peer dependencies: `next >= 13` (App Router), `react` and `react-dom` 18 or 19.
 
-## 1. Authentication
+## Quick start
 
-Naystack provides a seamless email-based authentication system with optional Google OAuth.
+Three files and four env vars get you email auth and an authenticated GraphQL
+API.
 
-### Server Setup
+**1. Environment**
 
-Define your auth routes in `app/api/(auth)/email/route.ts`. The library reads `SIGNING_KEY` and `REFRESH_KEY` from environment variables automatically.
+```bash
+SIGNING_KEY=change-me            # signs access tokens
+REFRESH_KEY=change-me-too        # signs refresh tokens
+NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT=/api/email
+NEXT_PUBLIC_GRAPHQL_ENDPOINT=/api/graphql
+```
 
-```typescript
+**2. Auth route** — `app/api/email/route.ts`
+
+```ts
 import { setupEmailAuth } from "naystack/auth";
-import { db } from "@/app/api/lib/db";
-import { UserTable } from "@/app/api/(graphql)/User/db";
-import { eq } from "drizzle-orm";
 
 export const { GET, POST, PUT, DELETE } = setupEmailAuth({
-  // Fetch user by request data (used for login & sign-up duplicate check)
   getUser: async ({ email }: { email: string }) => {
     const [user] = await db
       .select({ id: UserTable.id, password: UserTable.password })
@@ -38,50 +82,38 @@ export const { GET, POST, PUT, DELETE } = setupEmailAuth({
       .where(eq(UserTable.email, email));
     return user;
   },
-  // Create a new user with the hashed password
-  createUser: async (data: {
-    email: string;
-    password: string;
-    name: string;
-  }) => {
+  createUser: async (data: { email: string; password: string; name: string }) => {
     const [user] = await db
       .insert(UserTable)
       .values(data)
       .returning({ id: UserTable.id, password: UserTable.password });
     return user;
   },
-  // Optional: callback after successful sign-up
-  onSignUp: async (userId, body: { orgTitle?: string }) => {
-    if (body.orgTitle && userId) {
-      await createOrg(userId, { title: body.orgTitle });
-    }
-  },
 });
 ```
 
-The returned route handlers map to:
+**3. GraphQL route** — `app/api/graphql/route.ts`
 
-| Handler  | HTTP Method | Purpose                                   |
-| -------- | ----------- | ----------------------------------------- |
-| `GET`    | GET         | Refresh tokens (exchange refresh cookie)  |
-| `POST`   | POST        | Sign up (create user, return tokens)      |
-| `PUT`    | PUT         | Login (verify credentials, return tokens) |
-| `DELETE` | DELETE      | Logout (clear refresh cookie)             |
+```ts
+import { setupGraphQL, resolver, QueryLibrary } from "naystack/graphql";
 
-### Client Setup
+const getCurrentUser = resolver(
+  async (ctx) => db.query.users.findFirst({ where: eq(UserTable.id, ctx.userId) }),
+  { output: User, outputOptions: { nullable: true }, authorized: true },
+);
 
-Wrap your application with `AuthWrapper` in your root layout. This fetches the access token on mount and provides it to all auth hooks via React context.
+export const { GET, POST } = await setupGraphQL({
+  resolvers: [QueryLibrary({ getCurrentUser })],
+});
+```
+
+**4. Layout** — `app/layout.tsx`
 
 ```tsx
-// app/layout.tsx
-import { AuthWrapper } from "naystack/auth/client";
+import { AuthWrapper } from "naystack/auth";
 import { ApolloWrapper } from "naystack/graphql/client";
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
@@ -94,741 +126,709 @@ export default function RootLayout({
 }
 ```
 
-### Frontend Hooks
+From here, `useLogin()` / `useSignUp()` log users in, and `useAuthQuery()` /
+`useAuthMutation()` call your schema as that user.
 
-#### `useToken()`
+## Modules at a glance
 
-Returns the current JWT access token (or `null` if not loaded / logged out). Use it for conditional rendering or passing to custom fetch calls.
-
-```tsx
-import { useToken } from "naystack/auth/client";
-
-export default function Home() {
-  const token = useToken();
-
-  return (
-    <Link href={token ? "/dashboard" : "/signup"}>
-      <button>{token ? "Dashboard" : "Get Started"}</button>
-    </Link>
-  );
-}
-```
-
-#### `useSignUp()`
-
-Returns a function that registers a new user. Sends a POST to the auth endpoint. Returns `null` on success, or the error message string on failure.
-
-```tsx
-import { useSignUp } from "naystack/auth/client";
-
-function SignUpForm() {
-  const signUp = useSignUp();
-
-  const handleSubmit = async (data: {
-    name: string;
-    email: string;
-    password: string;
-  }) => {
-    const error = await signUp(data);
-    if (error) {
-      setMessage(error);
-    } else {
-      router.replace("/dashboard");
-    }
-  };
-}
-```
-
-#### `useLogin()`
-
-Returns a function that logs the user in. Sends a PUT to the auth endpoint. Returns `null` on success, or the error message string on failure.
-
-```tsx
-import { useLogin } from "naystack/auth/client";
-
-function LoginForm() {
-  const login = useLogin();
-
-  const handleSubmit = async (data: { email: string; password: string }) => {
-    const error = await login(data);
-    if (error) {
-      form.setError("password", { message: error });
-    } else {
-      router.replace("/dashboard");
-    }
-  };
-}
-```
-
-#### `useLogout()`
-
-Returns a function that logs the user out. Clears the token immediately and sends DELETE to the auth endpoint.
-
-```tsx
-import { useLogout } from "naystack/auth/client";
-
-function LogoutButton() {
-  const logout = useLogout();
-
-  return (
-    <button
-      onClick={() => {
-        logout();
-        router.push("/login");
-      }}
-    >
-      Log out
-    </button>
-  );
-}
-```
-
-### Server-side Auth Helpers
-
-#### `getContext(req)`
-
-Extracts the auth context from a `NextRequest`. Reads either the `Authorization: Bearer <token>` header or the refresh cookie. Use it in API routes outside of GraphQL.
-
-```typescript
-import { getContext } from "naystack/auth";
-
-export const POST = async (req: NextRequest) => {
-  const ctx = getContext(req);
-  if (!ctx?.userId) return new NextResponse("Unauthorized", { status: 401 });
-
-  // ctx.userId is available for authenticated operations
-  const chats = await db
-    .select()
-    .from(ChatTable)
-    .where(eq(ChatTable.userId, ctx.userId));
-  return NextResponse.json(chats);
-};
-```
-
-#### `getRefreshToken()`
-
-Server-side function to read the refresh token from cookies. Useful in Server Components and layouts to check if the user is logged in.
-
-```typescript
-import { getRefreshToken } from "naystack/auth";
-import { redirect } from "next/navigation";
-
-export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
-  const token = await getRefreshToken();
-  if (!token) return redirect("/login");
-  return <div>{children}</div>;
-}
-```
-
-#### `checkAuthStatus(redirectURL?)`
-
-Checks if the current request has a valid refresh cookie. Optionally redirects to the given URL if not authorized.
-
-```typescript
-import { checkAuthStatus } from "naystack/auth";
-
-// In a Server Component:
-await checkAuthStatus("/login"); // Redirects to /login if not authorized
-```
-
-### Google OAuth
-
-```typescript
-import { setupGoogleAuth } from "naystack/auth";
-
-export const { GET } = setupGoogleAuth({
-  getUserIdFromEmail: async (googleUser) => {
-    // Find or create user by Google email
-    return findOrCreateUserByEmail(googleUser.email!);
-  },
-  redirectURL: "/dashboard",
-  errorRedirectURL: "/login",
-});
-```
-
-### Connecting social accounts
-
-Linking an Instagram (or any other platform) account to an already logged-in user
-is not login — it lives in [§5 Social APIs](#5-social-apis) as `setupSocialAuth`.
+| Import                      | Runs on | What's in it                                                                                                  |
+| --------------------------- | ------- | ------------------------------------------------------------------------------------------------------------- |
+| `naystack/auth`             | server  | `setupEmailAuth`, `setupGoogleAuth`, `AuthWrapper` (SSR), `getContext`, `checkAuthStatus`, `getRefreshToken`, `getTokenizedResponse` |
+| `naystack/auth/client`      | client  | `AuthWrapper`, `useToken`, `useLogin`, `useSignUp`, `useLogout`, `getAccessToken`, `refreshAccessToken`      |
+| `naystack/auth/token-store` | client  | The access token outside React — `getAccessToken`, `setAccessToken`, `refreshAccessToken`, `subscribeToAccessToken` |
+| `naystack/graphql`          | server  | `setupGraphQL`, `resolver`, `field`, `QueryLibrary`, `FieldLibrary`, `GQLError`, `Injector`, `query`, type helpers |
+| `naystack/graphql/client`   | client  | `ApolloWrapper`, `useAuthQuery`, `useAuthMutation`                                                            |
+| `naystack/graphql/next`     | client  | `ApolloWrapper` on `@apollo/client-integration-nextjs`, for `useSuspenseQuery` streaming                      |
+| `naystack/file`             | server  | `setupFileUpload`, `uploadFile`, `deleteFile`, `getUploadURL`, `getDownloadURL`                               |
+| `naystack/file/client`      | client  | `useFileUpload`                                                                                               |
+| `naystack/socials`          | server  | `setupSocialAuth`, `InstagramProvider`, `YouTubeProvider`, `createInstagramPost`, `createThreadsPost`, readers, webhooks |
+| `naystack/socials/types`    | both    | `SocialPlatform`, `SocialProfile`, `SocialPost`, `SocialTokens`, `socialProfileURL` — no server code          |
+| `naystack/utils/client`     | client  | `setupSEO`, `useVisibility`, `useBreakpoint`                                                                  |
+| `naystack/env`              | both    | `getEnv`, `getEnvValue`, `EnvVariable`, `addEnv`                                                              |
 
 ---
 
-## 2. GraphQL
+## Authentication
 
-Naystack provides a type-safe GraphQL layer built on `type-graphql` and `Apollo Server`. Define resolvers as plain functions and let the library generate the schema.
+### How sessions work
 
-### Defining Queries and Mutations
+- **Access token** — a 24-hour JWT signed with `SIGNING_KEY`. Lives in memory on
+  the client (never in storage) and goes out as `Authorization: Bearer …`.
+- **Refresh token** — a 1-year JWT signed with `REFRESH_KEY`, set as an httpOnly,
+  secure cookie named `refresh`. Only the server ever reads it.
+- On page load `AuthWrapper` exchanges the cookie for a fresh access token. When
+  a GraphQL call fails with an expired token, the client refreshes once and
+  retries the call — you never handle it.
+- Server Components and route handlers identify the user from either the bearer
+  header or the cookie via `getContext(req)`.
 
-Use `resolver()` to define a resolver. It returns an object with the resolver function, plus `.call()` and `.authCall()` for direct server-side invocation (e.g. in Server Components).
+### Email + password
 
-```typescript
-// app/api/(graphql)/User/resolvers/get-current-user.ts
+`setupEmailAuth` returns the four route handlers. Passwords are hashed with
+bcrypt on sign-up; you only store what `createUser` receives.
+
+```ts
+// app/api/email/route.ts
+import { setupEmailAuth } from "naystack/auth";
+
+export const { GET, POST, PUT, DELETE, OPTIONS } = setupEmailAuth({
+  // Look up by whatever the client sent (email here). Used by login and by
+  // sign-up's duplicate check. Return at least { id, password }.
+  getUser: async ({ email }: { email: string }) => {
+    const [user] = await db
+      .select({ id: UserTable.id, password: UserTable.password })
+      .from(UserTable)
+      .where(eq(UserTable.email, email));
+    return user;
+  },
+  // `password` is already hashed. Any extra fields the client sent are here too.
+  createUser: async (data: { email: string; password: string; name: string }) => {
+    const [user] = await db
+      .insert(UserTable)
+      .values(data)
+      .returning({ id: UserTable.id, password: UserTable.password });
+    return user;
+  },
+
+  // All optional:
+  onSignUp: async (userId, body) => {},   // after a successful sign-up
+  onLogin: async (userId, body) => {},    // after a successful login
+  onRefresh: async (userId, body) => {},  // on every token refresh (GET)
+  onLogout: async (userId, body) => {},   // on logout (DELETE)
+  onError: ({ status, message }) =>       // customize error responses
+    NextResponse.json({ error: message }, { status }),
+  allowedOrigins: ["https://app.example.com"], // enable CORS for these origins
+});
+```
+
+| Handler  | Method | What it does                                                                                    |
+| -------- | ------ | ----------------------------------------------------------------------------------------------- |
+| `GET`    | GET    | Exchange the refresh cookie for a new access token. Body is the token, or empty when logged out |
+| `POST`   | POST   | Sign up. If the email exists **and** the password matches, logs in instead of failing           |
+| `PUT`    | PUT    | Log in                                                                                          |
+| `DELETE` | DELETE | Log out — clears the refresh cookie                                                             |
+| `OPTIONS`| OPTIONS| Only returned when `allowedOrigins` is set; answers CORS preflights                             |
+
+Every success response has the access token as its **plain-text body** and sets
+the refresh cookie. Errors are plain-text messages with a 4xx status (`"A user
+already exists"`, `"Invalid password"`, …) — the client hooks return them to you
+as strings.
+
+**Captcha.** Set `TURNSTILE_KEY` and sign-up/login will require a `captchaToken`
+field in the body, verified against Cloudflare Turnstile.
+
+**CORS.** `allowedOrigins` adds the CORS headers, rejects unlisted cross-origin
+requests with 403, and marks the refresh cookie `SameSite=None` so a frontend on
+another origin still receives it.
+
+### Client: `AuthWrapper` and hooks
+
+`AuthWrapper` holds the access token and gives the hooks below their context. It
+comes in two flavours with the same props:
+
+- `import { AuthWrapper } from "naystack/auth"` — a **Server Component**. The
+  first token fetch runs during SSR with the cookie forwarded and streams in, so
+  the client never renders logged-out and then flips. Use this in `app/layout.tsx`.
+- `import { AuthWrapper } from "naystack/auth/client"` — the plain client
+  provider. Use it inside a tree that is already `"use client"`.
+
+Either way it must sit **above** `ApolloWrapper`.
+
+```tsx
+import { useToken, useLogin, useSignUp, useLogout } from "naystack/auth/client";
+
+function Nav() {
+  const token = useToken(); // string | null (logged out) | undefined (not loaded yet)
+  return <Link href={token ? "/dashboard" : "/login"}>…</Link>;
+}
+
+function LoginForm() {
+  const login = useLogin();
+  const onSubmit = async (data: { email: string; password: string }) => {
+    const error = await login(data); // null on success, message string on failure
+    if (error) form.setError("password", { message: error });
+    else router.replace("/dashboard");
+  };
+}
+
+function SignUpForm() {
+  const signUp = useSignUp();
+  // Extra fields (name, orgTitle, …) are forwarded to `createUser` / `onSignUp`.
+  const onSubmit = async (data: { name: string; email: string; password: string }) => {
+    const error = await signUp(data);
+    if (error) setMessage(error);
+  };
+}
+
+function LogoutButton() {
+  const logout = useLogout(); // clears the token immediately, then calls DELETE
+  return <button onClick={() => { logout(); router.push("/login"); }}>Log out</button>;
+}
+```
+
+**The token outside React.** The Apollo link, a custom `fetch` wrapper or a
+WebSocket client can read the live token from `naystack/auth/token-store`:
+
+```ts
+import { getAccessToken, refreshAccessToken } from "naystack/auth/token-store";
+
+const res = await fetch("/api/custom", {
+  headers: { Authorization: `Bearer ${getAccessToken()}` },
+});
+if (res.status === 401) await refreshAccessToken(); // shared: N callers, one request
+```
+
+### Server helpers
+
+```ts
+import {
+  getContext,
+  getRefreshToken,
+  checkAuthStatus,
+  getTokenizedResponse,
+} from "naystack/auth";
+
+// Route handlers: who is calling? Reads the bearer header, else the cookie.
+export const POST = async (req: NextRequest) => {
+  const { userId, isRefreshID } = getContext(req);
+  if (!userId) return new NextResponse("Unauthorized", { status: 401 });
+  // isRefreshID is true when identified by cookie rather than access token
+};
+
+// Server Components / layouts: gate a page.
+export default async function ProtectedLayout({ children }) {
+  await checkAuthStatus("/login"); // redirects when there is no refresh cookie
+  return children;
+}
+
+// Or read the cookie yourself.
+const refresh = await getRefreshToken(); // string | null
+
+// Custom login flows (magic link, passkey, …) end the same way the built-ins do:
+export const POST = async (req: NextRequest) => {
+  const userId = await verifyMagicLink(await req.json());
+  if (!userId) return new NextResponse("Invalid link", { status: 400 });
+  return getTokenizedResponse(userId); // access token body + refresh cookie
+};
+```
+
+### Google login
+
+One GET handler starts the OAuth flow and handles the callback.
+
+```ts
+// app/api/google/route.ts
+import { setupGoogleAuth } from "naystack/auth";
+
+export const { GET } = setupGoogleAuth({
+  // Map the Google profile to your user id. Return null to refuse.
+  getUserIdFromEmail: async (googleUser, data) => {
+    return findOrCreateUserByEmail(googleUser.email!, googleUser.name);
+  },
+  redirectURL: "/dashboard",
+  errorRedirectURL: "/login", // defaults to redirectURL
+});
+```
+
+Point users at `NEXT_PUBLIC_GOOGLE_AUTH_ENDPOINT` (e.g. `<a href="/api/google">`).
+The entry point accepts optional query params: `?redirectURL=` and
+`?errorRedirectURL=` override the configured ones for that request, and `?data=`
+is an opaque string handed to `getUserIdFromEmail` as its second argument
+(invite codes, referral ids). On success the refresh cookie is set and the
+browser lands on `redirectURL`; `AuthWrapper` picks the session up from there.
+
+Requires `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` and
+`NEXT_PUBLIC_GOOGLE_AUTH_ENDPOINT` (the absolute callback URL registered in
+Google Cloud).
+
+> Linking an Instagram or YouTube account to a user who is already logged in is
+> not login — see [Social APIs](#social-apis).
+
+---
+
+## GraphQL
+
+Resolvers are plain functions wrapped in `resolver()` / `field()`. naystack turns
+them into `type-graphql` classes, builds the schema, and serves it with Apollo
+Server. Types for input and output are `type-graphql` classes you already write
+(`@ObjectType`, `@InputType`).
+
+### Queries and mutations
+
+```ts
+// app/api/graphql/User/resolvers/get-current-user.ts
 import { resolver } from "naystack/graphql";
 
 export default resolver(
   async (ctx) => {
     if (!ctx.userId) return null;
-    const [user] = await db
-      .select()
-      .from(UserTable)
-      .where(eq(UserTable.id, ctx.userId));
-    return user || null;
+    const [user] = await db.select().from(UserTable).where(eq(UserTable.id, ctx.userId));
+    return user ?? null;
   },
   {
-    output: User, // GraphQL return type (type-graphql class)
-    outputOptions: { nullable: true }, // Return type is nullable
-  },
-);
-```
-
-**With input and authorization:**
-
-```typescript
-// app/api/(graphql)/Feedback/resolvers/submit-feedback.ts
-import { resolver } from "naystack/graphql";
-
-export default resolver(
-  async (ctx, input: SubmitFeedbackInput) => {
-    await db.insert(FeedbackTable).values({
-      userId: ctx.userId, // guaranteed non-null when authorized: true
-      score: input.score,
-      text: input.text,
-    });
-    return true;
-  },
-  {
-    output: Boolean,
-    input: SubmitFeedbackInput, // GraphQL input type (type-graphql @InputType class)
-    authorized: true, // Requires authenticated user (ctx.userId non-null)
-    mutation: true, // Registers as a Mutation (default is Query)
-  },
-);
-```
-
-### Defining Field Resolvers
-
-Use `field()` to define resolvers for computed fields on a parent type. The first argument is the parent object.
-
-```typescript
-// app/api/(graphql)/Property/resolvers/seller-field.ts
-import { field } from "naystack/graphql";
-
-export default field(
-  async (property: PropertyDB) => {
-    if (!property.sellerId) return null;
-    const [seller] = await db
-      .select()
-      .from(ContactTable)
-      .where(eq(ContactTable.id, property.sellerId));
-    return seller || null;
-  },
-  {
-    output: ContactGQL,
+    output: User,                       // @ObjectType class, or String / Number / Boolean
     outputOptions: { nullable: true },
   },
 );
 ```
 
-### Registering Resolvers
+```ts
+// app/api/graphql/Feedback/resolvers/submit-feedback.ts
+export default resolver(
+  async (ctx, input: SubmitFeedbackInput) => {
+    await db.insert(FeedbackTable).values({ userId: ctx.userId, ...input });
+    return true;
+  },
+  {
+    output: Boolean,
+    input: SubmitFeedbackInput,   // @InputType class → the `input` argument
+    authorized: true,             // rejects anonymous calls; ctx.userId is typed non-null
+    mutation: true,               // Mutation instead of Query
+  },
+);
+```
 
-Use `QueryLibrary()` for queries/mutations and `FieldLibrary()` for field resolvers. Pass the returned classes to `setupGraphQL`.
+`inputOptions: { nullable: true }` makes the argument optional. Inside the
+resolver, `ctx` is `Context` — `{ userId: number | null, isRefreshID?: boolean }`
+— or `AuthorizedContext` (`userId: number`) when `authorized: true`.
 
-```typescript
-// app/api/(graphql)/User/graphql.ts
+### Field resolvers
+
+```ts
+// app/api/graphql/Property/resolvers/seller-field.ts
+import { field } from "naystack/graphql";
+
+export default field(
+  async (property: PropertyDB, ctx) => {
+    if (!property.sellerId) return null;
+    return db.query.contacts.findFirst({ where: eq(ContactTable.id, property.sellerId) });
+  },
+  { output: ContactGQL, outputOptions: { nullable: true } },
+);
+```
+
+If the parent query already put a value on the row (`property.seller`), the
+field resolver is skipped and that value is returned — cheap hydration without
+N+1. Set `alwaysResolve: true` on a field that checks `ctx` (an access gate) so
+the check can't be bypassed that way.
+
+### Registering resolvers
+
+```ts
+// app/api/graphql/User/graphql.ts
 import { QueryLibrary, FieldLibrary } from "naystack/graphql";
-import getCurrentUser from "./resolvers/get-current-user";
-import onboardUser from "./resolvers/onboard-user";
-import updateUser from "./resolvers/update-user";
-import organizations from "./resolvers/organizations-field";
-import { User } from "./types";
 
-// Each key becomes a Query or Mutation field name in the schema
-export const UserResolvers = QueryLibrary({
-  getCurrentUser,
-  onboardUser,
-  updateUser,
-});
+// Each key becomes the Query / Mutation field name.
+export const UserResolvers = QueryLibrary({ getCurrentUser, onboardUser, updateUser });
 
-// Each key becomes a field resolver on the User type
-export const UserFieldResolvers = FieldLibrary<UserDB>(User, {
-  organizations,
-});
+// Each key becomes a field on the User type. <UserDB> is the parent row's type.
+export const UserFieldResolvers = FieldLibrary<UserDB>(User, { organizations });
 ```
 
-### Initializing the GraphQL Server
-
-```typescript
-// app/api/(graphql)/route.ts
+```ts
+// app/api/graphql/route.ts
 import { setupGraphQL } from "naystack/graphql";
-import { UserResolvers, UserFieldResolvers } from "./User/graphql";
-import { ChatResolvers } from "./Chat/graphql";
-import { FeedbackResolvers } from "./Feedback/graphql";
 
-export const { GET, POST } = await setupGraphQL({
-  resolvers: [
-    UserResolvers,
-    UserFieldResolvers,
-    ChatResolvers,
-    FeedbackResolvers,
-  ],
+export const { GET, POST, OPTIONS } = await setupGraphQL({
+  resolvers: [UserResolvers, UserFieldResolvers, ChatResolvers],
+  // Optional:
+  allowedOrigins: ["https://app.example.com"], // CORS
+  plugins: [],                                  // Apollo Server plugins
+  authChecker: ({ context }) => !!context.userId, // the default
+  getContext: (req) => ({ userId: … }),         // replace how users are identified
 });
 ```
 
-The `getContext` function is built in — it reads the `Authorization` header or refresh cookie automatically. Pass a custom `getContext` if you need to override it.
+In development Apollo Sandbox is served on GET; in production (`NODE_ENV=production`)
+introspection is off.
 
-### Throwing Errors
+**Cookie vs token.** The built-in `getContext` accepts a bearer access token or
+the refresh cookie. A request identified by **cookie only** can run `query`
+operations but nothing else — `ctx.userId` is nulled for mutations — so a
+CSRF'd form post can't write as the user. `useAuthQuery` sends the cookie; `useAuthMutation`
+sends the bearer token.
 
-Use `GQLError()` to throw structured GraphQL errors from resolvers:
+### Errors
 
-```typescript
+```ts
 import { GQLError } from "naystack/graphql";
 
-// In a resolver:
-if (!input.email) throw GQLError(400); // "Please provide all required inputs"
-if (!ctx.userId) throw GQLError(403); // "You are not allowed to perform this action"
-if (!deal) throw GQLError(404, "Deal not found"); // Custom message
+if (!input.email) throw GQLError(400);              // "Please provide all required inputs"
+if (deal.ownerId !== ctx.userId) throw GQLError(403); // "You are not allowed to perform this action"
+if (!deal) throw GQLError(404, "Deal not found");   // custom message
 ```
 
-### Type Helpers: `QueryResponseType` / `FieldResponseType`
+The status lands in `extensions.statusCode` on the client.
 
-Infer the return type of a query or field resolver definition. Use them to type component props that receive resolver results.
+### Calling resolvers from Server Components
 
-```typescript
-import type { QueryResponseType, FieldResponseType } from "naystack/graphql";
-import type getCurrentUser from "@/app/api/(graphql)/User/resolvers/get-current-user";
-import type getDeal from "@/app/api/(graphql)/Deal/queries/get-deal";
-import type sellerField from "@/app/api/(graphql)/Property/resolvers/seller-field";
+Every definition carries `.call(input)` and `.authCall(input)`. Both are wrapped
+in React `cache()`, so calling the same resolver twice in one render costs one
+query.
 
-interface DealDetailsProps {
-  user: QueryResponseType<typeof getCurrentUser>;
-  deal: QueryResponseType<typeof getDeal>;
-  seller: FieldResponseType<typeof sellerField>;
-}
+```ts
+const planets = await getPlanets.call();      // as an anonymous caller
+const user = await getCurrentUser.authCall(); // reads the refresh cookie
 ```
 
-### Server-Side Data Fetching
+For an `authorized: true` resolver, both resolve to **`null` when there is no
+session** instead of running the resolver with a null user — so the type is
+`Result | null` and you handle the logged-out case where it shows up.
 
-#### Direct calls with `.call()` / `.authCall()`
-
-Every query definition has `.call()` (unauthenticated or based on `authorized` flag) and `.authCall()` (always reads the refresh cookie for auth). Use these in Server Components.
-
-```typescript
-// In a Server Component:
-const user = await getCurrentUser.authCall();
-const planets = await getPlanets.authCall();
-```
-
-#### `Injector` Component
-
-Wraps a client component and injects server-fetched data via Suspense. The component receives `{ data, loading }` as props.
+#### `Injector` — stream server data into a client component
 
 ```tsx
 // app/(dashboard)/chat/page.tsx
-import { Injector } from "naystack/graphql/server";
-import getCurrentUser from "@/app/api/(graphql)/User/resolvers/get-current-user";
-import getChats from "@/app/api/(graphql)/Chat/resolvers/get-chats";
-import { ChatWindow } from "./components/chat-window";
+import { Injector } from "naystack/graphql";
+import { ChatWindow } from "./chat-window";
 
-export default async function ChatPage() {
+export default function ChatPage() {
   return (
     <Injector
-      fetch={async () => {
-        const user = await getCurrentUser.authCall();
-        const chats = await getChats.authCall();
-        return { user, chats };
-      }}
+      fetch={async () => ({
+        user: await getCurrentUser.authCall(),
+        chats: await getChats.authCall(),
+      })}
       Component={ChatWindow}
+      props={{ roomId: 1 }} // any extra props ChatWindow needs
     />
   );
 }
 ```
 
-The `ChatWindow` component receives `{ data, loading }`:
+`ChatWindow` renders immediately with `loading: true`, then again with `data`
+once `fetch` resolves — Suspense underneath, no `useEffect` fetching. Pass
+`isComponentDynamic` when `Component` comes from `next/dynamic`.
 
 ```tsx
-// components/chat-window.tsx
-export function ChatWindow({ data, loading }: { data?: { user: ...; chats: ... }; loading: boolean }) {
+"use client";
+export function ChatWindow({ data, loading, roomId }: { data?: { user: …; chats: … }; loading: boolean; roomId: number }) {
   if (loading) return <Spinner />;
-  return <div>{data?.user.name}'s chats: {data?.chats.length}</div>;
+  return <ul>{data?.chats.map(…)}</ul>;
 }
 ```
 
-#### Server-side `query()` (from `naystack/graphql/server`)
+#### `query` — run a GraphQL document on the server
 
-Run a raw GraphQL query on the server using the registered Apollo client. Cookies are sent automatically.
+For code that already has typed documents (GraphQL Codegen) and wants Next.js
+caching semantics:
 
-```typescript
-import { query } from "naystack/graphql/server";
+```ts
+import { query } from "naystack/graphql";
 
 const data = await query(GetUserDocument, {
-  variables: { id: userId },
-  revalidate: 60, // Cache for 60s (Next.js ISR)
-  tags: ["user"], // For on-demand revalidation
+  variables: { id },
+  revalidate: 60,      // ISR: cache for 60s
+  tags: ["user"],      // revalidateTag("user") busts it
+  noCookie: false,     // default: the request carries the user's cookies
 });
 ```
 
-### Client Setup (Apollo)
+### Client hooks
 
-Wrap your app with `ApolloWrapper` (inside `AuthWrapper`) so client components can use GraphQL hooks:
+Wrap the app in `ApolloWrapper` (inside `AuthWrapper`). It builds one Apollo
+client with the auth/refresh link chain and clears the cache on logout so the
+next user can't see the previous one's data.
 
 ```tsx
-// app/layout.tsx
-import { AuthWrapper } from "naystack/auth/client";
 import { ApolloWrapper } from "naystack/graphql/client";
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <html lang="en">
-      <body>
-        <AuthWrapper>
-          <ApolloWrapper>{children}</ApolloWrapper>
-        </AuthWrapper>
-      </body>
-    </html>
-  );
+<ApolloWrapper cacheConfig={{ typePolicies: … }}>{children}</ApolloWrapper>
+```
+
+If you use Apollo's App Router integration (`useSuspenseQuery`,
+`useBackgroundQuery`), import the same component from `naystack/graphql/next`
+instead — it is built on `ApolloNextAppProvider`.
+
+```tsx
+import { useAuthQuery, useAuthMutation } from "naystack/graphql/client";
+
+// Auto-fires when `variables` is set, refires when it changes.
+const [refetch, { data, loading, error }] = useAuthQuery(GET_ORG, { id: orgId });
+
+// Without variables it's lazy — call it yourself.
+const [getSummary, { loading }] = useAuthQuery(GET_SUMMARY);
+const result = await getSummary({ type });
+
+// Mutations: input goes out as `variables.input`.
+const [createDeal, { loading, hasAuth }] = useAuthMutation(CREATE_DEAL);
+const { data } = await createDeal({ propertyId, share: 10 });
+```
+
+Both take Apollo's hook options as the last argument. `useAuthQuery` defaults to
+`fetchPolicy: "no-cache"` (always fresh); pass `{ fetchPolicy: "cache-first" }`
+for reference data. Your operations should declare a single `$input` variable:
+
+```graphql
+mutation CreateDeal($input: CreateDealInput!) {
+  createDeal(input: $input)
 }
 ```
 
-### Client Hooks
+### Type helpers
 
-#### `useAuthQuery(query, variables?)`
+```ts
+import type { QueryResponseType, FieldResponseType } from "naystack/graphql";
+import type getCurrentUser from "@/app/api/graphql/User/resolvers/get-current-user";
 
-Hook to run a GraphQL query with the current user's token. Returns `[refetch, { data, loading, error }]`.
-
-```tsx
-import { useAuthQuery } from "naystack/graphql/client";
-import { GET_SUMMARY } from "@/constants/graphql/queries";
-
-function SummaryCard({ type }: { type: string }) {
-  const [getSummary, { loading, data }] = useAuthQuery(GET_SUMMARY);
-
-  const handleFetch = async () => {
-    const result = await getSummary({ type });
-    if (result.data?.getSummary) {
-      setSummary(result.data.getSummary);
-    }
-  };
-
-  return (
-    <button onClick={handleFetch} disabled={loading}>
-      Get Summary
-    </button>
-  );
-}
-```
-
-#### `useAuthMutation(mutation, options?)`
-
-Hook to run a GraphQL mutation with the current user's token. Returns `[mutate, { data, loading, error }]`.
-
-```tsx
-import { useAuthMutation } from "naystack/graphql/client";
-import { CREATE_DEAL } from "@/lib/gql/mutations";
-
-function CreateDealModal({ propertyId }: { propertyId: number }) {
-  const [createDeal, { loading }] = useAuthMutation(CREATE_DEAL);
-
-  const onSubmit = async (values: FormFields) => {
-    const response = await createDeal({
-      propertyId,
-      share: Number(values.share),
-      targetProfit: Number(values.targetProfit),
-    });
-    const dealId = response.data?.createDeal;
-    if (dealId) router.push(`/deals/${dealId}`);
-  };
-
-  return <form onSubmit={handleSubmit(onSubmit)}>...</form>;
-}
+type CurrentUser = QueryResponseType<typeof getCurrentUser>; // what .call() resolves to
 ```
 
 ---
 
-## 3. File Upload
+## File uploads
 
-Naystack simplifies AWS S3 file uploads with presigned URLs and client-side helpers. AWS credentials are read from environment variables automatically.
+One authenticated `PUT` route that stores a multipart upload in S3 and tells you
+where it went. Works with AWS S3 and anything S3-compatible (Cloudflare R2, MinIO)
+via `S3_ENDPOINT`.
 
-### Server Setup
+### Server
 
-```typescript
-// app/api/(rest)/file/route.ts
+```ts
+// app/api/file/route.ts
 import { setupFileUpload } from "naystack/file";
 
 export const { PUT } = setupFileUpload({
-  // Called after each successful upload. Return value is sent in the response as `onUploadResponse`.
+  // Required. Called once the object is stored. Whatever you return is sent
+  // back to the client as `onUploadResponse`.
   onUpload: async ({ url, type, userId, data }) => {
-    if (type === "DealDocument" && url) {
-      const payload = data as {
-        dealId: number;
-        fileName: string;
-        category: string;
-      };
-      const [row] = await db
-        .insert(DealDocumentsTable)
-        .values({
-          dealId: payload.dealId,
-          fileURL: url,
-          fileName: payload.fileName,
-          category: payload.category,
-        })
-        .returning();
-      return row ?? {};
+    if (type === "avatar") {
+      await db.update(UserTable).set({ avatar: url }).where(eq(UserTable.id, userId));
     }
-    return {};
+    return { url };
   },
-  // Optional: customize the S3 key (defaults to UUID)
-  getKey: async ({ type, userId }) =>
-    `${type}/${userId}/${crypto.randomUUID()}`,
+
+  // Optional. S3 object key — defaults to a UUID.
+  getKey: async ({ type, userId }) => `${type}/${userId}/${crypto.randomUUID()}`,
+
+  // Optional. Transform before storing — resize, re-encode, strip EXIF.
+  // Only the returned bytes are written; the blob's `type` becomes Content-Type.
+  processFile: async (file, { type }) =>
+    type === "avatar" ? await resizeToWebp(file, 512) : file,
+
+  // Optional. Per-upload S3 put fields.
+  putOptions: ({ type }) => ({
+    CacheControl: type === "avatar" ? "public, max-age=31536000, immutable" : undefined,
+  }),
 });
 ```
 
-The `setupFileUpload` also returns server-side helpers:
+`type` is a free-form string the client sends (`"avatar"`, `"DealDocument"`),
+and `data` is the optional JSON the client attached — it is `undefined` unless
+the client sent one, so narrow it before reading.
 
-- **`uploadFile(keys, { url?, blob? })`** — Upload a file from a URL or Blob to S3.
-- **`deleteFile(url)`** — Delete a file by its full S3 URL.
-- **`getUploadURL(keys)`** — Get a presigned PUT URL.
-- **`getDownloadURL(keys)`** — Get the public download URL.
+The route requires a **bearer access token** (not the cookie), so uploads always
+go through `useFileUpload` or a request that sets `Authorization` itself.
 
-### Client Usage
+Server-side helpers, same env:
+
+```ts
+import { uploadFile, deleteFile, getUploadURL, getDownloadURL } from "naystack/file";
+
+await uploadFile(["exports", `${id}.csv`], { blob });          // → public URL
+await uploadFile("imports/remote.jpg", { url: "https://…" });   // fetch then store
+await uploadFile(key, { blob, put: { ContentDisposition: "attachment" } });
+await deleteFile(url);                                          // by its public URL
+await getUploadURL(key);                                        // presigned PUT, 5 min
+getDownloadURL(["avatars", "1.webp"]);                          // https://<NEXT_PUBLIC_S3_DOMAIN>/avatars/1.webp
+```
+
+### Client
 
 ```tsx
 import { useFileUpload } from "naystack/file/client";
 
-function FileUploader({ dealId }: { dealId: number }) {
-  const uploadFile = useFileUpload();
-  const [uploading, setUploading] = useState(false);
+function AvatarPicker() {
+  const upload = useFileUpload();
 
-  const handleUpload = async (file: File) => {
-    setUploading(true);
-    try {
-      const result = await uploadFile(file, "DealDocument", {
-        data: { dealId, fileName: file.name, category: "Contract" },
-      });
-      if (result?.url) {
-        console.log("Uploaded:", result.url);
-        router.refresh();
-      }
-    } finally {
-      setUploading(false);
-    }
+  const onChange = async (file: File) => {
+    const result = await upload(file, "avatar", {
+      data: { crop: "square" }, // optional, arrives as `data` on the server
+      async: true,              // optional: respond before the S3 write finishes
+    });
+    console.log(result?.url, result?.onUploadResponse);
   };
 
-  return (
-    <input
-      type="file"
-      onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])}
-    />
-  );
+  return <input type="file" onChange={(e) => e.target.files?.[0] && onChange(e.target.files[0])} />;
 }
 ```
+
+`upload` also accepts a React Native `{ uri, name, type }` descriptor, which RN
+streams from disk.
 
 ---
 
-## 4. Client Utilities
+## Social APIs
 
-### SEO
+Connect a user's Instagram, Threads or YouTube account, keep reading it, and
+publish to it. Three layers:
 
-The `setupSEO` utility creates a metadata factory for Next.js. Call it once with your site defaults, then use the returned function per-page.
+1. **`setupSocialAuth`** — one OAuth route for every platform. Hands you a
+   normalized profile and tokens to store.
+2. **Providers** (`InstagramProvider`, `YouTubeProvider`) — read a profile or
+   recent posts from any stored token, through one `SocialProvider` interface.
+   Write the sync job once.
+3. **Per-platform publishing** — `createInstagramPost`, `createThreadsPost`,
+   plus the messaging, comment and webhook helpers. Publishing stays
+   per-platform on purpose: stories, reels, carousels, reply controls and
+   text-only posts don't fit one honest signature.
 
-```typescript
-// lib/utils/seo.ts
-import { setupSEO } from "naystack/client";
+| Platform  | Connect | Profile | Posts | Refresh tokens | Publish | Messaging / comments | Webhooks |
+| --------- | :-----: | :-----: | :---: | :------------: | :-----: | :------------------: | :------: |
+| Instagram |   ✓     |   ✓     |  ✓    |       ✓        |   ✓     |          ✓           |    ✓     |
+| Threads   |         |         |  ✓    |                |   ✓     |                      |    ✓     |
+| YouTube   |   ✓     |   ✓     |  ✓    |       ✓        |         |                      |          |
 
-export const getSEO = setupSEO({
-  title: "My App - Tagline",
-  description: "Description of my application.",
-  siteName: "My App",
-  themeColor: "#5b9364",
-});
+`SocialPlatform` also lists `TikTok` so `socialProfileURL` can link to a stored
+handle; there is no TikTok provider yet.
 
-// In a page:
-export const metadata = getSEO("Dashboard", "Your personalized dashboard");
-// Produces: title = "Dashboard • My App", description = "Your personalized dashboard"
-```
+### Import `SocialPlatform` from `naystack/socials/types`
 
-### `useVisibility(onVisible?)`
+The enums and row shapes — `SocialPlatform`, `SocialMediaKind`, `SocialProfile`,
+`SocialPost`, `SocialTokens`, `socialProfileURL` — live in their own entry and
+are **not** re-exported from `naystack/socials`. That entry has no server code,
+so client bundles and GraphQL schema files can import it too.
 
-Triggers a callback when a DOM element enters the viewport. Returns a ref to attach to the observed element.
-
-```tsx
-import { useVisibility } from "naystack/client";
-
-function LazySection() {
-  const ref = useVisibility(() => loadMoreData());
-  return <section ref={ref}>...</section>;
-}
-```
-
-### `useBreakpoint(query)`
-
-Responsive media query hook. Returns `true`/`false` or `null` during SSR.
-
-```tsx
-import { useBreakpoint } from "naystack/client";
-
-function ResponsiveNav() {
-  const isMobile = useBreakpoint("(max-width: 639px)");
-  if (isMobile === null) return <Skeleton />;
-  return isMobile ? <MobileNav /> : <DesktopNav />;
-}
-```
-
----
-
-## 5. Social APIs
-
-Publish to and read from Instagram and Threads, and read any connected account
-through one normalized provider interface.
-
-Each platform exposes **one publishing method** that picks the right media type from
-what you pass. Meta's container/upload/publish dance underneath is an implementation
-detail — you never touch it.
-
-| Path                                     | What it is                                                                                                            |
-| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `socials/types.ts`                       | Platform-neutral shapes: `SocialProfile`, `SocialPost`, `SocialTokens`, `SocialPlatform`, `SocialMediaKind`. Imported from **`naystack/socials/types`** — their own entry, deliberately not re-exported by the barrel (see below), and free of server code so client bundles can use it |
-| `socials/provider.ts`                    | The `SocialProvider` interface                                                                                        |
-| `socials/poll.ts`                        | `pollUntilReady` / `withRetry` — waiting and retrying, with no platform in them                                        |
-| `socials/meta/`                          | Meta's Graph protocol — request client, container polling, webhook verification. Shared by Instagram and Threads only |
-| `socials/instagram/`, `socials/threads/` | One folder per platform: getters, setters, types, and an `adapter.ts` for platforms that implement `SocialProvider`   |
-
-**Reading is normalized; publishing is not.** OAuth, profile and content endpoints
-collapse cleanly onto one shape, so a consumer stores one row per connected account
-whatever the platform. Publish inputs don't: Threads takes text-only posts,
-Instagram requires media and adds stories, reels, carousels and collaborators. A
-shared publish signature could only describe the intersection, so each platform
-keeps its own `create<Platform>Post`.
-
-A platform that isn't on Meta's Graph API (X, LinkedIn) brings its own client and
-exposes its own `create<Platform>Post`; it doesn't touch `socials/meta/`. If it also
-supports OAuth + profile reads, it adds an `adapter.ts` exporting a `SocialProvider`
-constant so the generalized pieces pick it up for free.
-
-### Providers
-
-A provider is a plain object with no per-instance state — import the constant, no
-construction. Capability is method presence: a platform that can't refresh tokens
-omits `refresh`, one with no content-listing API omits `fetchMedia`, and callers
-narrow with a plain `if`. Platform *knowledge* is not a capability, so it is
-always there: `platform` and `profileURL(username)` are required of every adapter.
-
-The shapes come from `naystack/socials/types`, never from `naystack/socials`:
-
-```typescript
-import { InstagramProvider } from "naystack/socials";
+```ts
+import { InstagramProvider, setupSocialAuth } from "naystack/socials";
 import { SocialPlatform } from "naystack/socials/types";
 ```
 
-The build runs with `splitting: false`, so the barrel inlines its own copy of
-that module. Were it to re-export the enums, a consumer mixing the two paths
-would hold two enum objects with identical values — fine for `===`, fatal for
-anything identity-keyed (type-graphql's enum registry answers "Cannot determine
-GraphQL input type" and names neither module). One path, one instance. Same
-reasoning as `auth/token-store`.
-
-```typescript
-import { InstagramProvider } from "naystack/socials";
-
-const profile = await InstagramProvider.fetchProfile(accessToken);
-// { platform: "instagram", username: "…", followers: 12043, contentCount: 87, … }
-
-const posts = await InstagramProvider.fetchMedia?.(accessToken, { limit: 6 });
-// [{ kind: "video", permalink: "…", likes: 812, comments: null, … }]
-// null instead means the request failed — an account with nothing posted
-// returns []. Cache the empty, retry the null.
-
-InstagramProvider.profileURL(profile.username);
-// "https://instagram.com/…" — so a stored account row links out without the
-// consumer keeping its own per-platform URL table. Code holding a row rather
-// than a provider — a client bundle, a query result — calls the same table
-// directly: `socialProfileURL(platform, username)` from `naystack/socials/types`.
-```
-
-Every metric on a `SocialPost` is `number | null`, and `null` always means *the
-platform didn't give us this* — hidden, unrequested, or nonexistent on that
-platform. Adapters never substitute `0`, because "nobody liked it" and "likes are
-hidden" are different facts and only you know which your averages should skip.
-
-A list of providers is all a job needs to stay platform-agnostic:
-
-```typescript
-const providers = [InstagramProvider];
-
-for (const account of expiringAccounts) {
-  const provider = providers.find((p) => p.platform === account.platform);
-  const next = await provider?.auth.refresh?.({ accessToken: account.accessToken });
-}
-```
+> Why: the build inlines shared modules into each entry. If the barrel re-exported
+> the enum, code mixing both paths would hold two enum objects with equal values —
+> fine for `===`, fatal for identity-keyed registries like type-graphql's
+> (`"Cannot determine GraphQL input type"`). One path, one instance.
 
 ### Connecting accounts
 
-`setupSocialAuth` mounts every registered provider's OAuth flow behind one route.
-Mount it on a dynamic segment and `/api/social/instagram`, `/api/social/youtube`
-and the rest are all the same handler. The single GET serves both the connect entry
-point (`?state`, no code → 302 to the platform's authorize URL) and the callback.
+Mount the handler on a dynamic segment; `/api/social/instagram`,
+`/api/social/youtube`, … all resolve to it.
 
-```typescript
+```ts
 // app/api/social/[platform]/route.ts
-import { InstagramProvider, setupSocialAuth } from "naystack/socials";
+import { InstagramProvider, YouTubeProvider, setupSocialAuth } from "naystack/socials";
+import { SocialPlatform } from "naystack/socials/types";
 
 export const { GET } = setupSocialAuth({
-  providers: [InstagramProvider],
-  endpoint: "https://yourapp.com/api/social",
-  redirectURL: "/dashboard",
-  errorRedirectURL: "/login",
+  providers: [InstagramProvider, YouTubeProvider],
+  endpoint: "https://yourapp.com/api/social", // redirect URI is <endpoint>/<platform>
+  redirectURL: "/settings/accounts",
+  errorRedirectURL: "/settings/accounts",
   onConnect: async ({ platform, profile, tokens, userId }) => {
-    if (!userId) return "You are not logged in";
-    await saveSocialAccount(userId, platform, profile, tokens);
+    if (!userId) return "You are not logged in"; // a string = show this error
+    await upsertSocialAccount(userId, platform, profile, tokens);
   },
-  // Optional, per platform. Each provider has its own default.
-  scopes: { instagram: ["instagram_business_basic"] },
+  // Optional per-platform scopes; each provider has a sensible default.
+  scopes: { [SocialPlatform.Instagram]: ["instagram_business_basic", "instagram_business_content_publish"] },
 });
 ```
 
-`onConnect` receives a normalized `SocialProfile`, so one callback stores every
-platform. Each provider's redirect URI is `<endpoint>/<platform>`; platforms match
-it exactly, so register every one of them.
+To start a connection send the user to
+`${NEXT_PUBLIC_SOCIAL_AUTH_ENDPOINT}/instagram?state=<access token>`. The state
+is the logged-in user's access token; `onConnect` receives it decoded as
+`userId`. Register `<endpoint>/instagram`, `<endpoint>/youtube`, … as redirect
+URIs with each platform — they must match verbatim.
 
-The Instagram OAuth primitives underneath — `getInstagramAuthorizationURL`,
-`getLongLivedInstagramToken`, `refreshInstagramAccessToken` — are exported for
-anything the route doesn't cover. Requires `INSTAGRAM_CLIENT_ID` and
-`INSTAGRAM_CLIENT_SECRET`.
+**Native apps** add `&returnTo=yourapp://accounts` to the entry point. It rides
+along in the OAuth state and replaces `redirectURL` (or `errorRedirectURL`, with
+`?error=` appended) at the end, so an in-app auth session gets its custom-scheme
+callback. Failures during the callback always redirect with `?error=…`, never a
+bare 500.
+
+`onConnect` receives the same shapes for every platform:
+
+```ts
+type SocialProfile = {
+  platform: SocialPlatform;
+  platformUserId: string | null; // stable — key on this, not username
+  username: string;
+  displayName: string | null;
+  avatar: string | null;         // usually a signed CDN URL; copy it
+  followers: number | null;      // null = hidden by the platform, never 0
+  contentCount: number;
+  metadata: Record<string, unknown>;
+};
+
+type SocialTokens = {
+  accessToken: string;
+  refreshToken?: string; // Google-style platforms
+  expiresAt?: Date;
+  scopes?: string[];
+};
+```
+
+### Reading through providers
+
+A provider is a plain object — import it, no construction. Capabilities are
+optional methods: `fetchMedia` is absent on a platform with no content API,
+`auth.refresh` on one whose tokens don't expire. Narrow with `if`.
+
+```ts
+import { InstagramProvider, YouTubeProvider } from "naystack/socials";
+
+const profile = await InstagramProvider.fetchProfile(accessToken);
+// { platform: "Instagram", username, followers: 12043, contentCount: 87, … }
+
+const posts = await YouTubeProvider.fetchMedia?.(accessToken, { limit: 12 });
+// SocialPost[]: { kind: "Video", permalink, thumbnail, likes, comments, views, publishedAt, … }
+// null  → the request failed (retry later)
+// []    → the account has nothing (cache it)
+
+InstagramProvider.profileURL(profile.username); // "https://instagram.com/…"
+```
+
+Every metric on a `SocialPost` is `number | null`; `null` always means *the
+platform didn't say* — hidden, not requested, or nonexistent there — so an
+average can skip it rather than count a fake zero.
+
+A refresh job stays platform-agnostic:
+
+```ts
+const providers = [InstagramProvider, YouTubeProvider];
+
+for (const account of expiringAccounts) {
+  const provider = providers.find((p) => p.platform === account.platform);
+  const next = await provider?.auth.refresh?.(account.tokens);
+  if (next) await saveTokens(account.id, next);
+  else if (next === null) await markDisconnected(account.id); // revoked
+}
+```
+
+`refresh` returns `null` only when the grant is gone; a network or quota error
+throws, so an outage is never recorded as a revocation.
 
 ### Instagram
 
-`createInstagramPost(token, input)` — feed image, reel, story or carousel:
+**Publishing.** One call; what gets posted follows from the media:
 
 | `media`                 | Result                        |
 | ----------------------- | ----------------------------- |
-| one image               | feed image                    |
+| one photo               | feed image                    |
 | one video               | reel                          |
 | 2–10 items              | carousel (counts as one post) |
 | any, with `story: true` | story, from the first item    |
 
-```typescript
-import { createInstagramPost } from "naystack/socials";
+```ts
+import { createInstagramPost, MetaMediaType } from "naystack/socials";
 
 // Feed image — JPEG only
 await createInstagramPost(accessToken, {
-  media: { url: "https://cdn.example.com/launch.jpg", type: "image" },
+  media: { url: "https://cdn.example.com/launch.jpg", type: MetaMediaType.Photo, altText: "Launch poster" },
   caption: "New campaign is live 🎉",
 });
 
-// Reel — 9:16, 5–90s, H.264/HEVC to reach the Reels tab
+// Reel — 9:16, 5–90s
 await createInstagramPost(accessToken, {
-  media: { url: "https://cdn.example.com/promo.mp4", type: "video" },
+  media: { url: "https://cdn.example.com/promo.mp4", type: MetaMediaType.Video },
   caption: "Behind the scenes",
   shareToFeed: true,
-  thumbOffset: 1500, // or coverURL
+  thumbOffset: 1500,        // ms into the video, or coverURL
+  collaborators: ["acme"],  // up to 3
 });
 
 // Story — gone in 24h
 await createInstagramPost(accessToken, {
-  media: { url: "https://cdn.example.com/story.mp4", type: "video" },
+  media: { url: "https://cdn.example.com/story.mp4", type: MetaMediaType.Video },
   story: true,
 });
 
@@ -836,201 +836,247 @@ await createInstagramPost(accessToken, {
 await createInstagramPost(accessToken, {
   caption: "Campaign recap",
   media: [
-    { url: "https://cdn.example.com/1.jpg", type: "image" },
-    { url: "https://cdn.example.com/2.mp4", type: "video" },
+    { url: "https://cdn.example.com/1.jpg", type: MetaMediaType.Photo },
+    { url: "https://cdn.example.com/2.mp4", type: MetaMediaType.Video },
   ],
 });
 ```
 
-`canPublishToInstagram(token)` answers whether a token is allowed to publish. Meta
-exposes no scope-listing endpoint for Instagram Login tokens, so it probes the
-publishing quota — a read-only endpoint needing exactly the same
-`instagram_business_content_publish` scope. Nothing is posted:
+Returns the published media id, or `null` if any step failed (the API's own
+error is logged). Under the hood it creates the container, polls until Instagram
+has processed it, retries transient container failures, then publishes — tune
+with `wait: { intervalMS, timeoutMS }` and `retry: { attempts, backoffMS }`.
+Media URLs must be publicly reachable; the token needs
+`instagram_business_content_publish` and a professional account; Instagram
+allows 100 posts per rolling 24 hours.
 
-```typescript
-import { canPublishToInstagram } from "naystack/socials";
+`canPublishToInstagram(token)` answers whether a token may publish without
+posting anything — Meta has no scope-listing endpoint for Instagram Login
+tokens, so it probes the publishing-quota endpoint, which needs the same scope.
+It rejects (rather than returning `false`) if the request itself fails.
 
-if (!(await canPublishToInstagram(process.env.INSTAGRAM_ACCESS_TOKEN!))) {
-  throw new Error(
-    "Instagram token cannot publish — reconnect with the publish scope",
-  );
-}
-```
+**Reading, messaging, comments:**
 
-It rejects rather than answering `false` if the request itself fails, so a network blip
-is never reported as a missing permission. For a one-off manual check, Meta's
-[Access Token Debugger](https://developers.facebook.com/tools/debug/accesstoken/) shows
-a token's scopes in the browser.
-
-`createInstagramPost` returns the published media id, or `null` if any step failed — the
-API's own error is logged. Media URLs must be publicly reachable (Instagram downloads them server-side)
-and images must be JPEG. Publishing needs a token with the
-`instagram_business_content_publish` scope and an Instagram professional account;
-Instagram allows 100 published posts per rolling 24 hours. Tune container polling with
-`wait: { intervalMS, timeoutMS }`.
-
-Reading and messaging:
-
-```typescript
+```ts
 import {
   getInstagramUser,
   getInstagramMedia,
   getInstagramConversations,
   getInstagramConversation,
   getInstagramConversationByUser,
-  getInstagramConversationsByUser,
-  getInstagramMessage,
   sendInstagramMessage,
+  replyToInstagramComment,
   setupInstagramWebhook,
 } from "naystack/socials";
 
-// Fetch the authenticated user's profile
-const user = await getInstagramUser(accessToken);
-// => { username: "johndoe", followers_count: 1234, media_count: 56 }
-
-// Fetch recent media
+const user = await getInstagramUser(accessToken);           // { username, followers_count, media_count }
 const media = await getInstagramMedia(accessToken, undefined, 10);
-// => { data: [{ like_count: 5, comments_count: 2, permalink: "..." }, ...] }
 
-// Fetch conversations with pagination
 const convos = await getInstagramConversations(accessToken, 25);
-for (const convo of convos.data ?? []) {
-  console.log(convo.participants, convo.messages);
-}
-if (convos.fetchMore) {
-  const nextPage = await convos.fetchMore();
-}
+const next = await convos.fetchMore?.();                     // cursor pagination
 
-// Fetch conversations filtered by a specific user
-const userConvos = await getInstagramConversationsByUser(accessToken, userId);
+const thread = await getInstagramConversationByUser(accessToken, otherUserId);
+await sendInstagramMessage(accessToken, otherUserId, "Hello!");
+await replyToInstagramComment(accessToken, commentId, "Thanks!"); // needs manage_comments
 
-// Fetch the single conversation with a specific user (2-participant thread)
-const convo = await getInstagramConversationByUser(accessToken, userId);
-
-// Send a message
-await sendInstagramMessage(accessToken, recipientId, "Hello!");
-
-// Webhook setup (app/api/webhooks/instagram/route.ts)
+// app/api/webhooks/instagram/route.ts
 export const { GET, POST } = setupInstagramWebhook({
-  secret: process.env.WEBHOOK_SECRET!,
-  callback: async (type, value, id) => {
-    console.log("Webhook event:", type, value, id);
+  secret: process.env.WEBHOOK_SECRET!, // the verify token from the Meta portal
+  callback: async (type, value, entryId) => {
+    if (type === "messaging") await handleDM(value);
   },
 });
 ```
 
+Every getter takes an optional `fields` array to request more than the default
+columns, and a generic to type the result. Anything not wrapped is one call
+away with the base URL and API version already pinned:
+
+```ts
+import { getInstagramData, readGraphID } from "naystack/socials";
+
+const id = readGraphID(
+  "Instagram comment reply",
+  await getInstagramData<{ id: string }>(token, `${commentId}/replies`, {
+    params: { message: "thanks!" }, method: "POST",
+  }),
+);
+```
+
+**OAuth primitives** — `getInstagramAuthorizationURL`, `getLongLivedInstagramToken`,
+`refreshInstagramAccessToken` — are exported for flows `setupSocialAuth` doesn't
+cover. They need `INSTAGRAM_CLIENT_ID` and `INSTAGRAM_CLIENT_SECRET`.
+
 ### Threads
 
-`createThreadsPost(token, input)` — no media is a text post, one item is a single
-image or video, 2–20 is a carousel:
+No media → text post; one item → image or video; 2–20 → carousel.
 
-```typescript
-import {
-  getThread,
-  getThreads,
-  getThreadsReplies,
-  createThreadsPost,
-  createThread,
-  setupThreadsWebhook,
-} from "naystack/socials";
+```ts
+import { createThreadsPost, createThread, getThreads, getThreadsReplies, setupThreadsWebhook, MetaMediaType } from "naystack/socials";
 
-// Text post — a bare string works
-await createThreadsPost(accessToken, "Hello from Naystack!");
+await createThreadsPost(accessToken, "Hello from naystack!");
 
-// Media, replies, reply controls
 await createThreadsPost(accessToken, {
   text: "Campaign is live",
-  media: { url: "https://cdn.example.com/campaign.jpg", type: "image" },
-  replyControl: "everyone",
+  media: { url: "https://cdn.example.com/campaign.jpg", type: MetaMediaType.Photo },
+  replyControl: "everyone", // | "accounts_you_follow" | "mentioned_only"
 });
 
-// Carousel
 await createThreadsPost(accessToken, {
-  text: "Campaign recap",
-  media: [
-    { url: "https://cdn.example.com/1.jpg", type: "image" },
-    { url: "https://cdn.example.com/2.mp4", type: "video" },
-  ],
+  text: "Read more", linkAttachment: "https://example.com/post", // text-only posts
 });
 
-// A thread — each post replies to the previous one
-const firstPostId = await createThread(accessToken, [
-  "First post in thread",
-  "Second post (reply to first)",
-  {
-    text: "Third, with a picture",
-    media: { url: "https://cdn.example.com/3.jpg", type: "image" },
-  },
+// A thread: each post replies to the previous one. Returns the first id.
+await createThread(accessToken, [
+  "First post",
+  "Second post",
+  { text: "Third, with a picture", media: { url: "https://cdn.example.com/3.jpg", type: MetaMediaType.Photo } },
 ]);
 
-// Fetch user's threads
-const threads = await getThreads(accessToken);
-// => [{ text: "Hello world", permalink: "...", username: "johndoe" }]
+const posts = await getThreads(accessToken);            // [{ text, permalink, username }]
+const replies = await getThreadsReplies(accessToken, postId);
 
-// Webhook setup (app/api/webhooks/threads/route.ts)
+// app/api/webhooks/threads/route.ts
 export const { GET, POST } = setupThreadsWebhook({
   secret: process.env.WEBHOOK_SECRET!,
-  callback: async (field, value) => {
-    console.log("Threads event:", field, value);
-    return true; // Return false to respond with 500
-  },
+  callback: async (field, value) => true, // false → respond 500 so Meta retries
 });
+```
+
+`getThreadsData` is the raw-call escape hatch, like `getInstagramData`.
+
+### YouTube
+
+Connect via `setupSocialAuth` with `YouTubeProvider` (Google OAuth with
+`access_type=offline` + `prompt=consent`, so a refresh token is always issued).
+Reads need only a bearer token:
+
+```ts
+import { YouTubeProvider, getYouTubeChannel, getYouTubeUploads, refreshYouTubeToken } from "naystack/socials";
+
+const profile = await YouTubeProvider.fetchProfile(accessToken);
+// followers is null when the channel hides its subscriber count
+
+const channel = await getYouTubeChannel(accessToken);        // raw youtube_v3.Schema$Channel, null if none
+const playlist = channel?.contentDetails?.relatedPlaylists?.uploads;
+if (playlist) await getYouTubeUploads(accessToken, playlist, 50); // includes private/unlisted for the owner
+
+const fresh = await refreshYouTubeToken(refreshToken);        // null = revoked
+```
+
+`fetchMedia` returns only public videos, newest first. Credentials come from
+`YOUTUBE_CLIENT_ID` / `YOUTUBE_CLIENT_SECRET`, falling back to the Google login
+ones so a single Google Cloud client can serve both.
+
+### Waiting and retrying
+
+The poll/retry helpers behind publishing are exported for any API that hands
+back a job id:
+
+```ts
+import { pollUntilReady, withRetry } from "naystack/socials";
+
+const state = await pollUntilReady(() => readJob(id), (s) => s.status === "PENDING", { intervalMS: 2000 });
+const result = await withRetry(() => tryCreate(), { attempts: 3, backoffMS: 1000 });
 ```
 
 ---
 
-## Environment Variables
+## Client utilities
 
-Naystack reads configuration from environment variables. Set the ones you need based on which modules you use.
+`naystack/utils/client`:
 
-### Required (Core Auth)
+```ts
+// lib/seo.ts
+import { setupSEO } from "naystack/utils/client";
 
-```bash
-SIGNING_KEY=your-jwt-signing-key
-REFRESH_KEY=your-jwt-refresh-key
+export const getSEO = setupSEO({
+  title: "Acme — Ship faster",
+  description: "The Acme platform.",
+  siteName: "Acme",
+  themeColor: "#5b9364",
+});
+
+// app/dashboard/page.tsx
+export const metadata = getSEO("Dashboard", "Your personalized dashboard");
+// title "Dashboard • Acme", Open Graph + Twitter cards, Apple web-app tags
+
+// With an image; { imageSize: "small" } for avatars/icons so chat apps render a thumbnail card
+export async function generateMetadata({ params }) {
+  const post = await getPost(params.id);
+  return getSEO(post.title, post.excerpt, post.author.avatar, { imageSize: "small" });
+}
 ```
 
-### Required (Client-side endpoints)
+```tsx
+import { useVisibility, useBreakpoint } from "naystack/utils/client";
 
-```bash
-NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT=/api/email
-NEXT_PUBLIC_GRAPHQL_ENDPOINT=/api/graphql
-NEXT_PUBLIC_FILE_ENDPOINT=/api/file
-NEXT_PUBLIC_BASE_URL=https://yourapp.com
+const ref = useVisibility(() => loadMore());        // IntersectionObserver, 100px margin
+<section ref={ref} />;
+
+const isMobile = useBreakpoint("(max-width: 639px)"); // true | false | null during SSR
 ```
 
-### Google OAuth
+---
 
-```bash
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-NEXT_PUBLIC_GOOGLE_AUTH_ENDPOINT=/api/google
+## Environment variables
+
+Set only what the modules you use need. Public ones are read on the client too.
+
+| Variable                              | Needed by            | Notes                                                                 |
+| ------------------------------------- | -------------------- | --------------------------------------------------------------------- |
+| `SIGNING_KEY`                         | auth, graphql, file  | Signs access tokens                                                   |
+| `REFRESH_KEY`                         | auth, graphql        | Signs refresh tokens                                                  |
+| `NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT`     | auth                 | `/api/email` — where `setupEmailAuth` is mounted                      |
+| `NEXT_PUBLIC_GRAPHQL_ENDPOINT`        | graphql              | `/api/graphql`                                                        |
+| `NEXT_PUBLIC_FILE_ENDPOINT`           | file                 | `/api/file`                                                           |
+| `NEXT_PUBLIC_BASE_URL`                | utils/client         | `https://yourapp.com` — used by `setupSEO`                            |
+| `TURNSTILE_KEY`                       | auth (optional)      | Cloudflare Turnstile secret; turns captcha on for sign-up/login       |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | auth (Google)  | From Google Cloud Console                                             |
+| `NEXT_PUBLIC_GOOGLE_AUTH_ENDPOINT`    | auth (Google)        | Absolute callback URL, registered in Google Cloud                     |
+| `NEXT_PUBLIC_SOCIAL_AUTH_ENDPOINT`    | socials              | `/api/social` — base of the `setupSocialAuth` route                   |
+| `INSTAGRAM_CLIENT_ID` / `INSTAGRAM_CLIENT_SECRET` | socials  | From the Meta developer portal. Server-only                           |
+| `YOUTUBE_CLIENT_ID` / `YOUTUBE_CLIENT_SECRET` | socials      | Optional — fall back to the `GOOGLE_*` pair                           |
+| `S3_REGION`, `S3_BUCKET`              | file                 |                                                                       |
+| `S3_ACCESS_KEY_ID` / `S3_ACCESS_KEY_SECRET` | file           |                                                                       |
+| `NEXT_PUBLIC_S3_DOMAIN`               | file                 | Host that serves the bucket — `bucket.s3.amazonaws.com` or your CDN   |
+| `S3_ENDPOINT`                         | file (optional)      | Custom endpoint for R2, MinIO and other S3-compatible stores          |
+| `NODE_ENV`                            | graphql              | `production` disables introspection and the sandbox                   |
+
+Read them in your own code the same way naystack does:
+
+```ts
+import { getEnv, getEnvValue, EnvVariable } from "naystack/env";
+
+getEnv(EnvVariable.SIGNING_KEY);            // throws if unset
+getEnv(EnvVariable.TURNSTILE_KEY, true);    // string | undefined
+getEnvValue(EnvVariable.S3_REGION);         // never throws
 ```
 
-### Social accounts
+## React Native / Expo
 
-`NEXT_PUBLIC_SOCIAL_AUTH_ENDPOINT` is the base URL of the `setupSocialAuth` route;
-each provider's redirect URI is `<base>/<platform>`. Client ids are server-only —
-the authorization URL is built on the server, so they never ship in the client bundle.
+The auth, GraphQL and file client entries have no DOM dependencies, and the
+server side handles the mobile cases: `allowedOrigins` for CORS, `returnTo` for custom-scheme OAuth
+callbacks, and `useFileUpload` accepting a `{ uri, name, type }` file. Without a
+`NEXT_PUBLIC_*` build step, set the endpoints at startup:
 
-```bash
-NEXT_PUBLIC_SOCIAL_AUTH_ENDPOINT=/api/social
-INSTAGRAM_CLIENT_ID=your-instagram-client-id
-INSTAGRAM_CLIENT_SECRET=your-instagram-client-secret
+```ts
+import { addEnv } from "naystack/env";
+
+addEnv("EMAIL_AUTH_ENDPOINT", "https://yourapp.com/api/email");
+addEnv("GRAPHQL_ENDPOINT", "https://yourapp.com/api/graphql");
+addEnv("FILE_ENDPOINT", "https://yourapp.com/api/file");
 ```
 
-### AWS S3 (File Upload)
+## Requirements
 
-```bash
-S3_REGION=us-east-1
-S3_BUCKET=your-bucket-name
-S3_ACCESS_KEY_ID=your-access-key-id
-S3_ACCESS_KEY_SECRET=your-secret-access-key
-```
+- Next.js 13+ with the App Router (route handlers, `next/headers`)
+- React 18 or 19
+- Node.js 18+ (uses the global `fetch` and `FormData`)
+- `type-graphql` needs `experimentalDecorators` and `emitDecoratorMetadata` in
+  your `tsconfig.json`, and `import "reflect-metadata"` at the top of the
+  GraphQL route file, before your `@ObjectType` classes are imported
 
-### Optional
+## License
 
-```bash
-TURNSTILE_KEY=cloudflare-turnstile-secret-key
-NODE_ENV=production
-```
+ISC © [Abhinay Pandey](https://github.com/abhinaypandey02)

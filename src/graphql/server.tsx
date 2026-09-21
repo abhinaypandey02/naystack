@@ -35,11 +35,13 @@ type ComponentProps<Y> =
  * @param injectorProps.fetch - Async function that returns the data to pass to the component. Runs on the server.
  * @param injectorProps.Component - React component that receives `{ data?: T; loading: boolean }` plus any extra props.
  * @param injectorProps.props - Optional. Any additional props to pass to `Component`. Required if the Component has props other than `data` and `loading`.
+ * @param injectorProps.isComponentDynamic - Set when `Component` comes from `next/dynamic`: the loading fallback then
+ *   gets its own Suspense boundary, so the chunk load can't suspend the outer one.
  * @returns A React element that suspends until `fetch()` completes, then renders `Component` with the data.
  *
  * @example Simple usage:
  * ```tsx
- * import { Injector } from "naystack/graphql/server";
+ * import { Injector } from "naystack/graphql";
  * import getCurrentUser from "@/app/api/(graphql)/User/resolvers/get-current-user";
  * import AuthChecker from "./components/auth-checker";
  *
@@ -55,7 +57,7 @@ type ComponentProps<Y> =
  *
  * @example Fetching multiple queries:
  * ```tsx
- * import { Injector } from "naystack/graphql/server";
+ * import { Injector } from "naystack/graphql";
  * import getCurrentUser from "@/app/api/(graphql)/User/resolvers/get-current-user";
  * import getChats from "@/app/api/(graphql)/Chat/resolvers/get-chats";
  * import { ChatWindow } from "./components/chat-window";
@@ -138,7 +140,7 @@ const { query: gqlQuery } = registerApolloClient(() => {
  *
  * @example
  * ```ts
- * import { query } from "naystack/graphql/server";
+ * import { query } from "naystack/graphql";
  * import { GetUserDocument } from "@/generated/graphql";
  *
  * // In a Server Component:

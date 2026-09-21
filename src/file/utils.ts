@@ -78,9 +78,8 @@ export const getDownloadURL = (keys: string | string[]) => {
  * Uploads a file to S3 at the given key(s), either from a Blob or a remote URL.
  *
  * @param keys - S3 key or key path segments (array joined by `/`).
- * @param options.blob - A Blob/File to upload directly.
- * @param options.url - A remote URL to fetch and upload. Ignored if `blob` is provided.
- * @param options.put - Fields to set on the S3 put. See {@link PutOverrides}.
+ * @param source - `{ blob }` to upload a Blob/File directly, or `{ url }` to fetch a remote URL and upload
+ *   that (ignored if `blob` is given). `put` sets fields on the S3 put — see {@link PutOverrides}.
  * @returns The public download URL of the uploaded file, or `null` if neither `blob` nor `url` was provided.
  * @category File
  */

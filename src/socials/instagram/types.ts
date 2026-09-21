@@ -85,7 +85,7 @@ export type InstagramConversation = {
  * downloads it server-side.
  *
  * @property url - Public URL. Images must be **JPEG**.
- * @property type - `"image"` or `"video"`.
+ * @property type - `MetaMediaType.Photo` or `MetaMediaType.Video` (from `naystack/socials`).
  * @property altText - Accessibility description, up to 1000 characters. Images only.
  *
  * @category Socials
@@ -97,7 +97,7 @@ export type InstagramPostMedia = {
 };
 
 /**
- * Input for {@link createInstagramPost}. What gets published follows from `media`:
+ * Input for `createInstagramPost`. What gets published follows from `media`:
  *
  * | `media` | Result |
  * | --- | --- |

@@ -1,13 +1,44 @@
 {
   "$schema": "https://typedoc.org/schema.json",
-  "entryPoints": ["src"],
+  "entryPoints": [
+    "src"
+  ],
   "entryPointStrategy": "expand",
   "out": "docs",
-  "exclude": ["**/node_modules/**", "**/*.test.ts", "**/*.spec.ts"],
+  "exclude": [
+    "**/node_modules/**",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ],
   "excludeExternals": true,
   "includeVersion": true,
   "readme": "README.md",
-  "plugin": ["./typedoc-hide-type-params.mjs"],
+  "plugin": [
+    "./typedoc-hide-type-params.mjs"
+  ],
   "categorizeByGroup": true,
-  "categoryOrder": ["Auth", "GraphQL", "File", "Client", "Socials", "Environment", "*"]
+  "categoryOrder": [
+    "Auth",
+    "GraphQL",
+    "File",
+    "Client",
+    "Socials",
+    "Environment",
+    "*"
+  ],
+  "highlightLanguages": [
+    "ts",
+    "tsx",
+    "js",
+    "jsx",
+    "json",
+    "bash",
+    "graphql"
+  ],
+  "intentionallyNotExported": [
+    "GeneratedResolver",
+    "ComponentProps",
+    "AuthCallReturn",
+    "ParsedGQLTypeWithNullability"
+  ]
 }

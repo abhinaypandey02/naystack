@@ -19,7 +19,7 @@ import { EnvVariable, getEnv } from "@/src/env";
  * @example Setup in a utility file:
  * ```ts
  * // lib/utils/seo.ts
- * import { setupSEO } from "naystack/client";
+ * import { setupSEO } from "naystack/utils/client";
  *
  * export const getSEO = setupSEO({
  *   title: "Land Exchange Toolbox - Premium Real Estate Tools",

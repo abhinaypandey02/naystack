@@ -37,6 +37,14 @@ export const TokenContext = createContext<{
   setToken: () => null,
 });
 
+/**
+ * Props shared by both `AuthWrapper`s.
+ *
+ * @property skipInitialFetch - Skip the on-mount token fetch; set the token yourself via `setAccessToken` / `AuthApply`.
+ * @property onTokenUpdate - Reserved; not currently called.
+ *
+ * @category Auth
+ */
 export type AuthWrapperProps = PropsWithChildren<{
   onTokenUpdate?: (token: string | null) => void;
   skipInitialFetch?: boolean;
@@ -45,12 +53,17 @@ export type AuthWrapperProps = PropsWithChildren<{
 /**
  * Provider that fetches the current access token from your auth endpoint and exposes it via TokenContext.
  * Wrap your app (or the part that needs auth) so that `useToken()`, `useLogin()`, `useSignUp()`, `useLogout()` work.
- * On mount it GETs `NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT` with credentials; the response's `accessToken` is stored and provided to children.
+ * On mount it GETs `NEXT_PUBLIC_EMAIL_AUTH_ENDPOINT` with credentials; the plain-text response body is the
+ * access token (empty when logged out), stored and provided to children.
  *
  * Must be placed **above** `ApolloWrapper` in the component tree (since `ApolloWrapper` needs the token).
  *
- * @param children - React children (e.g. your app or a layout).
- * @param onTokenUpdate - Optional callback fired whenever the token changes (after initial load). Receives `token` (string) or `null` on logout.
+ * The same name exported from `naystack/auth` is a Server Component version that
+ * performs that first fetch during SSR (forwarding the refresh cookie) and streams
+ * the token down, so the page doesn't wait for a client round-trip. Use it in a
+ * server layout; use this one anywhere that is already `"use client"`.
+ *
+ * @param props - See {@link AuthWrapperProps}.
  * @returns TokenContext.Provider wrapping children.
  *
  * @example
@@ -108,10 +121,10 @@ function AuthChildComponent() {
 }
 
 /**
- * Fetches the access token on mount by calling the auth endpoint. Stores the result in TokenContext.
+ * Fetches the access token on mount by calling the auth endpoint. Stores the result in the token store.
  * Used internally by auth setup; prefer `AuthWrapper` for typical usage.
  *
- * @param getRefreshToken - Optional async function that returns a refresh token string (e.g. from cookies or storage). If omitted, the request relies on httpOnly cookies via `credentials: "include"`.
+ * @param skip - Skip the fetch (e.g. when the token is supplied another way).
  *
  * @category Auth
  */
@@ -187,8 +200,9 @@ export function useSetToken() {
 }
 
 /**
- * Returns a sign-up function that POSTs to the auth endpoint with credentials. On success, the response's
- * `accessToken` is stored and the token context updates automatically.
+ * Returns a sign-up function that POSTs to the auth endpoint with credentials. On success, the returned
+ * access token is stored and the token context updates automatically. Signing up with an existing
+ * email **and** its correct password logs that user in instead of failing.
  *
  * The payload must include at least `email` and `password`. You can include any extra fields (e.g. `name`, `designation`)
  * and they will be forwarded to the `createUser` callback on the server.
@@ -239,8 +253,8 @@ export function useSignUp() {
 }
 
 /**
- * Returns a login function that PUTs to the auth endpoint with credentials. On success, the response's
- * `accessToken` is stored and the token context updates automatically.
+ * Returns a login function that PUTs to the auth endpoint with credentials. On success, the returned
+ * access token is stored and the token context updates automatically.
  *
  * @returns A function `(data) => Promise<null | string>`. Call with `{ email, password }`. Returns `null` on success, or the error message on failure (e.g. `"Invalid password"`).
  *

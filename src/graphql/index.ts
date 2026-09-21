@@ -1,10 +1,14 @@
 /**
- * GraphQL module: server setup, resolver/field helpers, resolver libraries, error helpers, and context types.
+ * GraphQL module: server setup, resolver/field helpers, resolver libraries, error helpers,
+ * context types, and the server-side data helpers (`Injector`, `query`).
  *
  * @example
  * ```ts
  * // Server-side (resolvers, route setup)
  * import { resolver, field, QueryLibrary, FieldLibrary, setupGraphQL, GQLError } from "naystack/graphql";
+ *
+ * // Server Components
+ * import { Injector, query } from "naystack/graphql";
  *
  * // Type helpers
  * import type { QueryResponseType, FieldResponseType, Context, AuthorizedContext } from "naystack/graphql";

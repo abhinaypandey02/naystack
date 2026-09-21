@@ -280,7 +280,7 @@ export const getInstagramContainerStatus = async (
  * the publishing quota — a read-only endpoint that needs exactly the same
  * `instagram_business_content_publish` scope publishing does. Nothing is posted.
  *
- * Worth calling before {@link createInstagramPost} in a scheduled job: a token whose
+ * Worth calling before `createInstagramPost` in a scheduled job: a token whose
  * access was revoked fails here with a clear reason, instead of surfacing later as a
  * container error.
  *

@@ -52,6 +52,12 @@ export type ContainerState = {
   error?: string;
 };
 
+/**
+ * What a media item to publish is. Used by `InstagramPostMedia.type` and
+ * `ThreadsPostMedia.type`; a string enum, so pass the member, not `"photo"`.
+ *
+ * @category Socials
+ */
 export enum MetaMediaType {
   Photo = "photo",
   Video = "video",

@@ -54,15 +54,15 @@ const mediaParams = (media?: ThreadsPostMedia): GraphParams => ({
  *
  * @example
  * ```ts
- * import { createThreadsPost } from "naystack/socials";
+ * import { createThreadsPost, MetaMediaType } from "naystack/socials";
  *
  * await createThreadsPost(accessToken, "Hello from Naystack!");
  *
  * await createThreadsPost(accessToken, {
  *   text: "Campaign recap",
  *   media: [
- *     { url: "https://cdn.example.com/1.jpg", type: "image" },
- *     { url: "https://cdn.example.com/2.mp4", type: "video" },
+ *     { url: "https://cdn.example.com/1.jpg", type: MetaMediaType.Photo },
+ *     { url: "https://cdn.example.com/2.mp4", type: MetaMediaType.Video },
  *   ],
  * });
  * ```
@@ -119,12 +119,12 @@ export const createThreadsPost = async (
  *
  * @example
  * ```ts
- * import { createThread } from "naystack/socials";
+ * import { createThread, MetaMediaType } from "naystack/socials";
  *
  * const firstPostId = await createThread(accessToken, [
  *   "First post in thread",
  *   "Second post (reply to first)",
- *   { text: "Third, with a picture", media: { url: "https://cdn.example.com/3.jpg", type: "image" } },
+ *   { text: "Third, with a picture", media: { url: "https://cdn.example.com/3.jpg", type: MetaMediaType.Photo } },
  * ]);
  * ```
  *

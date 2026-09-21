@@ -98,8 +98,10 @@ export const tokenContext = (token?: string | null) => {
 };
 
 /**
- * Hook to run a GraphQL query with the current user's token. The query auto-fires when both the token
- * and variables are available. Returns a refetch function and the Apollo query result.
+ * Hook to run a GraphQL query as the current user. Requests are sent with `credentials: "include"`, so the
+ * server identifies the user from the refresh cookie (the `Authorization` header is deliberately not added on
+ * this path). The query auto-fires whenever `variables` is set and changes. Returns a refetch function and the
+ * Apollo query result.
  *
  * Defaults to `fetchPolicy: "no-cache"` (always fresh, safe for viewer-keyed data).
  * Override per-query via `options` — e.g. `{ fetchPolicy: "cache-first" }` for static
@@ -107,11 +109,11 @@ export const tokenContext = (token?: string | null) => {
  * instantly while refetching.
  *
  * @param query - A `TypedDocumentNode` for the query (e.g. from codegen or a `gql` template).
- * @param variables - Optional initial variables (the `input` value). Automatically wrapped as `{ input: variables }` before sending. Query fires automatically when this and token are set; change to refetch.
+ * @param variables - Optional initial variables (the `input` value). Automatically wrapped as `{ input: variables }` before sending. The query fires when this is set and again whenever it changes (compared by value); omit it for a manually triggered query.
  * @param options - Optional Apollo `LazyQueryHookOptions` (e.g. `fetchPolicy`, `notifyOnNetworkStatusChange`). Merged into the underlying `useLazyQuery`.
  * @returns Tuple: `[refetch, result]`.
  *   - `refetch(input)` — runs the query again with the given input (wrapped as `variables.input`).
- *   - `result` — `{ data, loading, error, hasAuth }` from Apollo. `hasAuth` is `true` when an auth token is available.
+ *   - `result` — `{ data, loading, error, ... }` from Apollo's `useLazyQuery`.
  *
  * @example Lazy query (no initial variables, manually triggered):
  * ```tsx
@@ -181,7 +183,9 @@ export function useAuthQuery<T, V extends OperationVariables>(
 }
 
 /**
- * Hook to run a GraphQL mutation with the current user's token. Returns a function you call with the mutation input.
+ * Hook to run a GraphQL mutation with the current user's access token (sent as a `Bearer` header by the
+ * link chain, which also refreshes an expired token and retries once). Returns a function you call with
+ * the mutation input.
  *
  * The input is sent as `variables.input` to the GraphQL endpoint.
  *

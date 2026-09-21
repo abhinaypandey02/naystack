@@ -11,7 +11,7 @@ import { useEffect, useRef, useState } from "react";
  *
  * @example Lazy-load content when a section enters the viewport:
  * ```tsx
- * import { useVisibility } from "naystack/client";
+ * import { useVisibility } from "naystack/utils/client";
  *
  * function LazySection() {
  *   const [loaded, setLoaded] = useState(false);
@@ -77,7 +77,7 @@ export function useVisibility(onVisible?: () => void) {
  *
  * @example Responsive navigation:
  * ```tsx
- * import { useBreakpoint } from "naystack/client";
+ * import { useBreakpoint } from "naystack/utils/client";
  *
  * function ResponsiveNav() {
  *   const isMobile = useBreakpoint("(max-width: 639px)");

@@ -12,8 +12,11 @@ import { ClearStoreOnLogout } from "./clear-store";
 import { makeAuthLink } from "./links";
 
 /**
- * Apollo Client provider for Next.js. Wrap your app (or a subtree) so client components can run GraphQL queries and mutations.
- * The GraphQL endpoint is read from `NEXT_PUBLIC_GRAPHQL_ENDPOINT` env var.
+ * `ApolloWrapper` built on `@apollo/client-integration-nextjs` (`ApolloNextAppProvider`),
+ * for apps that use Apollo's App Router streaming — `useSuspenseQuery`, `useBackgroundQuery`
+ * — from client components. Same auth link chain and logout cache clearing as the
+ * `naystack/graphql/client` wrapper; pick this one only if you need that integration.
+ * The GraphQL endpoint is read from `NEXT_PUBLIC_GRAPHQL_ENDPOINT`.
  *
  * Must be placed **inside** `AuthWrapper` (since `useAuthQuery` / `useAuthMutation` depend on the auth token).
  *
@@ -26,7 +29,7 @@ import { makeAuthLink } from "./links";
  * ```tsx
  * // app/layout.tsx
  * import { AuthWrapper } from "naystack/auth/client";
- * import { ApolloWrapper } from "naystack/graphql/client";
+ * import { ApolloWrapper } from "naystack/graphql/next";
  *
  * export default function RootLayout({ children }: { children: React.ReactNode }) {
  *   return (

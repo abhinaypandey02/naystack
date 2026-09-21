@@ -10,6 +10,12 @@
  *
  * // Google OAuth
  * import { setupGoogleAuth } from "naystack/auth";
+ *
+ * // Server-Component AuthWrapper (fetches the token during SSR)
+ * import { AuthWrapper } from "naystack/auth";
+ *
+ * // End a custom login route the way the built-in ones do
+ * import { getTokenizedResponse } from "naystack/auth";
  * ```
  *
  * @module

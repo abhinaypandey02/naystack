@@ -57,6 +57,24 @@ const EXTRA_ENV =
   (globalThis as any).__NAYSTACK_ENV__ ||
   ((globalThis as any).__NAYSTACK_ENV__ = {});
 
+/**
+ * Sets a client-side endpoint at runtime, for environments with no
+ * `NEXT_PUBLIC_*` build step (React Native, Expo). Keys are the env names with
+ * the `NEXT_PUBLIC_` prefix dropped; a real env var still wins when both exist.
+ *
+ * @param key - `"GRAPHQL_ENDPOINT"`, `"EMAIL_AUTH_ENDPOINT"`, `"GOOGLE_AUTH_ENDPOINT"`, `"SOCIAL_AUTH_ENDPOINT"`, `"FILE_ENDPOINT"` or `"BASE_URL"`.
+ * @param value - The absolute URL.
+ *
+ * @example
+ * ```ts
+ * import { addEnv } from "naystack/env";
+ *
+ * addEnv("GRAPHQL_ENDPOINT", "https://yourapp.com/api/graphql");
+ * addEnv("EMAIL_AUTH_ENDPOINT", "https://yourapp.com/api/email");
+ * ```
+ *
+ * @category Environment
+ */
 export function addEnv(key: string, value: string) {
   EXTRA_ENV[key] = value;
 }

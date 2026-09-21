@@ -54,11 +54,11 @@ const mediaParams = (media: InstagramPostMedia): GraphParams => ({
  *
  * @example
  * ```ts
- * import { createInstagramPost } from "naystack/socials";
+ * import { createInstagramPost, MetaMediaType } from "naystack/socials";
  *
  * // Reel
  * await createInstagramPost(accessToken, {
- *   media: { url: "https://cdn.example.com/promo.mp4", type: "video" },
+ *   media: { url: "https://cdn.example.com/promo.mp4", type: MetaMediaType.Video },
  *   caption: "Behind the scenes",
  *   shareToFeed: true,
  * });
@@ -67,8 +67,8 @@ const mediaParams = (media: InstagramPostMedia): GraphParams => ({
  * await createInstagramPost(accessToken, {
  *   caption: "Campaign recap",
  *   media: [
- *     { url: "https://cdn.example.com/1.jpg", type: "image" },
- *     { url: "https://cdn.example.com/2.mp4", type: "video" },
+ *     { url: "https://cdn.example.com/1.jpg", type: MetaMediaType.Photo },
+ *     { url: "https://cdn.example.com/2.mp4", type: MetaMediaType.Video },
  *   ],
  * });
  * ```

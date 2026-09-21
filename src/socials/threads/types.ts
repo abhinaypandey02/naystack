@@ -24,7 +24,7 @@ export type ThreadsPost = {
  * downloads it server-side.
  *
  * @property url - Public URL. Images: JPEG/PNG, 8 MB max. Videos: MP4/MOV, 1 GB / 5 min max.
- * @property type - `"image"` or `"video"`.
+ * @property type - `MetaMediaType.Photo` or `MetaMediaType.Video` (from `naystack/socials`).
  * @property altText - Accessibility description.
  *
  * @category Socials
@@ -36,7 +36,7 @@ export type ThreadsPostMedia = {
 };
 
 /**
- * Input for {@link createThreadsPost}. What gets published follows from `media`:
+ * Input for `createThreadsPost`. What gets published follows from `media`:
  * none is a text post, one is a single image or video, 2–20 is a carousel.
  *
  * @property text - Post text, 500 characters max.

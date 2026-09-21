@@ -24,7 +24,7 @@ export type NativeFile = { uri: string; name: string; type: string };
  *   - `config` — Optional object with:
  *     - `data` — JSON-serializable metadata object; sent as form field `data`.
  *     - `async` — If `true`, the upload is processed asynchronously on the server.
- *   Resolves to the JSON response `{ url, data }` or `null`.
+ *   Resolves to the JSON response `{ url, onUploadResponse }` or `null`.
  *
  * @example
  * ```tsx
@@ -85,11 +85,11 @@ export const useFileUpload = () => {
  * Shape of the JSON response from the file upload PUT endpoint.
  *
  * @property url - The public S3 URL of the uploaded file.
- * @property data - The return value from the `onUpload` callback in `setupFileUpload`.
+ * @property onUploadResponse - The return value from the `onUpload` callback in `setupFileUpload`.
  *
  * @category File
  */
 export interface FileUploadResponseType {
   url?: string;
-  data?: object | null;
+  onUploadResponse?: object | null;
 }
